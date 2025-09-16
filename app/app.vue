@@ -1,9 +1,9 @@
 <template>
   <div>
     <NuxtRouteAnnouncer />
-    <div class="navbar bg-base-100 shadow-sm">
+    <div class="navbar bg-base-300 shadow-sm">
       <div class="flex-1">
-        <a class="btn btn-ghost text-xl">Songascribe</a>
+        <a @click="$router.push('/')" class="btn btn-ghost text-xl">Songascribe</a>
       </div>
       <div class="flex gap-2">
         <div class="dropdown dropdown-end">
@@ -21,9 +21,9 @@
           </div>
           <ul
             tabindex="0"
-            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+            class="menu menu-sm dropdown-content bg-base-200 rounded-box z-1 mt-3 w-52 p-2 shadow"
           >
-            <li><a>Settings</a></li>
+            <li><a @click="$router.push('settings')">Settings</a></li>
             <li><a>Logout</a></li>
           </ul>
         </div>

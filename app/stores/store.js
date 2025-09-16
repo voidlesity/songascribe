@@ -9,6 +9,18 @@ export const useStore = defineStore("store", {
           items: [
             {
               name: "Example 1",
+              songIds: ["2AFeu1UxqSnidAzmg2bJIX", "2AFeu1UxqSnidAzmg2bJIX"],
+            },
+            {
+              name: "Example 1",
+              songIds: ["2AFeu1UxqSnidAzmg2bJIX"],
+            },
+            {
+              name: "Example 1",
+              songIds: ["2AFeu1UxqSnidAzmg2bJIX"],
+            },
+            {
+              name: "Example 1",
               songIds: ["2AFeu1UxqSnidAzmg2bJIX"],
             },
           ],
