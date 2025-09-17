@@ -14,5 +14,11 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
   },
+  runtimeConfig: {
+    spotify: {
+      clientId: "",
+      clientSecret: "",
+    },
+  },
   css: ["~/assets/app.css"],
 });

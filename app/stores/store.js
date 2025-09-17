@@ -5,27 +5,16 @@ export const useStore = defineStore("store", {
     return {
       categories: [
         {
-          name: "Example",
+          name: "Characters",
           items: [
             {
-              name: "Example 1",
-              songIds: ["2AFeu1UxqSnidAzmg2bJIX", "2AFeu1UxqSnidAzmg2bJIX"],
-            },
-            {
-              name: "Example 1",
-              songIds: ["2AFeu1UxqSnidAzmg2bJIX"],
-            },
-            {
-              name: "Example 1",
-              songIds: ["2AFeu1UxqSnidAzmg2bJIX"],
-            },
-            {
-              name: "Example 1",
-              songIds: ["2AFeu1UxqSnidAzmg2bJIX"],
+              name: "Sven",
+              songIds: ["2AFeu1UxqSnidAzmg2bJIX", "5pQrKA3Rj4vlLDt6Ed2TdS"],
             },
           ],
         },
       ],
     };
   },
+  persist: true,
 });
