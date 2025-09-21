@@ -11,6 +11,10 @@ export const useStore = defineStore("store", {
               name: "Sven",
               songIds: ["2AFeu1UxqSnidAzmg2bJIX", "5pQrKA3Rj4vlLDt6Ed2TdS"],
             },
+            {
+              name: "Michelle",
+              songIds: ["5pQrKA3Rj4vlLDt6Ed2TdS"],
+            },
           ],
         },
       ],
