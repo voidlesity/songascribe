@@ -16,9 +16,12 @@
           >
             <div class="w-10 rounded-full">
               <img
+                v-if="loggedIn"
                 alt="Spotify profile picture"
-                src="https://cdn.voidlesity.dev/assets/images/random/bort.png"
+                :title="user.display_name"
+                :src="user.images[0].url"
               />
+              <icon v-else name="ic:round-person" size="2.5rem" />
             </div>
           </div>
           <ul
@@ -26,7 +29,10 @@
             class="menu menu-sm dropdown-content bg-base-200 rounded-box z-1 mt-3 w-52 p-2 shadow"
           >
             <li><a @click="$router.push('settings')">Settings</a></li>
-            <li><a>Logout</a></li>
+            <li>
+              <a v-if="loggedIn" @click="clear">Logout</a>
+              <a v-else href="/auth/spotify">Login</a>
+            </li>
           </ul>
         </div>
       </div>
@@ -34,3 +40,7 @@
     <NuxtPage />
   </div>
 </template>
+
+<script setup>
+const { loggedIn, user, clear } = useUserSession();
+</script>

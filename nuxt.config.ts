@@ -12,14 +12,17 @@ export default defineNuxtConfig({
     "pinia-plugin-persistedstate",
     "@formkit/auto-animate",
     "nuxt-lodash",
+    "nuxt-auth-utils",
   ],
   vite: {
     plugins: [tailwindcss()],
   },
   runtimeConfig: {
-    spotify: {
-      clientId: "",
-      clientSecret: "",
+    oauth: {
+      spotify: {
+        clientId: "",
+        clientSecret: "",
+      },
     },
   },
   css: ["~/assets/app.css"],
