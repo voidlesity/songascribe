@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "songascribe",
   "type": "module",
   "private": true,
   "scripts": {
@@ -15,6 +15,7 @@
     "@nuxt/icon": "2.0.0",
     "@nuxt/image": "1.11.0",
     "@tailwindcss/vite": "4.1.14",
+    "@pinia/nuxt": "0.11.2",
     "@vueuse/core": "13.9.0",
     "daisyui": "5.3.7",
     "drizzle-orm": "0.44.6",
@@ -28,7 +29,6 @@
   "devDependencies": {
     "@formkit/auto-animate": "0.9.0",
     "@iconify-json/ic": "1.2.4",
-    "@pinia/nuxt": "0.11.2",
     "@types/node": "^24.8.1",
     "drizzle-kit": "^0.31.5",
     "nuxt-auth-utils": "0.5.25",
