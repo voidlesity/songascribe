@@ -10,7 +10,6 @@ export default defineNuxtConfig({
     "@nuxt/image",
     "@pinia/nuxt",
     "pinia-plugin-persistedstate",
-    "@formkit/auto-animate",
     "nuxt-lodash",
     "nuxt-auth-utils",
   ],

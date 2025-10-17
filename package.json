@@ -28,7 +28,6 @@
     "pinia-plugin-persistedstate": "4.5.0"
   },
   "devDependencies": {
-    "@formkit/auto-animate": "0.9.0",
     "@iconify-json/ic": "1.2.4",
     "@types/node": "^24.8.1",
     "drizzle-kit": "^0.31.5",
