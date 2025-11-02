@@ -1,6 +1,7 @@
 CREATE TABLE `data` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`user` integer,
+	`data` blob,
 	FOREIGN KEY (`user`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, blob } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -9,4 +9,5 @@ export const users = sqliteTable("users", {
 export const data = sqliteTable("data", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   user: integer("user").references(() => users.id),
+  data: blob({ mode: "json" }),
 });

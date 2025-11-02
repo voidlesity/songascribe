@@ -12,8 +12,8 @@
         />
       </div>
       <div class="modal-action gap-1">
-        <button @click="closeModal()" class="btn">Cancel</button>
-        <button @click="createCategory()" class="btn bg-primary">Create</button>
+        <button class="btn" @click="closeModal()">Cancel</button>
+        <button class="btn bg-primary" @click="createCategory()">Create</button>
       </div>
     </div>
   </dialog>
@@ -28,9 +28,9 @@
         />
       </label>
       <button
-        @click="openModal('addSong')"
         class="btn btn-primary h-auto tooltip tooltip-left"
         data-tip="Quick add Song"
+        @click="openModal('addSong')"
       >
         <icon name="ic:round-plus" size="1.5rem" />
       </button>
@@ -41,18 +41,18 @@
         <a
           v-for="(cat, idx) in categories"
           :key="idx"
-          @click="selected = idx"
           role="tab"
           class="tab"
           :class="{ 'tab-active': idx == selected }"
+          @click="selected = idx"
           >{{ cat.name }}</a
         >
         <a
-          @click="openModal('newCategory')"
           role="tab"
           class="tab tooltip"
           data-tip="Create new Category"
           style="font-weight: normal"
+          @click="openModal('newCategory')"
         >
           <icon name="ic:round-plus" size="1.5rem" />
         </a>
@@ -85,9 +85,9 @@
           <div v-else>
             <div class="carousel carousel-center rounded-box w-full gap-1">
               <div
-                class="carousel-item w-9/10"
                 v-for="(songId, idx) in item.songIds"
                 :key="idx"
+                class="carousel-item w-9/10"
               >
                 <iframe
                   :src="`https://open.spotify.com/embed/track/${songId}`"
@@ -115,6 +115,9 @@ export default {
       selected: 0,
     };
   },
+  created() {
+    this.categories = useStore().categories;
+  },
   methods: {
     openModal(mode) {
       if (mode == "newCategory") {
@@ -129,9 +132,6 @@ export default {
       this.categories.push(this.selectedCategory);
       this.closeModal();
     },
-  },
-  created() {
-    this.categories = useStore().categories;
   },
 };
 </script>

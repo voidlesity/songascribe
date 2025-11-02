@@ -20,6 +20,13 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -28,12 +35,8 @@
           "name": "data_user_users_id_fk",
           "tableFrom": "data",
           "tableTo": "users",
-          "columnsFrom": [
-            "user"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
