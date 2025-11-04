@@ -13,8 +13,8 @@
             <img
               v-if="loggedIn"
               alt="Spotify profile picture"
-              :title="user.display_name"
-              :src="user.images[0].url"
+              :title="user.name"
+              :src="user.avatar"
             />
             <icon v-else name="ic:round-person" size="2.5rem" />
           </div>
