@@ -10,7 +10,6 @@ export default defineNuxtConfig({
     "@nuxt/image",
     "@pinia/nuxt",
     "pinia-plugin-persistedstate",
-    "nuxt-lodash",
     "nuxt-auth-utils",
   ],
   vite: {

@@ -13,28 +13,27 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@nuxt/eslint": "1.9.0",
+    "@nuxt/eslint": "1.10.0",
     "@nuxt/icon": "2.1.0",
     "@nuxt/image": "1.11.0",
     "@pinia/nuxt": "0.11.2",
     "@tailwindcss/vite": "4.1.16",
     "@vueuse/core": "14.0.0",
     "better-sqlite3": "^12.4.1",
-    "daisyui": "5.3.10",
+    "daisyui": "5.4.4",
     "drizzle-orm": "0.44.7",
-    "eslint": "9.38.0",
-    "nuxi": "3.29.3",
+    "eslint": "9.39.1",
+    "nuxi": "3.30.0",
     "nuxt": "4.2.0",
+    "pinia-plugin-persistedstate": "4.7.1",
     "tailwindcss": "4.1.16",
     "vue": "3.5.22",
-    "vue-router": "4.6.3",
-    "pinia-plugin-persistedstate": "4.5.0"
+    "vue-router": "4.6.3"
   },
   "devDependencies": {
     "@iconify-json/ic": "1.2.4",
     "@types/node": "^24.8.1",
-    "drizzle-kit": "^0.31.5",
-    "nuxt-auth-utils": "0.5.25",
-    "nuxt-lodash": "2.5.3"
+    "drizzle-kit": "^0.31.6",
+    "nuxt-auth-utils": "0.5.25"
   }
 }
