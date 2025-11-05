@@ -1,6 +1,6 @@
 export default defineOAuthSpotifyEventHandler({
   async onSuccess(event, { user, tokens }) {
-    const test = await db
+    user = await db
       .insert(tables.users)
       .values({
         id: user.id,
@@ -12,9 +12,8 @@ export default defineOAuthSpotifyEventHandler({
         set: { name: user.display_name, avatar: user.images[0].url },
       })
       .returning();
-    console.log(test);
     await setUserSession(event, {
-      user: test,
+      user: user[0],
       tokens: tokens,
     });
     return sendRedirect(event, "/");

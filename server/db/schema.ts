@@ -4,10 +4,30 @@ export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   avatar: text("avatar").notNull(),
+  settings: blob({ mode: "json" }),
 });
 
-export const data = sqliteTable("data", {
+export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   user: integer("user").references(() => users.id),
-  data: blob({ mode: "json" }),
+  name: text("name"),
+});
+
+export const items = sqliteTable("items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  categorie: integer("categorie").references(() => categories.id),
+  name: text("name"),
+});
+
+export const songs = sqliteTable("songs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name"),
+  artist: text("artist"),
+  url: text("url"),
+});
+
+export const songsMap = sqliteTable("songs_map", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  item: integer("item").references(() => items.id),
+  song: integer("song").references(() => songs.id),
 });
