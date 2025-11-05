@@ -13,7 +13,7 @@ CREATE TABLE `items` (
 );
 --> statement-breakpoint
 CREATE TABLE `songs` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`text` integer PRIMARY KEY NOT NULL,
 	`name` text,
 	`artist` text,
 	`url` text
@@ -24,7 +24,7 @@ CREATE TABLE `songs_map` (
 	`item` integer,
 	`song` integer,
 	FOREIGN KEY (`item`) REFERENCES `items`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`song`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`song`) REFERENCES `songs`(`text`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

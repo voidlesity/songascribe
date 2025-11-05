@@ -104,8 +104,6 @@
 </template>
 
 <script>
-import { useStore } from "#imports";
-
 export default {
   data() {
     return {
@@ -116,7 +114,21 @@ export default {
     };
   },
   created() {
-    this.categories = useStore().categories;
+    this.categories = [
+      {
+        name: "Characters",
+        items: [
+          {
+            name: "Sven",
+            songIds: ["2AFeu1UxqSnidAzmg2bJIX", "5pQrKA3Rj4vlLDt6Ed2TdS"],
+          },
+          {
+            name: "Michelle",
+            songIds: ["5pQrKA3Rj4vlLDt6Ed2TdS"],
+          },
+        ],
+      },
+    ];
   },
   methods: {
     openModal(mode) {

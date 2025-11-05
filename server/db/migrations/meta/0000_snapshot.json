@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "02133ea7-45fe-4b76-ae50-ee9ab8a09319",
+  "id": "ef0e13cf-640b-4654-b4cd-37cac2b2e0a5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -97,12 +97,12 @@
     "songs": {
       "name": "songs",
       "columns": {
-        "id": {
-          "name": "id",
+        "text": {
+          "name": "text",
           "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "name": {
           "name": "name",
@@ -172,15 +172,15 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "songs_map_song_songs_id_fk": {
-          "name": "songs_map_song_songs_id_fk",
+        "songs_map_song_songs_text_fk": {
+          "name": "songs_map_song_songs_text_fk",
           "tableFrom": "songs_map",
           "tableTo": "songs",
           "columnsFrom": [
             "song"
           ],
           "columnsTo": [
-            "id"
+            "text"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"

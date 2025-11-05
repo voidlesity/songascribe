@@ -1,0 +1,8 @@
+/.nuxt
+/.output
+/node_modules
+
+.gitignore
+.sqlite.db
+
+README.md

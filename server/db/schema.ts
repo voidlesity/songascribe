@@ -20,7 +20,7 @@ export const items = sqliteTable("items", {
 });
 
 export const songs = sqliteTable("songs", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: integer("text").primaryKey(),
   name: text("name"),
   artist: text("artist"),
   url: text("url"),

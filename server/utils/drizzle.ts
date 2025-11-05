@@ -5,4 +5,4 @@ import * as schema from "../db/schema";
 
 export const tables = schema;
 
-export const db = drizzle("./server/db/sqlite.db");
+export const db = drizzle("./sqlite.db");
