@@ -9,7 +9,11 @@ async function getSpotifyToken(config: any) {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization:
         "Basic " +
-        btoa(config.spotify.clientId + ":" + config.spotify.clientSecret),
+        btoa(
+          config.oauth.spotify.clientId +
+            ":" +
+            config.oauth.spotify.clientSecret
+        ),
     },
     body: "grant_type=client_credentials",
   });
