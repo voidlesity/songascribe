@@ -119,12 +119,50 @@ export default {
         name: "Characters",
         items: [
           {
-            name: "Sven",
-            songIds: ["2AFeu1UxqSnidAzmg2bJIX", "5pQrKA3Rj4vlLDt6Ed2TdS"],
+            name: "Lola",
+            songIds: [
+              "6PA3RNr4T1f8Ze56vBGESB",
+              "559K8nUEfwvXHHuPBgX2do",
+              "5amqt1t0f5mq8zX0xGlT19",
+            ],
           },
           {
-            name: "Michelle",
-            songIds: ["5pQrKA3Rj4vlLDt6Ed2TdS"],
+            name: "Akira",
+            songIds: [
+              "1oHbgg5WYa7WOJC8VoBVYi",
+              "0Mjb8viquEZn6E5RrfxsHE",
+              "4S0zagxseJHOL5ZVnTQA6X",
+              "1msD6DT04B7lwD5F1qCSlL",
+            ],
+          },
+          {
+            name: "Leo",
+            songIds: ["5ww51aDl5gIrLgamIMvywo"],
+          },
+          {
+            name: "Tate",
+            songIds: ["0rCPywvi7aXlK2uwypkZAM", "4XSlqvVREKMkNmvLoro1Ku"],
+          },
+        ],
+      },
+      {
+        name: "Places",
+        items: [
+          {
+            name: "Suntides",
+            songIds: ["4CnIxrp7yazTYbjYrDtNSZ"],
+          },
+          {
+            name: "Spooky Forest",
+            songIds: ["6tlKLobnqnDdmrhtgnP6Rn"],
+          },
+          {
+            name: "Beach Resort",
+            songIds: ["2rCrt6lNSz5k554jOOSvIN"],
+          },
+          {
+            name: "Cruise Ship",
+            songIds: ["5T2Cft0v1qKSmH0GUDzB2b", "4ry7YKyh7eiIrWpVEdTJFR"],
           },
         ],
       },
