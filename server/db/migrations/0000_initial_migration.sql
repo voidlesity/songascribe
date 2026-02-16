@@ -2,6 +2,8 @@ CREATE TABLE `categories` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`user` integer,
 	`name` text,
+	`is_public` integer DEFAULT false,
+	`created_at` integer,
 	FOREIGN KEY (`user`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -12,13 +14,30 @@ CREATE TABLE `items` (
 	FOREIGN KEY (`categorie`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `songs` (
+CREATE TABLE `shares` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`name` text,
-	`artist` text,
-	`url` text
+	`category` integer,
+	`share_token` text NOT NULL,
+	`created_at` integer NOT NULL,
+	FOREIGN KEY (`category`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `shares_share_token_unique` ON `shares` (`share_token`);--> statement-breakpoint
+CREATE TABLE `songs` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`spotify_id` text,
+	`name` text,
+	`artist` text,
+	`album` text,
+	`album_art` text,
+	`duration` integer,
+	`preview_url` text,
+	`url` text,
+	`release_date` text,
+	`popularity` integer
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `songs_spotify_id_unique` ON `songs` (`spotify_id`);--> statement-breakpoint
 CREATE TABLE `songs_map` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`item` integer,

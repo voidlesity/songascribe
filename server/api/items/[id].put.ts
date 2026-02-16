@@ -1,0 +1,118 @@
+// Helper function to extract Spotify ID from URL
+function extractSpotifyId(url: string): string | null {
+  const match = url.match(/track\/([a-zA-Z0-9]+)/);
+  return match ? match[1] : null;
+}
+
+// Helper function to fetch track info from Spotify
+async function fetchSpotifyTrackInfo(spotifyId: string) {
+  try {
+    const trackInfo = await $fetch(`/api/spotify/track?id=${spotifyId}`, {
+      baseURL: "",
+    });
+    return trackInfo;
+  } catch (error) {
+    console.error("Error fetching Spotify track info:", error);
+    return null;
+  }
+}
+
+export default defineEventHandler(async (event) => {
+  const { user } = await requireUserSession(event);
+  const itemId = parseInt(getRouterParam(event, "id") || "0");
+  const body = await readBody(event);
+
+  if (!itemId) {
+    throw createError({
+      statusCode: 400,
+      message: "Invalid item ID",
+    });
+  }
+
+  // Get the item and verify it belongs to a category owned by the user
+  const item = db
+    .select({
+      item: tables.items,
+      category: tables.categories,
+    })
+    .from(tables.items)
+    .leftJoin(
+      tables.categories,
+      eq(tables.items.categorie, tables.categories.id),
+    )
+    .where(eq(tables.items.id, itemId))
+    .get();
+
+  if (!item || item.category?.user !== user.id) {
+    throw createError({
+      statusCode: 404,
+      message: "Item not found",
+    });
+  }
+
+  // Update the item name if provided
+  if (body.name) {
+    await db
+      .update(tables.items)
+      .set({ name: body.name })
+      .where(eq(tables.items.id, itemId));
+  }
+
+  // Update songs if provided
+  if (body.songs && Array.isArray(body.songs)) {
+    // Remove existing song mappings
+    await db.delete(tables.songsMap).where(eq(tables.songsMap.item, itemId));
+
+    // Add new songs
+    for (const songData of body.songs) {
+      const spotifyId = extractSpotifyId(songData.url);
+
+      // Check if song already exists by Spotify ID or URL
+      let song = spotifyId
+        ? db
+            .select()
+            .from(tables.songs)
+            .where(eq(tables.songs.spotify_id, spotifyId))
+            .get()
+        : db
+            .select()
+            .from(tables.songs)
+            .where(eq(tables.songs.url, songData.url))
+            .get();
+
+      // Create song if it doesn't exist
+      if (!song) {
+        // Fetch full track info from Spotify if we have an ID
+        let trackInfo = null;
+        if (spotifyId) {
+          trackInfo = await fetchSpotifyTrackInfo(spotifyId);
+        }
+
+        const [newSong] = await db
+          .insert(tables.songs)
+          .values({
+            spotify_id: spotifyId,
+            name: trackInfo?.name || songData.name,
+            artist: trackInfo?.artist || songData.artist,
+            album: trackInfo?.album || null,
+            album_art: trackInfo?.albumArt || null,
+            duration: trackInfo?.duration || null,
+            preview_url: trackInfo?.previewUrl || null,
+            url: songData.url,
+            release_date: trackInfo?.releaseDate || null,
+            popularity: trackInfo?.popularity || null,
+          })
+          .returning();
+        song = newSong;
+      }
+
+      // Link song to item
+      await db.insert(tables.songsMap).values({
+        item: itemId,
+        song: song?.id,
+      });
+    }
+  }
+
+  return { success: true };
+});

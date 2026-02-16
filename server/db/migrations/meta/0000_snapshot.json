@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "21926c83-6f67-4bb7-b7c1-a2922840137d",
+  "id": "a2970422-001b-40dc-a9ac-85a1d2d7aff8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -27,6 +27,21 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -35,8 +50,12 @@
           "name": "categories_user_users_id_fk",
           "tableFrom": "categories",
           "tableTo": "users",
-          "columnsFrom": ["user"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -76,8 +95,72 @@
           "name": "items_categorie_categories_id_fk",
           "tableFrom": "items",
           "tableTo": "categories",
-          "columnsFrom": ["categorie"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "categorie"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "shares": {
+      "name": "shares",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "category": {
+          "name": "category",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "share_token": {
+          "name": "share_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "shares_share_token_unique": {
+          "name": "shares_share_token_unique",
+          "columns": [
+            "share_token"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "shares_category_categories_id_fk": {
+          "name": "shares_category_categories_id_fk",
+          "tableFrom": "shares",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -96,6 +179,13 @@
           "notNull": true,
           "autoincrement": true
         },
+        "spotify_id": {
+          "name": "spotify_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -110,15 +200,65 @@
           "notNull": false,
           "autoincrement": false
         },
+        "album": {
+          "name": "album",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "album_art": {
+          "name": "album_art",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "preview_url": {
+          "name": "preview_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "url": {
           "name": "url",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "release_date": {
+          "name": "release_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "popularity": {
+          "name": "popularity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "songs_spotify_id_unique": {
+          "name": "songs_spotify_id_unique",
+          "columns": [
+            "spotify_id"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -155,8 +295,12 @@
           "name": "songs_map_item_items_id_fk",
           "tableFrom": "songs_map",
           "tableTo": "items",
-          "columnsFrom": ["item"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "item"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -164,8 +308,12 @@
           "name": "songs_map_song_songs_id_fk",
           "tableFrom": "songs_map",
           "tableTo": "songs",
-          "columnsFrom": ["song"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "song"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -216,7 +364,9 @@
       "indexes": {
         "users_id_spotify_unique": {
           "name": "users_id_spotify_unique",
-          "columns": ["id_spotify"],
+          "columns": [
+            "id_spotify"
+          ],
           "isUnique": true
         }
       },
