@@ -1,5 +1,6 @@
 {
   "name": "songascribe",
+  "version": "0.0.1",
   "type": "module",
   "private": true,
   "scripts": {
@@ -13,25 +14,24 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@nuxt/eslint": "^1.12.1",
-    "@nuxt/icon": "2.2.1",
-    "@nuxt/image": "2.0.0",
+    "@nuxt/eslint": "^1.15.1",
+    "@nuxt/icon": "^2.2.1",
     "@tailwindcss/vite": "4.1.18",
-    "@vueuse/core": "14.1.0",
-    "better-sqlite3": "^12.5.0",
-    "daisyui": "5.5.14",
+    "@vueuse/core": "14.2.1",
+    "better-sqlite3": "^12.6.2",
+    "daisyui": "5.5.18",
     "drizzle-orm": "0.45.1",
-    "eslint": "9.39.2",
-    "nuxi": "^3.31.2",
-    "nuxt": "^4.2.2",
+    "eslint": "10.0.0",
+    "nuxi": "^3.33.1",
+    "nuxt": "^4.3.1",
     "tailwindcss": "4.1.18",
-    "vue": "3.5.27",
-    "vue-router": "5.0.0"
+    "vue": "^3.5.28",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@iconify-json/ic": "1.2.4",
-    "@types/node": "^25.1.0",
-    "drizzle-kit": "^0.31.8",
-    "nuxt-auth-utils": "^0.5.26"
+    "@types/node": "^25.2.3",
+    "drizzle-kit": "^0.31.9",
+    "nuxt-auth-utils": "^0.5.28"
   }
 }

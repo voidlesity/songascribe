@@ -12,7 +12,7 @@ async function getSpotifyToken(config: any) {
         btoa(
           config.oauth.spotify.clientId +
             ":" +
-            config.oauth.spotify.clientSecret
+            config.oauth.spotify.clientSecret,
         ),
     },
     body: "grant_type=client_credentials",
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
           type: "track",
           limit: 10,
         },
-      }
+      },
     );
     return searchResults.tracks.items;
   } catch (error) {

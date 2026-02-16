@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e5bd0d51-6003-41c9-a8c7-520330dd9c49",
+  "id": "21926c83-6f67-4bb7-b7c1-a2922840137d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -35,12 +35,8 @@
           "name": "categories_user_users_id_fk",
           "tableFrom": "categories",
           "tableTo": "users",
-          "columnsFrom": [
-            "user"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -80,12 +76,8 @@
           "name": "items_categorie_categories_id_fk",
           "tableFrom": "items",
           "tableTo": "categories",
-          "columnsFrom": [
-            "categorie"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["categorie"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -163,12 +155,8 @@
           "name": "songs_map_item_items_id_fk",
           "tableFrom": "songs_map",
           "tableTo": "items",
-          "columnsFrom": [
-            "item"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -176,12 +164,8 @@
           "name": "songs_map_song_songs_id_fk",
           "tableFrom": "songs_map",
           "tableTo": "songs",
-          "columnsFrom": [
-            "song"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["song"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -199,6 +183,13 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
+        },
+        "id_spotify": {
+          "name": "id_spotify",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "name": {
           "name": "name",
@@ -222,7 +213,13 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "users_id_spotify_unique": {
+          "name": "users_id_spotify_unique",
+          "columns": ["id_spotify"],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

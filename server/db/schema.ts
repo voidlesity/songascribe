@@ -2,6 +2,7 @@ import { sqliteTable, integer, text, blob } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  id_spotify: text("id_spotify").notNull().unique(),
   name: text("name").notNull(),
   avatar: text("avatar").notNull(),
   settings: blob({ mode: "json" }),

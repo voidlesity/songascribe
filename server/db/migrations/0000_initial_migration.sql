@@ -29,7 +29,10 @@ CREATE TABLE `songs_map` (
 --> statement-breakpoint
 CREATE TABLE `users` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`id_spotify` text NOT NULL,
 	`name` text NOT NULL,
 	`avatar` text NOT NULL,
 	`settings` blob
 );
+--> statement-breakpoint
+CREATE UNIQUE INDEX `users_id_spotify_unique` ON `users` (`id_spotify`);

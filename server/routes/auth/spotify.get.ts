@@ -3,11 +3,12 @@ export default defineOAuthSpotifyEventHandler({
     user = await db
       .insert(tables.users)
       .values({
+        id_spotify: user.id,
         name: user.display_name,
         avatar: user.images[0].url,
       })
       .onConflictDoUpdate({
-        target: tables.users.id,
+        target: tables.users.id_spotify,
         set: { name: user.display_name, avatar: user.images[0].url },
       })
       .returning();
