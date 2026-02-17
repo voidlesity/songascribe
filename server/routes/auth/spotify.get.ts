@@ -9,7 +9,7 @@ export default defineOAuthSpotifyEventHandler({
       })
       .onConflictDoUpdate({
         target: tables.users.id_spotify,
-        set: { name: user.display_name, avatar: user.images[0].url },
+        set: { avatar: user.images[0].url },
       })
       .returning();
     await setUserSession(event, {

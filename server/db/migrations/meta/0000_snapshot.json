@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a2970422-001b-40dc-a9ac-85a1d2d7aff8",
+  "id": "50dd51e9-79f8-477e-b03f-8eb9c0154a7d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -353,12 +353,13 @@
           "notNull": true,
           "autoincrement": false
         },
-        "settings": {
-          "name": "settings",
-          "type": "blob",
+        "theme": {
+          "name": "theme",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'dark'"
         }
       },
       "indexes": {

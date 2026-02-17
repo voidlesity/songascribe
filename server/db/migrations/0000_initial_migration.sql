@@ -51,7 +51,7 @@ CREATE TABLE `users` (
 	`id_spotify` text NOT NULL,
 	`name` text NOT NULL,
 	`avatar` text NOT NULL,
-	`settings` blob
+	`theme` text DEFAULT 'dark'
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `users_id_spotify_unique` ON `users` (`id_spotify`);

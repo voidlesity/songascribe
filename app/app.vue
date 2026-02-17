@@ -21,6 +21,10 @@
           <Icon name="ic:round-public" size="1.2rem" />
           Browse
         </button>
+        <button class="btn btn-ghost" @click="$router.push('/settings')">
+          <Icon name="ic:round-settings" size="1.2rem" />
+          Settings
+        </button>
       </div>
 
       <!-- User Menu -->
@@ -58,6 +62,12 @@
               Browse Public
             </a>
           </li>
+          <li class="md:hidden">
+            <a @click="$router.push('/settings')">
+              <Icon name="ic:round-settings" size="1rem" />
+              Settings
+            </a>
+          </li>
           <li class="md:hidden"><div class="divider my-0"></div></li>
           <li>
             <a v-if="loggedIn" @click="handleLogout">
@@ -78,6 +88,20 @@
 
 <script setup>
 const { loggedIn, user, clear } = useUserSession();
+
+// Initialize theme on mount
+onMounted(async () => {
+  if (loggedIn.value && user.value) {
+    try {
+      const userData = await $fetch("/api/user/me");
+      if (userData.theme) {
+        document.documentElement.setAttribute("data-theme", userData.theme);
+      }
+    } catch (error) {
+      console.error("Failed to load user theme:", error);
+    }
+  }
+});
 
 async function handleLogout() {
   try {
