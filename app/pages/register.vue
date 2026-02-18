@@ -49,7 +49,8 @@
             />
             <label class="label">
               <span class="label-text-alt text-xs opacity-70">
-                Must be at least 8 characters with uppercase, lowercase, and numbers
+                Must be at least 8 characters with uppercase, lowercase, and
+                numbers
               </span>
             </label>
           </div>
@@ -74,11 +75,7 @@
           </div>
 
           <div class="form-control mt-6">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="loading"
-            >
+            <button type="submit" class="btn btn-primary" :disabled="loading">
               <span v-if="loading" class="loading loading-spinner"></span>
               <span v-else>Register</span>
             </button>
@@ -90,10 +87,7 @@
         <div class="text-center">
           <p class="text-sm">
             Already have an account?
-            <button
-              @click="$router.push('/login')"
-              class="link link-primary"
-            >
+            <button @click="$router.push('/login')" class="link link-primary">
               Login here
             </button>
           </p>
@@ -104,36 +98,36 @@
 </template>
 
 <script setup>
-const name = ref('');
-const email = ref('');
-const password = ref('');
-const confirmPassword = ref('');
+const name = ref("");
+const email = ref("");
+const password = ref("");
+const confirmPassword = ref("");
 const loading = ref(false);
-const error = ref('');
+const error = ref("");
 
 const { loggedIn } = useUserSession();
 
 // Redirect if already logged in
 watchEffect(() => {
   if (loggedIn.value) {
-    navigateTo('/');
+    navigateTo("/");
   }
 });
 
 async function handleRegister() {
-  error.value = '';
+  error.value = "";
 
   // Validate passwords match
   if (password.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match';
+    error.value = "Passwords do not match";
     return;
   }
 
   loading.value = true;
 
   try {
-    const response = await $fetch('/api/auth/register', {
-      method: 'POST',
+    const response = await $fetch("/api/auth/register", {
+      method: "POST",
       body: {
         name: name.value,
         email: email.value,
@@ -143,12 +137,13 @@ async function handleRegister() {
 
     if (response.success) {
       // Refresh the page to update session
-      await navigateTo('/');
+      await navigateTo("/");
       window.location.reload();
     }
   } catch (err) {
-    console.error('Registration error:', err);
-    error.value = err.data?.message || 'Failed to create account. Please try again.';
+    console.error("Registration error:", err);
+    error.value =
+      err.data?.message || "Failed to create account. Please try again.";
   } finally {
     loading.value = false;
   }

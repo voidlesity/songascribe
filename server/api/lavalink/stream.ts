@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const { trackId } = getQuery(event);
 
-  if (!trackId || typeof trackId !== 'string') {
+  if (!trackId || typeof trackId !== "string") {
     throw createError({
       statusCode: 400,
       statusMessage: 'Track ID "trackId" is required',
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     if (!track) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Track not found',
+        statusMessage: "Track not found",
       });
     }
 
@@ -29,10 +29,10 @@ export default defineEventHandler(async (event) => {
       artworkUrl: track.info.artworkUrl || null,
     };
   } catch (error) {
-    console.error('Error getting stream URL:', error);
+    console.error("Error getting stream URL:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Error while getting stream URL',
+      statusMessage: "Error while getting stream URL",
     });
   }
 });

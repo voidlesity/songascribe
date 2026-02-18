@@ -9,14 +9,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Validate email format
-  if (!validateEmail(body.email)) {
-    throw createError({
-      statusCode: 400,
-      message: "Invalid email format",
-    });
-  }
-
   // Check if user already exists
   const existingUser = await db
     .select()

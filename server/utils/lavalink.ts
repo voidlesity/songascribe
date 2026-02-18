@@ -36,9 +36,9 @@ interface SearchResult {
 function getLavalinkConfig() {
   const config = useRuntimeConfig();
   return {
-    host: config.lavalink.host || "localhost",
-    port: config.lavalink.port || 2333,
-    password: config.lavalink.password || "youshallnotpass",
+    host: config.lavalink.host,
+    port: config.lavalink.port,
+    password: config.lavalink.password,
   };
 }
 

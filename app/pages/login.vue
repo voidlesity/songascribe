@@ -41,11 +41,7 @@
           </div>
 
           <div class="form-control mt-6">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="loading"
-            >
+            <button type="submit" class="btn btn-primary" :disabled="loading">
               <span v-if="loading" class="loading loading-spinner"></span>
               <span v-else>Login</span>
             </button>
@@ -71,27 +67,27 @@
 </template>
 
 <script setup>
-const email = ref('');
-const password = ref('');
+const email = ref("");
+const password = ref("");
 const loading = ref(false);
-const error = ref('');
+const error = ref("");
 
 const { loggedIn } = useUserSession();
 
 // Redirect if already logged in
 watchEffect(() => {
   if (loggedIn.value) {
-    navigateTo('/');
+    navigateTo("/");
   }
 });
 
 async function handleLogin() {
-  error.value = '';
+  error.value = "";
   loading.value = true;
 
   try {
-    const response = await $fetch('/api/auth/login', {
-      method: 'POST',
+    const response = await $fetch("/api/auth/login", {
+      method: "POST",
       body: {
         email: email.value,
         password: password.value,
@@ -100,12 +96,12 @@ async function handleLogin() {
 
     if (response.success) {
       // Refresh the page to update session
-      await navigateTo('/');
+      await navigateTo("/");
       window.location.reload();
     }
   } catch (err) {
-    console.error('Login error:', err);
-    error.value = err.data?.message || 'Invalid email or password';
+    console.error("Login error:", err);
+    error.value = err.data?.message || "Invalid email or password";
   } finally {
     loading.value = false;
   }

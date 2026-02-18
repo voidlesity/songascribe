@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const { q } = getQuery(event);
 
-  if (!q || typeof q !== 'string') {
+  if (!q || typeof q !== "string") {
     throw createError({
       statusCode: 400,
       statusMessage: 'Search query "q" is required',
@@ -27,10 +27,10 @@ export default defineEventHandler(async (event) => {
 
     return formattedTracks;
   } catch (error) {
-    console.error('Error searching tracks:', error);
+    console.error("Error searching tracks:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Error while searching for tracks',
+      statusMessage: "Error while searching for tracks",
     });
   }
 });

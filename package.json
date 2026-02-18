@@ -16,9 +16,8 @@
   "dependencies": {
     "@nuxt/eslint": "^1.15.1",
     "@nuxt/icon": "^2.2.1",
-    "@tailwindcss/vite": "4.1.18",
+    "@tailwindcss/vite": "4.2.0",
     "@vueuse/core": "14.2.1",
-    "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.6.2",
     "daisyui": "5.5.18",
     "drizzle-orm": "0.45.1",
@@ -31,9 +30,8 @@
   },
   "devDependencies": {
     "@iconify-json/ic": "1.2.4",
-    "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.2.3",
-    "nuxt-auth-utils": "^0.5.29",
-    "drizzle-kit": "^0.31.9"
+    "drizzle-kit": "^0.31.9",
+    "nuxt-auth-utils": "^0.5.29"
   }
 }
