@@ -165,8 +165,8 @@
             Account Information
           </h2>
           <p class="text-sm opacity-70 mb-4">
-            Your account is linked to Spotify. Logging out will clear your
-            session.
+            Logging out will clear your session and return you to the login
+            page.
           </p>
           <div class="flex gap-2">
             <button class="btn btn-error" @click="handleLogout">
@@ -235,7 +235,7 @@ const themeMessageType = ref("success");
 // Check if user is logged in
 onMounted(async () => {
   if (!loggedIn.value) {
-    navigateTo("/auth/spotify");
+    navigateTo("/login");
     return;
   }
 
@@ -341,7 +341,7 @@ async function handleLogout() {
 
 watch(loggedIn, (value) => {
   if (!value) {
-    navigateTo("/auth/spotify");
+    navigateTo("/login");
   }
 });
 </script>

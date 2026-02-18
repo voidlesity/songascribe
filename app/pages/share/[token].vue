@@ -51,39 +51,43 @@
           <div class="card-body p-6">
             <h2 class="card-title text-2xl mb-4">{{ item.name }}</h2>
 
-            <!-- Single Song -->
-            <div
-              v-if="item.songs.length === 1"
-              class="rounded-2xl overflow-hidden"
-            >
-              <iframe
-                v-if="item.songs[0].spotifyId"
-                :src="`https://open.spotify.com/embed/track/${item.songs[0].spotifyId}`"
-                class="w-full h-20"
-                frameborder="0"
-                allowtransparency="true"
-                allow="encrypted-media"
-              />
-            </div>
-
-            <!-- Multiple Songs Carousel -->
-            <div
-              v-else-if="item.songs.length > 1"
-              class="carousel carousel-center w-full space-x-2 rounded-2xl p-2 bg-base-200"
-            >
+            <!-- Songs List -->
+            <div v-if="item.songs.length > 0" class="space-y-2">
               <div
                 v-for="song in item.songs"
                 :key="song.id"
-                class="carousel-item w-[90%]"
+                class="flex items-center gap-3 p-3 bg-base-200 rounded-xl hover:bg-base-300 transition-colors"
               >
-                <iframe
-                  v-if="song.spotifyId"
-                  :src="`https://open.spotify.com/embed/track/${song.spotifyId}`"
-                  class="w-full h-20 rounded-xl"
-                  frameborder="0"
-                  allowtransparency="true"
-                  allow="encrypted-media"
-                />
+                <div class="avatar">
+                  <div class="w-12 h-12 rounded-lg">
+                    <img
+                      v-if="song.album_art"
+                      :src="song.album_art"
+                      :alt="song.name"
+                    />
+                    <div
+                      v-else
+                      class="bg-base-300 w-full h-full flex items-center justify-center"
+                    >
+                      <Icon name="ic:round-library-music" size="1.5rem" />
+                    </div>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold truncate">{{ song.name }}</div>
+                  <div class="text-sm opacity-70 truncate">
+                    {{ song.artist }}
+                  </div>
+                </div>
+                <a
+                  v-if="song.url"
+                  :href="song.url"
+                  target="_blank"
+                  class="btn btn-sm btn-circle btn-ghost"
+                  title="Open in source"
+                >
+                  <Icon name="ic:round-open-in-new" size="1.2rem" />
+                </a>
               </div>
             </div>
 

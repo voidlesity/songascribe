@@ -74,8 +74,9 @@ export default defineEventHandler(async (event) => {
         id: song?.id,
         name: song?.name,
         artist: song?.artist,
-        albumArt: song?.album_art,
-        spotifyId: song?.spotify_id,
+        album_art: song?.album_art,
+        track_id: song?.track_id,
+        source: song?.source,
         usageCount: count,
       };
     });

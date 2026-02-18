@@ -1,18 +1,28 @@
-// Helper function to extract Spotify ID from URL
-function extractSpotifyId(url: string): string | null {
-  const match = url.match(/track\/([a-zA-Z0-9]+)/);
-  return match ? match[1] : null;
+// Helper function to extract track ID from URL or use direct track ID
+function extractTrackId(urlOrId: string): string | null {
+  // If it's already a Lavalink track ID (base64 encoded), return it
+  if (!urlOrId.includes("://")) {
+    return urlOrId;
+  }
+
+  // For URLs, we'll search for the track later
+  return null;
 }
 
-// Helper function to fetch track info from Spotify
-async function fetchSpotifyTrackInfo(spotifyId: string) {
+// Helper function to fetch track info from Lavalink
+async function fetchLavalinkTrackInfo(query: string) {
   try {
-    const trackInfo = await $fetch(`/api/spotify/track?id=${spotifyId}`, {
-      baseURL: "",
-    });
+    // If it's a URL, search directly
+    if (query.startsWith("http")) {
+      const tracks = await searchTracks(query);
+      return tracks.length > 0 ? tracks[0] : null;
+    }
+
+    // If it's a track ID, get info directly
+    const trackInfo = await getTrackInfo(query);
     return trackInfo;
   } catch (error) {
-    console.error("Error fetching Spotify track info:", error);
+    console.error("Error fetching Lavalink track info:", error);
     return null;
   }
 }
@@ -65,14 +75,14 @@ export default defineEventHandler(async (event) => {
 
     // Add new songs
     for (const songData of body.songs) {
-      const spotifyId = extractSpotifyId(songData.url);
+      const trackId = extractTrackId(songData.url || songData.trackId);
 
-      // Check if song already exists by Spotify ID or URL
-      let song = spotifyId
+      // Check if song already exists by track ID or URL
+      let song = trackId
         ? db
             .select()
             .from(tables.songs)
-            .where(eq(tables.songs.spotify_id, spotifyId))
+            .where(eq(tables.songs.track_id, trackId))
             .get()
         : db
             .select()
@@ -82,25 +92,28 @@ export default defineEventHandler(async (event) => {
 
       // Create song if it doesn't exist
       if (!song) {
-        // Fetch full track info from Spotify if we have an ID
+        // Fetch full track info from Lavalink
         let trackInfo = null;
-        if (spotifyId) {
-          trackInfo = await fetchSpotifyTrackInfo(spotifyId);
+        if (trackId) {
+          trackInfo = await fetchLavalinkTrackInfo(trackId);
+        } else if (songData.url) {
+          trackInfo = await fetchLavalinkTrackInfo(songData.url);
         }
+
+        const trackData = trackInfo ? formatTrackForDatabase(trackInfo) : null;
 
         const [newSong] = await db
           .insert(tables.songs)
           .values({
-            spotify_id: spotifyId,
-            name: trackInfo?.name || songData.name,
-            artist: trackInfo?.artist || songData.artist,
-            album: trackInfo?.album || null,
-            album_art: trackInfo?.albumArt || null,
-            duration: trackInfo?.duration || null,
-            preview_url: trackInfo?.previewUrl || null,
-            url: songData.url,
-            release_date: trackInfo?.releaseDate || null,
-            popularity: trackInfo?.popularity || null,
+            track_id: trackData?.track_id || trackId,
+            name: trackData?.name || songData.name,
+            artist: trackData?.artist || songData.artist,
+            album: trackData?.album || null,
+            album_art: trackData?.album_art || null,
+            duration: trackData?.duration || null,
+            url: trackData?.url || songData.url,
+            source: trackData?.source || null,
+            isrc: trackData?.isrc || null,
           })
           .returning();
         song = newSong;

@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const user = await db
     .select()
     .from(tables.users)
-    .where(eq(tables.users.id_spotify, sessionUser.id_spotify))
+    .where(eq(tables.users.id, sessionUser.id))
     .limit(1);
 
   if (!user.length) {
@@ -22,5 +22,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  return user[0];
+  const userData = user[0];
+
+  return {
+    id: userData.id,
+    email: userData.email,
+    name: userData.name,
+    avatar: userData.avatar,
+    theme: userData.theme,
+  };
 });

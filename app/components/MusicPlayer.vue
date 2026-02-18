@@ -6,8 +6,8 @@
         <div class="avatar">
           <div class="w-16 h-16 rounded-lg">
             <img
-              v-if="currentSong?.albumArt"
-              :src="currentSong.albumArt"
+              v-if="currentSong?.album_art"
+              :src="currentSong.album_art"
               :alt="currentSong.name"
             />
             <div
@@ -42,7 +42,7 @@
           <button
             class="btn btn-primary btn-sm btn-circle"
             @click="togglePlay"
-            :disabled="!currentSong?.previewUrl"
+            :disabled="!currentSong"
           >
             <Icon v-if="isPlaying" name="ic:round-pause" size="1.2rem" />
             <Icon v-else name="ic:round-play-arrow" size="1.2rem" />
@@ -125,8 +125,8 @@
             <div class="avatar">
               <div class="w-8 h-8 rounded">
                 <img
-                  v-if="song.albumArt"
-                  :src="song.albumArt"
+                  v-if="song.album_art"
+                  :src="song.album_art"
                   :alt="song.name"
                 />
                 <div
@@ -151,21 +151,13 @@
         </div>
       </div>
 
-      <!-- No Preview Warning -->
+      <!-- Loading Warning -->
       <div
-        v-if="currentSong && !currentSong.previewUrl"
-        class="alert alert-warning py-2 mt-3"
+        v-if="currentSong && isLoadingStream"
+        class="alert alert-info py-2 mt-3"
       >
         <Icon name="ic:round-info" size="1rem" />
-        <span class="text-xs">Preview not available</span>
-        <a
-          v-if="currentSong.spotifyUrl"
-          :href="currentSong.spotifyUrl"
-          target="_blank"
-          class="btn btn-xs btn-primary"
-        >
-          Open in Spotify
-        </a>
+        <span class="text-xs">Loading track...</span>
       </div>
     </div>
 
@@ -201,6 +193,8 @@ const currentTime = ref(0);
 const duration = ref(0);
 const volume = ref(70);
 const showQueue = ref(false);
+const isLoadingStream = ref(false);
+const currentStreamUrl = ref(null);
 
 const currentSong = computed(() => props.songs[currentIndex.value] || null);
 
@@ -212,9 +206,9 @@ watch(volume, (newVolume) => {
 });
 
 // Watch current song changes
-watch(currentSong, (newSong) => {
-  if (newSong?.previewUrl && audioElement.value) {
-    audioElement.value.src = newSong.previewUrl;
+watch(currentSong, async (newSong) => {
+  if (newSong && audioElement.value) {
+    await loadSongStream(newSong);
     if (props.autoPlay || isPlaying.value) {
       playAudio();
     }
@@ -232,8 +226,37 @@ watch(
   { deep: true },
 );
 
+async function loadSongStream(song) {
+  if (!song) return;
+
+  isLoadingStream.value = true;
+
+  try {
+    // If we have a track_id, use it to get the stream URL
+    if (song.track_id || song.trackId) {
+      const streamData = await $fetch(
+        `/api/lavalink/stream?trackId=${encodeURIComponent(song.track_id || song.trackId)}`,
+      );
+      currentStreamUrl.value = streamData.streamUrl;
+      if (audioElement.value) {
+        audioElement.value.src = streamData.streamUrl;
+      }
+    } else if (song.url) {
+      // Fallback to direct URL if available
+      currentStreamUrl.value = song.url;
+      if (audioElement.value) {
+        audioElement.value.src = song.url;
+      }
+    }
+  } catch (error) {
+    console.error("Error loading stream:", error);
+  } finally {
+    isLoadingStream.value = false;
+  }
+}
+
 function togglePlay() {
-  if (!currentSong.value?.previewUrl) return;
+  if (!currentSong.value) return;
 
   if (isPlaying.value) {
     pauseAudio();
@@ -269,9 +292,10 @@ function previous() {
   }
 }
 
-function playSong(index) {
+async function playSong(index) {
   currentIndex.value = index;
-  if (currentSong.value?.previewUrl) {
+  if (currentSong.value) {
+    await loadSongStream(currentSong.value);
     setTimeout(() => playAudio(), 100);
   }
 }
@@ -312,11 +336,11 @@ function formatTime(seconds) {
 }
 
 // Initialize
-onMounted(() => {
+onMounted(async () => {
   if (audioElement.value) {
     audioElement.value.volume = volume.value / 100;
-    if (currentSong.value?.previewUrl) {
-      audioElement.value.src = currentSong.value.previewUrl;
+    if (currentSong.value) {
+      await loadSongStream(currentSong.value);
     }
   }
 });

@@ -2,10 +2,12 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  id_spotify: text("id_spotify").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password_hash: text("password_hash").notNull(),
   name: text("name").notNull(),
-  avatar: text("avatar").notNull(),
+  avatar: text("avatar"),
   theme: text("theme").default("dark"),
+  created_at: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 
 export const categories = sqliteTable("categories", {
@@ -24,16 +26,15 @@ export const items = sqliteTable("items", {
 
 export const songs = sqliteTable("songs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  spotify_id: text("spotify_id").unique(),
+  track_id: text("track_id").unique(), // Lavalink track identifier
   name: text("name"),
   artist: text("artist"),
   album: text("album"),
   album_art: text("album_art"),
   duration: integer("duration"),
-  preview_url: text("preview_url"),
   url: text("url"),
-  release_date: text("release_date"),
-  popularity: integer("popularity"),
+  source: text("source"), // e.g., "youtube", "soundcloud", etc.
+  isrc: text("isrc"), // International Standard Recording Code
 });
 
 export const songsMap = sqliteTable("songs_map", {

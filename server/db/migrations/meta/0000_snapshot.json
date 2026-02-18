@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "50dd51e9-79f8-477e-b03f-8eb9c0154a7d",
+  "id": "50f6abe2-b301-4143-a6a4-8543eb2e9167",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -179,8 +179,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "spotify_id": {
-          "name": "spotify_id",
+        "track_id": {
+          "name": "track_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -221,13 +221,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "preview_url": {
-          "name": "preview_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "url": {
           "name": "url",
           "type": "text",
@@ -235,26 +228,26 @@
           "notNull": false,
           "autoincrement": false
         },
-        "release_date": {
-          "name": "release_date",
+        "source": {
+          "name": "source",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "popularity": {
-          "name": "popularity",
-          "type": "integer",
+        "isrc": {
+          "name": "isrc",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         }
       },
       "indexes": {
-        "songs_spotify_id_unique": {
-          "name": "songs_spotify_id_unique",
+        "songs_track_id_unique": {
+          "name": "songs_track_id_unique",
           "columns": [
-            "spotify_id"
+            "track_id"
           ],
           "isUnique": true
         }
@@ -332,8 +325,15 @@
           "notNull": true,
           "autoincrement": true
         },
-        "id_spotify": {
-          "name": "id_spotify",
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "password_hash": {
+          "name": "password_hash",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -350,7 +350,7 @@
           "name": "avatar",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "theme": {
@@ -360,13 +360,20 @@
           "notNull": false,
           "autoincrement": false,
           "default": "'dark'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {
-        "users_id_spotify_unique": {
-          "name": "users_id_spotify_unique",
+        "users_email_unique": {
+          "name": "users_email_unique",
           "columns": [
-            "id_spotify"
+            "email"
           ],
           "isUnique": true
         }

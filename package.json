@@ -1,6 +1,6 @@
 {
   "name": "songascribe",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -18,6 +18,7 @@
     "@nuxt/icon": "^2.2.1",
     "@tailwindcss/vite": "4.1.18",
     "@vueuse/core": "14.2.1",
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.6.2",
     "daisyui": "5.5.18",
     "drizzle-orm": "0.45.1",
@@ -26,12 +27,13 @@
     "nuxt": "^4.3.1",
     "tailwindcss": "4.1.18",
     "vue": "^3.5.28",
-    "vue-router": "^4.6.4"
+    "vue-router": "^5.0.2"
   },
   "devDependencies": {
     "@iconify-json/ic": "1.2.4",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.2.3",
-    "drizzle-kit": "^0.31.9",
-    "nuxt-auth-utils": "^0.5.28"
+    "nuxt-auth-utils": "^0.5.29",
+    "drizzle-kit": "^0.31.9"
   }
 }

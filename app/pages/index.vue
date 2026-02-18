@@ -55,7 +55,7 @@
                 <input
                   v-model="songSearchQuery"
                   type="text"
-                  placeholder="Search Spotify for songs..."
+                  placeholder="Search for songs..."
                   class="input input-bordered join-item flex-1"
                   @input="debouncedSearch"
                 />
@@ -114,10 +114,9 @@
                 <div class="flex-1 space-y-2">
                   <input
                     v-model="song.url"
-                    type="url"
-                    placeholder="Spotify URL"
+                    type="text"
+                    placeholder="Track URL or search query"
                     class="input input-bordered input-sm w-full"
-                    @blur="extractSpotifyInfo(song)"
                   />
                   <div class="flex gap-2">
                     <input
@@ -666,7 +665,7 @@ async function searchSongs() {
   isSearching.value = true;
   try {
     const results = await $fetch(
-      `/api/spotify/search?q=${encodeURIComponent(songSearchQuery.value)}`,
+      `/api/lavalink/search?q=${encodeURIComponent(songSearchQuery.value)}`,
     );
     searchResults.value = results;
   } catch (error) {
@@ -695,7 +694,7 @@ async function searchMainSongs() {
   isMainSearching.value = true;
   try {
     const results = await $fetch(
-      `/api/spotify/search?q=${encodeURIComponent(mainSearchQuery.value)}`,
+      `/api/lavalink/search?q=${encodeURIComponent(mainSearchQuery.value)}`,
     );
     mainSearchResults.value = results;
     showMainSearchResults.value = true;
@@ -736,18 +735,13 @@ function closeQuickAddDialog() {
   mainSearchResults.value = [];
 }
 
-async function addToExistingItem(itemId) {
+async function addToExistingItem(itemId, categoryId) {
   if (!selectedTrack.value) return;
+  closeQuickAddDialog();
 
   try {
-    const spotifyUrl =
-      selectedTrack.value.external_urls?.spotify ||
-      `https://open.spotify.com/track/${selectedTrack.value.id}`;
-
-    // Get current item data
-    const item = categories.value
-      .flatMap((c) => c.items)
-      .find((i) => i.id === itemId);
+    // Fetch current item data
+    const item = currentCategory.value.items.find((item) => item.id === itemId);
 
     if (!item) {
       alert("Item not found");
@@ -760,11 +754,13 @@ async function addToExistingItem(itemId) {
         url: s.url,
         name: s.name,
         artist: s.artist,
+        trackId: s.trackId,
       })),
       {
-        url: spotifyUrl,
+        url: selectedTrack.value.url,
         name: selectedTrack.value.name,
-        artist: selectedTrack.value.artists.map((a) => a.name).join(", "),
+        artist: selectedTrack.value.artist,
+        trackId: selectedTrack.value.trackId,
       },
     ];
 
@@ -793,10 +789,6 @@ async function createNewItemWithSong() {
     return;
 
   try {
-    const spotifyUrl =
-      selectedTrack.value.external_urls?.spotify ||
-      `https://open.spotify.com/track/${selectedTrack.value.id}`;
-
     await $fetch("/api/items", {
       method: "POST",
       body: {
@@ -804,9 +796,10 @@ async function createNewItemWithSong() {
         categoryId: quickAddCategoryId.value,
         songs: [
           {
-            url: spotifyUrl,
+            url: selectedTrack.value.url,
             name: selectedTrack.value.name,
-            artist: selectedTrack.value.artists.map((a) => a.name).join(", "),
+            artist: selectedTrack.value.artist,
+            trackId: selectedTrack.value.trackId,
           },
         ],
       },
@@ -821,14 +814,11 @@ async function createNewItemWithSong() {
 }
 
 function addSearchResult(track) {
-  const spotifyUrl =
-    track.external_urls?.spotify ||
-    `https://open.spotify.com/track/${track.id}`;
-
   itemForm.value.songs.push({
-    url: spotifyUrl,
+    url: track.url,
     name: track.name,
-    artist: track.artists.map((a) => a.name).join(", "),
+    artist: track.artist,
+    trackId: track.trackId,
   });
 
   // Clear search
@@ -852,6 +842,7 @@ function openItemDialog(item = null) {
         url: s.url,
         name: s.name,
         artist: s.artist,
+        trackId: s.trackId || s.track_id,
       })),
     };
   } else {
@@ -874,21 +865,11 @@ function closeItemDialog() {
 }
 
 function addSongField() {
-  itemForm.value.songs.push({ url: "", name: "", artist: "" });
+  itemForm.value.songs.push({ url: "", name: "", artist: "", trackId: "" });
 }
 
 function removeSong(index) {
   itemForm.value.songs.splice(index, 1);
-}
-
-function extractSpotifyInfo(song) {
-  if (!song.url) return;
-
-  // Extract Spotify ID from URL
-  const match = song.url.match(/track\/([a-zA-Z0-9]+)/);
-  if (match) {
-    song.spotifyId = match[1];
-  }
 }
 
 async function saveItem() {
@@ -1071,7 +1052,7 @@ onMounted(() => {
 // Redirect to login if not logged in
 watch(loggedIn, (value) => {
   if (!value) {
-    navigateTo("/auth/spotify");
+    navigateTo("/login");
   }
 });
 </script>

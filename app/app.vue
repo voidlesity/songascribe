@@ -32,8 +32,8 @@
         <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
           <div class="w-10 rounded-full">
             <img
-              v-if="loggedIn"
-              alt="Spotify profile picture"
+              v-if="loggedIn && user.avatar"
+              alt="Profile picture"
               :title="user.name"
               :src="user.avatar"
             />
@@ -74,7 +74,7 @@
               <Icon name="ic:round-logout" size="1rem" />
               Logout
             </a>
-            <a v-else href="/auth/spotify">
+            <a v-else @click="$router.push('/login')">
               <Icon name="ic:round-login" size="1rem" />
               Login
             </a>
@@ -105,11 +105,13 @@ onMounted(async () => {
 
 async function handleLogout() {
   try {
+    await $fetch("/api/auth/logout", { method: "POST" });
     await clear();
-    navigateTo("/");
+    navigateTo("/login");
   } catch (error) {
     console.error("Logout error:", error);
-    navigateTo("/");
+    await clear();
+    navigateTo("/login");
   }
 }
 </script>
