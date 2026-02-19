@@ -38,33 +38,20 @@ export default defineEventHandler(async (event) => {
         .from(tables.songsMap)
         .where(eq(tables.songsMap.item, item.id));
 
-      const songIds = songMappings.map((m) => m.song);
-      const songs =
-        songIds.length > 0
-          ? await db
-              .select()
-              .from(tables.songs)
-              .where(
-                sql`${tables.songs.id} IN (${sql.join(
-                  songIds.map((id) => sql`${id}`),
-                  sql`, `,
-                )})`,
-              )
-          : [];
+      const songs = songMappings
+        .map((m) => {
+          try {
+            return m.song ? JSON.parse(m.song) : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
 
       return {
         id: item.id,
         name: item.name,
-        songs: songs.map((song) => ({
-          id: song.id,
-          track_id: song.track_id,
-          name: song.name,
-          artist: song.artist,
-          album_art: song.image,
-          duration: song.duration,
-          url: song.url,
-          source: song.source,
-        })),
+        songs,
       };
     }),
   );

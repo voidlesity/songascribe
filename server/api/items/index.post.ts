@@ -37,50 +37,14 @@ export default defineEventHandler(async (event) => {
     })
     .returning();
 
-  // Add songs if provided
+  // Add songs if provided — store the raw Lavalink track object as JSON
   if (body.songs && Array.isArray(body.songs)) {
-    for (const songData of body.songs) {
-      const queryKey: string = songData.trackId || songData.url;
-      if (!queryKey) continue;
+    for (const track of body.songs) {
+      if (!track.encoded) continue;
 
-      // Check if song already exists
-      let song = songData.trackId
-        ? db
-            .select()
-            .from(tables.songs)
-            .where(eq(tables.songs.track_id, songData.trackId))
-            .get()
-        : db
-            .select()
-            .from(tables.songs)
-            .where(eq(tables.songs.url, songData.url))
-            .get();
-
-      // Create song if it doesn't exist in the DB yet
-      if (!song) {
-        const trackInfo = await resolveTrack(queryKey);
-        const trackData = trackInfo ? formatTrackForDatabase(trackInfo) : null;
-
-        const [newSong] = await db
-          .insert(tables.songs)
-          .values({
-            track_id: trackData?.track_id ?? songData.trackId ?? null,
-            name: trackData?.name ?? songData.name ?? null,
-            artist: trackData?.artist ?? songData.artist ?? null,
-            image: trackData?.image ?? null,
-            duration: trackData?.duration ?? null,
-            url: trackData?.url ?? songData.url ?? null,
-            source: trackData?.source ?? null,
-          })
-          .returning();
-
-        song = newSong;
-      }
-
-      // Link song to item
       await db.insert(tables.songsMap).values({
         item: newItem?.id,
-        song: song?.id,
+        song: JSON.stringify(track),
       });
     }
   }
