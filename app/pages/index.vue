@@ -55,7 +55,7 @@
                 <input
                   v-model="songSearchQuery"
                   type="text"
-                  placeholder="Search Spotify for songs..."
+                  placeholder="Search for songs..."
                   class="input input-bordered join-item flex-1"
                   @input="debouncedSearch"
                 />
@@ -75,20 +75,28 @@
               >
                 <div
                   v-for="track in searchResults"
-                  :key="track.id"
+                  :key="track.encoded"
                   class="flex items-center gap-3 p-3 hover:bg-base-200 cursor-pointer transition-all"
                   @click="addSearchResult(track)"
                 >
                   <img
-                    v-if="track.album?.images?.[2]?.url"
-                    :src="track.album.images[2].url"
+                    v-if="track.info?.artworkUrl"
+                    :src="track.info.artworkUrl"
                     alt="Album art"
                     class="w-10 h-10 rounded"
                   />
+                  <div
+                    v-else
+                    class="w-10 h-10 rounded bg-base-300 flex items-center justify-center"
+                  >
+                    <Icon name="ic:round-library-music" size="1rem" />
+                  </div>
                   <div class="flex-1 min-w-0">
-                    <div class="font-semibold truncate">{{ track.name }}</div>
+                    <div class="font-semibold truncate">
+                      {{ track.info?.title }}
+                    </div>
                     <div class="text-sm opacity-70 truncate">
-                      {{ track.artists.map((a) => a.name).join(", ") }}
+                      {{ track.info?.author }}
                     </div>
                   </div>
                   <Icon
@@ -103,35 +111,58 @@
               </div>
             </div>
 
-            <div class="divider">OR Add Manually</div>
+            <div class="divider">OR Resolve URL</div>
 
-            <div class="space-y-2">
+            <!-- Manual URL resolve -->
+            <div class="flex gap-2 items-end mb-3">
+              <div class="flex-1">
+                <input
+                  v-model="manualUrl"
+                  type="text"
+                  placeholder="Paste a track URL to resolve..."
+                  class="input input-bordered input-sm w-full"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline"
+                :disabled="!manualUrl || isResolvingUrl"
+                @click="resolveManualUrl"
+              >
+                <span
+                  v-if="isResolvingUrl"
+                  class="loading loading-spinner loading-xs"
+                ></span>
+                <Icon v-else name="ic:round-search" size="1rem" />
+                Resolve
+              </button>
+            </div>
+
+            <!-- Added Songs List -->
+            <div v-if="itemForm.songs.length > 0" class="space-y-2">
               <div
                 v-for="(song, idx) in itemForm.songs"
-                :key="idx"
-                class="flex gap-2 items-start"
+                :key="song.encoded || idx"
+                class="flex items-center gap-3 p-3 bg-base-200 rounded-lg"
               >
-                <div class="flex-1 space-y-2">
-                  <input
-                    v-model="song.url"
-                    type="url"
-                    placeholder="Spotify URL"
-                    class="input input-bordered input-sm w-full"
-                    @blur="extractSpotifyInfo(song)"
-                  />
-                  <div class="flex gap-2">
-                    <input
-                      v-model="song.name"
-                      type="text"
-                      placeholder="Song Name"
-                      class="input input-bordered input-sm flex-1"
-                    />
-                    <input
-                      v-model="song.artist"
-                      type="text"
-                      placeholder="Artist"
-                      class="input input-bordered input-sm flex-1"
-                    />
+                <img
+                  v-if="song.info?.artworkUrl"
+                  :src="song.info.artworkUrl"
+                  alt="Album art"
+                  class="w-10 h-10 rounded"
+                />
+                <div
+                  v-else
+                  class="w-10 h-10 rounded bg-base-300 flex items-center justify-center"
+                >
+                  <Icon name="ic:round-library-music" size="1rem" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold truncate text-sm">
+                    {{ song.info?.title || "Unknown track" }}
+                  </div>
+                  <div class="text-xs opacity-70 truncate">
+                    {{ song.info?.author || "Unknown artist" }}
                   </div>
                 </div>
                 <button
@@ -142,14 +173,9 @@
                   <Icon name="ic:round-close" size="1.2rem" />
                 </button>
               </div>
-              <button
-                type="button"
-                class="btn btn-outline btn-sm w-full"
-                @click="addSongField"
-              >
-                <Icon name="ic:round-plus" size="1.2rem" />
-                Add Song Manually
-              </button>
+            </div>
+            <div v-else class="text-center py-4 opacity-50 text-sm">
+              No songs added yet. Use search or resolve a URL above.
             </div>
           </div>
 
@@ -254,17 +280,23 @@
         <div v-if="selectedTrack" class="mb-4">
           <div class="flex items-center gap-3 p-3 bg-base-200 rounded-box">
             <img
-              v-if="selectedTrack.album?.images?.[1]?.url"
-              :src="selectedTrack.album.images[1].url"
+              v-if="selectedTrack.info?.artworkUrl"
+              :src="selectedTrack.info.artworkUrl"
               alt="Album art"
               class="w-16 h-16 rounded"
             />
+            <div
+              v-else
+              class="w-16 h-16 rounded bg-base-300 flex items-center justify-center"
+            >
+              <Icon name="ic:round-library-music" size="1.5rem" />
+            </div>
             <div class="flex-1 min-w-0">
               <div class="font-semibold truncate">
-                {{ selectedTrack.name }}
+                {{ selectedTrack.info?.title }}
               </div>
               <div class="text-sm opacity-70 truncate">
-                {{ selectedTrack.artists.map((a) => a.name).join(", ") }}
+                {{ selectedTrack.info?.author }}
               </div>
             </div>
           </div>
@@ -413,13 +445,13 @@
             >
               <div
                 v-for="track in mainSearchResults"
-                :key="track.id"
+                :key="track.encoded"
                 class="flex items-center gap-3 p-3 hover:bg-base-200 cursor-pointer transition-all border-b border-base-300 last:border-b-0"
                 @click="openQuickAddDialog(track)"
               >
                 <img
-                  v-if="track.album?.images?.[2]?.url"
-                  :src="track.album.images[2].url"
+                  v-if="track.info?.artworkUrl"
+                  :src="track.info.artworkUrl"
                   alt="Album art"
                   class="w-12 h-12 rounded"
                 />
@@ -430,9 +462,11 @@
                   <Icon name="ic:round-library-music" size="1.5rem" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">{{ track.name }}</div>
+                  <div class="font-semibold truncate">
+                    {{ track.info?.title }}
+                  </div>
                   <div class="text-sm opacity-70 truncate">
-                    {{ track.artists.map((a) => a.name).join(", ") }}
+                    {{ track.info?.author }}
                   </div>
                 </div>
                 <Icon
@@ -622,6 +656,10 @@ const searchResults = ref([]);
 const isSearching = ref(false);
 let searchTimeout = null;
 
+// Manual URL resolve
+const manualUrl = ref("");
+const isResolvingUrl = ref(false);
+
 // Main Search Bar
 const mainSearchQuery = ref("");
 const mainSearchResults = ref([]);
@@ -644,6 +682,27 @@ const filteredItems = computed(() => {
   return currentCategory.value.items;
 });
 
+// Helper to extract tracks from Lavalink search result
+function extractTracks(result) {
+  if (!result) return [];
+  if (result.loadType === "search" || result.loadType === "track") {
+    if (Array.isArray(result.data)) {
+      return result.data;
+    }
+    if (result.data?.tracks) {
+      return result.data.tracks;
+    }
+    // Single track result
+    if (result.data?.encoded) {
+      return [result.data];
+    }
+  }
+  if (result.loadType === "playlist" && result.data?.tracks) {
+    return result.data.tracks;
+  }
+  return [];
+}
+
 // Methods
 async function fetchCategories() {
   loading.value = true;
@@ -665,10 +724,10 @@ async function searchSongs() {
 
   isSearching.value = true;
   try {
-    const results = await $fetch(
-      `/api/spotify/search?q=${encodeURIComponent(songSearchQuery.value)}`,
+    const result = await $fetch(
+      `/api/lavalink/search?q=${encodeURIComponent(songSearchQuery.value)}`,
     );
-    searchResults.value = results;
+    searchResults.value = extractTracks(result);
   } catch (error) {
     console.error("Error searching songs:", error);
     searchResults.value = [];
@@ -694,10 +753,10 @@ async function searchMainSongs() {
 
   isMainSearching.value = true;
   try {
-    const results = await $fetch(
-      `/api/spotify/search?q=${encodeURIComponent(mainSearchQuery.value)}`,
+    const result = await $fetch(
+      `/api/lavalink/search?q=${encodeURIComponent(mainSearchQuery.value)}`,
     );
-    mainSearchResults.value = results;
+    mainSearchResults.value = extractTracks(result);
     showMainSearchResults.value = true;
   } catch (error) {
     console.error("Error searching songs:", error);
@@ -740,33 +799,20 @@ async function addToExistingItem(itemId) {
   if (!selectedTrack.value) return;
 
   try {
-    const spotifyUrl =
-      selectedTrack.value.external_urls?.spotify ||
-      `https://open.spotify.com/track/${selectedTrack.value.id}`;
-
-    // Get current item data
-    const item = categories.value
-      .flatMap((c) => c.items)
-      .find((i) => i.id === itemId);
+    // Find the item across all categories
+    let item = null;
+    for (const cat of categories.value) {
+      item = cat.items.find((i) => i.id === itemId);
+      if (item) break;
+    }
 
     if (!item) {
       alert("Item not found");
       return;
     }
 
-    // Add the new song to existing songs
-    const updatedSongs = [
-      ...item.songs.map((s) => ({
-        url: s.url,
-        name: s.name,
-        artist: s.artist,
-      })),
-      {
-        url: spotifyUrl,
-        name: selectedTrack.value.name,
-        artist: selectedTrack.value.artists.map((a) => a.name).join(", "),
-      },
-    ];
+    // Add the new track to existing songs
+    const updatedSongs = [...item.songs, selectedTrack.value];
 
     await $fetch(`/api/items/${itemId}`, {
       method: "PUT",
@@ -793,22 +839,12 @@ async function createNewItemWithSong() {
     return;
 
   try {
-    const spotifyUrl =
-      selectedTrack.value.external_urls?.spotify ||
-      `https://open.spotify.com/track/${selectedTrack.value.id}`;
-
     await $fetch("/api/items", {
       method: "POST",
       body: {
         name: quickAddItemName.value,
         categoryId: quickAddCategoryId.value,
-        songs: [
-          {
-            url: spotifyUrl,
-            name: selectedTrack.value.name,
-            artist: selectedTrack.value.artists.map((a) => a.name).join(", "),
-          },
-        ],
+        songs: [selectedTrack.value],
       },
     });
 
@@ -821,19 +857,35 @@ async function createNewItemWithSong() {
 }
 
 function addSearchResult(track) {
-  const spotifyUrl =
-    track.external_urls?.spotify ||
-    `https://open.spotify.com/track/${track.id}`;
-
-  itemForm.value.songs.push({
-    url: spotifyUrl,
-    name: track.name,
-    artist: track.artists.map((a) => a.name).join(", "),
-  });
+  // Add the full Lavalink track object
+  itemForm.value.songs.push(track);
 
   // Clear search
   songSearchQuery.value = "";
   searchResults.value = [];
+}
+
+async function resolveManualUrl() {
+  if (!manualUrl.value.trim()) return;
+
+  isResolvingUrl.value = true;
+  try {
+    const result = await $fetch(
+      `/api/lavalink/search?q=${encodeURIComponent(manualUrl.value)}`,
+    );
+    const tracks = extractTracks(result);
+    if (tracks.length > 0) {
+      itemForm.value.songs.push(tracks[0]);
+      manualUrl.value = "";
+    } else {
+      alert("Could not resolve the URL. Please check the link and try again.");
+    }
+  } catch (error) {
+    console.error("Error resolving URL:", error);
+    alert("Failed to resolve URL. Please try again.");
+  } finally {
+    isResolvingUrl.value = false;
+  }
 }
 
 function openItemDialog(item = null) {
@@ -848,11 +900,7 @@ function openItemDialog(item = null) {
     itemForm.value = {
       name: item.name,
       categoryId: currentCategory.value.id,
-      songs: item.songs.map((s) => ({
-        url: s.url,
-        name: s.name,
-        artist: s.artist,
-      })),
+      songs: item.songs.map((s) => ({ ...s })),
     };
   } else {
     editingItem.value = null;
@@ -862,6 +910,7 @@ function openItemDialog(item = null) {
       songs: [],
     };
   }
+  manualUrl.value = "";
   showItemDialog.value = true;
 }
 
@@ -871,31 +920,17 @@ function closeItemDialog() {
   itemForm.value = { name: "", categoryId: null, songs: [] };
   songSearchQuery.value = "";
   searchResults.value = [];
-}
-
-function addSongField() {
-  itemForm.value.songs.push({ url: "", name: "", artist: "" });
+  manualUrl.value = "";
 }
 
 function removeSong(index) {
   itemForm.value.songs.splice(index, 1);
 }
 
-function extractSpotifyInfo(song) {
-  if (!song.url) return;
-
-  // Extract Spotify ID from URL
-  const match = song.url.match(/track\/([a-zA-Z0-9]+)/);
-  if (match) {
-    song.spotifyId = match[1];
-  }
-}
-
 async function saveItem() {
   try {
-    const validSongs = itemForm.value.songs.filter(
-      (s) => s.url && s.url.trim(),
-    );
+    // Filter to only songs with encoded track data
+    const validSongs = itemForm.value.songs.filter((s) => s.encoded);
 
     if (editingItem.value) {
       await $fetch(`/api/items/${editingItem.value.id}`, {
@@ -1071,7 +1106,7 @@ onMounted(() => {
 // Redirect to login if not logged in
 watch(loggedIn, (value) => {
   if (!value) {
-    navigateTo("/auth/spotify");
+    navigateTo("/login");
   }
 });
 </script>

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "50dd51e9-79f8-477e-b03f-8eb9c0154a7d",
+  "id": "87c0dd07-3a5e-419a-afa1-876fa2409d05",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -169,101 +169,6 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "songs": {
-      "name": "songs",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "spotify_id": {
-          "name": "spotify_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "artist": {
-          "name": "artist",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "album": {
-          "name": "album",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "album_art": {
-          "name": "album_art",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "duration": {
-          "name": "duration",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "preview_url": {
-          "name": "preview_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "release_date": {
-          "name": "release_date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "popularity": {
-          "name": "popularity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "songs_spotify_id_unique": {
-          "name": "songs_spotify_id_unique",
-          "columns": [
-            "spotify_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "songs_map": {
       "name": "songs_map",
       "columns": {
@@ -283,7 +188,7 @@
         },
         "song": {
           "name": "song",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -297,19 +202,6 @@
           "tableTo": "items",
           "columnsFrom": [
             "item"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "songs_map_song_songs_id_fk": {
-          "name": "songs_map_song_songs_id_fk",
-          "tableFrom": "songs_map",
-          "tableTo": "songs",
-          "columnsFrom": [
-            "song"
           ],
           "columnsTo": [
             "id"
@@ -332,8 +224,15 @@
           "notNull": true,
           "autoincrement": true
         },
-        "id_spotify": {
-          "name": "id_spotify",
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "password_hash": {
+          "name": "password_hash",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -350,7 +249,7 @@
           "name": "avatar",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "theme": {
@@ -360,13 +259,20 @@
           "notNull": false,
           "autoincrement": false,
           "default": "'dark'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {
-        "users_id_spotify_unique": {
-          "name": "users_id_spotify_unique",
+        "users_email_unique": {
+          "name": "users_email_unique",
           "columns": [
-            "id_spotify"
+            "email"
           ],
           "isUnique": true
         }

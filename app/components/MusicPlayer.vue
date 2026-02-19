@@ -6,9 +6,9 @@
         <div class="avatar">
           <div class="w-16 h-16 rounded-lg">
             <img
-              v-if="currentSong?.albumArt"
-              :src="currentSong.albumArt"
-              :alt="currentSong.name"
+              v-if="currentSong?.info?.artworkUrl"
+              :src="currentSong.info.artworkUrl"
+              :alt="currentSong.info?.title"
             />
             <div
               v-else
@@ -21,10 +21,10 @@
 
         <div class="flex-1 min-w-0">
           <div class="font-semibold truncate text-sm">
-            {{ currentSong?.name || "No song selected" }}
+            {{ currentSong?.info?.title || "No song selected" }}
           </div>
           <div class="text-xs opacity-70 truncate">
-            {{ currentSong?.artist || "Unknown artist" }}
+            {{ currentSong?.info?.author || "Unknown artist" }}
           </div>
         </div>
 
@@ -42,7 +42,7 @@
           <button
             class="btn btn-primary btn-sm btn-circle"
             @click="togglePlay"
-            :disabled="!currentSong?.previewUrl"
+            :disabled="!currentSong"
           >
             <Icon v-if="isPlaying" name="ic:round-pause" size="1.2rem" />
             <Icon v-else name="ic:round-play-arrow" size="1.2rem" />
@@ -56,6 +56,16 @@
           >
             <Icon name="ic:round-skip-next" size="1.2rem" />
           </button>
+
+          <a
+            v-if="currentSong?.info?.uri"
+            :href="currentSong.info.uri"
+            target="_blank"
+            class="btn btn-ghost btn-sm btn-circle"
+            title="Open in source"
+          >
+            <Icon name="ic:round-open-in-new" size="1.2rem" />
+          </a>
         </div>
       </div>
 
@@ -117,7 +127,7 @@
         <div v-if="showQueue" class="mt-2 space-y-1 max-h-48 overflow-y-auto">
           <div
             v-for="(song, index) in songs"
-            :key="song.id"
+            :key="song.encoded || index"
             class="flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 cursor-pointer transition-colors"
             :class="{ 'bg-base-300': index === currentIndex }"
             @click="playSong(index)"
@@ -125,9 +135,9 @@
             <div class="avatar">
               <div class="w-8 h-8 rounded">
                 <img
-                  v-if="song.albumArt"
-                  :src="song.albumArt"
-                  :alt="song.name"
+                  v-if="song.info?.artworkUrl"
+                  :src="song.info.artworkUrl"
+                  :alt="song.info?.title"
                 />
                 <div
                   v-else
@@ -138,8 +148,12 @@
               </div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-xs font-semibold truncate">{{ song.name }}</div>
-              <div class="text-xs opacity-70 truncate">{{ song.artist }}</div>
+              <div class="text-xs font-semibold truncate">
+                {{ song.info?.title || "Unknown" }}
+              </div>
+              <div class="text-xs opacity-70 truncate">
+                {{ song.info?.author || "Unknown artist" }}
+              </div>
             </div>
             <Icon
               v-if="index === currentIndex && isPlaying"
@@ -151,21 +165,13 @@
         </div>
       </div>
 
-      <!-- No Preview Warning -->
+      <!-- Loading Warning -->
       <div
-        v-if="currentSong && !currentSong.previewUrl"
-        class="alert alert-warning py-2 mt-3"
+        v-if="currentSong && isLoadingStream"
+        class="alert alert-info py-2 mt-3"
       >
         <Icon name="ic:round-info" size="1rem" />
-        <span class="text-xs">Preview not available</span>
-        <a
-          v-if="currentSong.spotifyUrl"
-          :href="currentSong.spotifyUrl"
-          target="_blank"
-          class="btn btn-xs btn-primary"
-        >
-          Open in Spotify
-        </a>
+        <span class="text-xs">Loading track...</span>
       </div>
     </div>
 
@@ -177,6 +183,7 @@
       @ended="onSongEnd"
       @play="isPlaying = true"
       @pause="isPlaying = false"
+      @error="onAudioError"
     />
   </div>
 </template>
@@ -201,6 +208,8 @@ const currentTime = ref(0);
 const duration = ref(0);
 const volume = ref(70);
 const showQueue = ref(false);
+const isLoadingStream = ref(false);
+const currentStreamUrl = ref(null);
 
 const currentSong = computed(() => props.songs[currentIndex.value] || null);
 
@@ -212,9 +221,9 @@ watch(volume, (newVolume) => {
 });
 
 // Watch current song changes
-watch(currentSong, (newSong) => {
-  if (newSong?.previewUrl && audioElement.value) {
-    audioElement.value.src = newSong.previewUrl;
+watch(currentSong, async (newSong) => {
+  if (newSong && audioElement.value) {
+    await loadSongStream(newSong);
     if (props.autoPlay || isPlaying.value) {
       playAudio();
     }
@@ -232,8 +241,54 @@ watch(
   { deep: true },
 );
 
+async function loadSongStream(song) {
+  if (!song || !audioElement.value) return;
+
+  isLoadingStream.value = true;
+  currentTime.value = 0;
+  duration.value = 0;
+
+  try {
+    let src = null;
+
+    // Use the track's URI from Lavalink info as the source
+    if (song.info?.uri) {
+      src = song.info.uri;
+    }
+
+    // If we have an encoded track, try to decode it to get the URI
+    if (!src && song.encoded) {
+      try {
+        const trackData = await $fetch(
+          `/api/lavalink/track?trackId=${encodeURIComponent(song.encoded)}`,
+        );
+        if (trackData?.info?.uri) {
+          src = trackData.info.uri;
+        }
+      } catch (error) {
+        console.error("Error decoding track:", error);
+      }
+    }
+
+    if (src) {
+      currentStreamUrl.value = src;
+      audioElement.value.src = src;
+      audioElement.value.load();
+
+      // Set duration from Lavalink track length if available (in ms)
+      if (song.info?.length) {
+        duration.value = song.info.length / 1000;
+      }
+    }
+  } catch (error) {
+    console.error("Error loading stream:", error);
+  } finally {
+    isLoadingStream.value = false;
+  }
+}
+
 function togglePlay() {
-  if (!currentSong.value?.previewUrl) return;
+  if (!currentSong.value) return;
 
   if (isPlaying.value) {
     pauseAudio();
@@ -243,12 +298,11 @@ function togglePlay() {
 }
 
 function playAudio() {
-  if (audioElement.value && currentSong.value?.previewUrl) {
-    audioElement.value.play().catch((error) => {
-      console.error("Error playing audio:", error);
-      isPlaying.value = false;
-    });
-  }
+  if (!audioElement.value?.src) return;
+  audioElement.value.play().catch((error) => {
+    console.error("Error playing audio:", error);
+    isPlaying.value = false;
+  });
 }
 
 function pauseAudio() {
@@ -269,10 +323,11 @@ function previous() {
   }
 }
 
-function playSong(index) {
+async function playSong(index) {
   currentIndex.value = index;
-  if (currentSong.value?.previewUrl) {
-    setTimeout(() => playAudio(), 100);
+  if (currentSong.value) {
+    await loadSongStream(currentSong.value);
+    playAudio();
   }
 }
 
@@ -297,6 +352,14 @@ function onSongEnd() {
   }
 }
 
+function onAudioError() {
+  console.warn(
+    "Audio element error - source may not be directly playable in browser.",
+    currentSong.value?.info?.uri,
+  );
+  isLoadingStream.value = false;
+}
+
 function seek(event) {
   if (!audioElement.value || !duration.value) return;
   const seekTime = parseFloat(event.target.value);
@@ -312,11 +375,11 @@ function formatTime(seconds) {
 }
 
 // Initialize
-onMounted(() => {
+onMounted(async () => {
   if (audioElement.value) {
     audioElement.value.volume = volume.value / 100;
-    if (currentSong.value?.previewUrl) {
-      audioElement.value.src = currentSong.value.previewUrl;
+    if (currentSong.value) {
+      await loadSongStream(currentSong.value);
     }
   }
 });

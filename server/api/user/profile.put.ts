@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
       name: body.name,
       avatar: body.avatar,
     })
-    .where(eq(tables.users.id_spotify, sessionUser.id_spotify))
+    .where(eq(tables.users.id, sessionUser.id))
     .returning();
 
   if (!updatedUser.length) {

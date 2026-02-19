@@ -45,37 +45,25 @@ export default defineEventHandler(async (event) => {
   // Get songs for each item
   const itemsWithSongs = await Promise.all(
     categoryItems.map(async (item) => {
-      // Get song mappings for this item
       const songMappings = await db
         .select()
         .from(tables.songsMap)
         .where(eq(tables.songsMap.item, item.id));
 
-      // Get actual song details
-      const songIds = songMappings.map((m) => m.song);
-      const songs =
-        songIds.length > 0
-          ? await db
-              .select()
-              .from(tables.songs)
-              .where(
-                sql`${tables.songs.id} IN (${sql.join(
-                  songIds.map((id) => sql`${id}`),
-                  sql`, `,
-                )})`,
-              )
-          : [];
+      const songs = songMappings
+        .map((m) => {
+          try {
+            return m.song ? JSON.parse(m.song) : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
 
       return {
         id: item.id,
         name: item.name,
-        songs: songs.map((song) => ({
-          id: song.id,
-          name: song.name,
-          artist: song.artist,
-          url: song.url,
-          spotifyId: song.url?.split("/").pop()?.split("?")[0] || null,
-        })),
+        songs,
       };
     }),
   );

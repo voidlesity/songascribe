@@ -1,13 +1,11 @@
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
 
-  // Get categories for the user
   const userCategories = await db
     .select()
     .from(tables.categories)
     .where(eq(tables.categories.user, user.id));
 
-  // For each category, get items with their songs
   const categoriesWithItems = await Promise.all(
     userCategories.map(async (category) => {
       const categoryItems = await db
@@ -17,44 +15,25 @@ export default defineEventHandler(async (event) => {
 
       const itemsWithSongs = await Promise.all(
         categoryItems.map(async (item) => {
-          // Get song mappings for this item
           const songMappings = await db
             .select()
             .from(tables.songsMap)
             .where(eq(tables.songsMap.item, item.id));
 
-          // Get actual song details
-          const songIds = songMappings.map((m) => m.song);
-          const songs =
-            songIds.length > 0
-              ? await db
-                  .select()
-                  .from(tables.songs)
-                  .where(
-                    sql`${tables.songs.id} IN (${sql.join(
-                      songIds.map((id) => sql`${id}`),
-                      sql`, `,
-                    )})`,
-                  )
-              : [];
+          const songs = songMappings
+            .map((m) => {
+              try {
+                return m.song ? JSON.parse(m.song) : null;
+              } catch {
+                return null;
+              }
+            })
+            .filter(Boolean);
 
           return {
             id: item.id,
             name: item.name,
-            songs: songs.map((song) => ({
-              id: song.id,
-              name: song.name,
-              artist: song.artist,
-              album: song.album,
-              albumArt: song.album_art,
-              duration: song.duration,
-              previewUrl: song.preview_url,
-              url: song.url,
-              spotifyId: song.spotify_id,
-              spotifyUrl: song.url,
-              releaseDate: song.release_date,
-              popularity: song.popularity,
-            })),
+            songs,
           };
         }),
       );

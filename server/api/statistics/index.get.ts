@@ -37,77 +37,92 @@ export default defineEventHandler(async (event) => {
           )
       : [];
 
-  // Get unique songs
-  const uniqueSongIds = [...new Set(allSongMappings.map((m) => m.song))];
-  const allSongs =
-    uniqueSongIds.length > 0
-      ? await db
-          .select()
-          .from(tables.songs)
-          .where(
-            sql`${tables.songs.id} IN (${sql.join(
-              uniqueSongIds.map((id) => sql`${id}`),
-              sql`, `,
-            )})`,
-          )
-      : [];
+  // Parse raw Lavalink track JSON from each mapping
+  const allTracks = allSongMappings
+    .map((m) => {
+      try {
+        return m.song ? JSON.parse(m.song) : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  // Deduplicate tracks by encoded string
+  const uniqueTracksMap = new Map<string, any>();
+  for (const track of allTracks) {
+    if (track.encoded && !uniqueTracksMap.has(track.encoded)) {
+      uniqueTracksMap.set(track.encoded, track);
+    }
+  }
+  const uniqueTracks = Array.from(uniqueTracksMap.values());
 
   // Calculate statistics
   const totalCategories = userCategories.length;
   const totalItems = allItems.length;
-  const totalSongs = uniqueSongIds.length;
+  const totalSongs = uniqueTracks.length;
   const totalSongMappings = allSongMappings.length;
 
-  // Most used songs
-  const songUsageMap = new Map<number, number>();
-  allSongMappings.forEach((mapping) => {
-    const count = songUsageMap.get(mapping.song!) || 0;
-    songUsageMap.set(mapping.song!, count + 1);
-  });
+  // Most used songs (by encoded string frequency)
+  const songUsageMap = new Map<string, number>();
+  for (const track of allTracks) {
+    if (track.encoded) {
+      const count = songUsageMap.get(track.encoded) || 0;
+      songUsageMap.set(track.encoded, count + 1);
+    }
+  }
 
   const mostUsedSongs = Array.from(songUsageMap.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
-    .map(([songId, count]) => {
-      const song = allSongs.find((s) => s.id === songId);
+    .map(([encoded, count]) => {
+      const track = uniqueTracksMap.get(encoded);
       return {
-        id: song?.id,
-        name: song?.name,
-        artist: song?.artist,
-        albumArt: song?.album_art,
-        spotifyId: song?.spotify_id,
+        ...track,
         usageCount: count,
       };
     });
 
   // Category statistics
-  const categoryStats = await Promise.all(
-    userCategories.map(async (category) => {
-      const items = allItems.filter((item) => item.categorie === category.id);
-      const itemIds = items.map((i) => i.id);
-      const songMappings = allSongMappings.filter((m) =>
-        itemIds.includes(m.item!),
-      );
-      const uniqueSongs = new Set(songMappings.map((m) => m.song));
+  const categoryStats = userCategories.map((category) => {
+    const items = allItems.filter((item) => item.categorie === category.id);
+    const catItemIds = items.map((i) => i.id);
+    const catMappings = allSongMappings.filter((m) =>
+      catItemIds.includes(m.item!),
+    );
 
-      return {
-        id: category.id,
-        name: category.name,
-        itemCount: items.length,
-        songCount: uniqueSongs.size,
-        isPublic: category.is_public,
-      };
-    }),
-  );
+    const catTracks = catMappings
+      .map((m) => {
+        try {
+          return m.song ? JSON.parse(m.song) : null;
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    const uniqueEncodedSet = new Set(
+      catTracks.map((t: any) => t.encoded).filter(Boolean),
+    );
+
+    return {
+      id: category.id,
+      name: category.name,
+      itemCount: items.length,
+      songCount: uniqueEncodedSet.size,
+      isPublic: category.is_public,
+    };
+  });
 
   // Artist statistics
   const artistMap = new Map<string, number>();
-  allSongs.forEach((song) => {
-    if (song.artist) {
-      const count = artistMap.get(song.artist) || 0;
-      artistMap.set(song.artist, count + 1);
+  for (const track of uniqueTracks) {
+    const author = track.info?.author;
+    if (author) {
+      const count = artistMap.get(author) || 0;
+      artistMap.set(author, count + 1);
     }
-  });
+  }
 
   const topArtists = Array.from(artistMap.entries())
     .sort((a, b) => b[1] - a[1])
@@ -134,9 +149,9 @@ export default defineEventHandler(async (event) => {
   const avgSongsPerItem =
     totalItems > 0 ? (totalSongMappings / totalItems).toFixed(2) : 0;
 
-  // Total listening time (if duration data available)
-  const totalDuration = allSongs.reduce(
-    (sum, song) => sum + (song.duration || 0),
+  // Total listening time from Lavalink track lengths (in ms)
+  const totalDuration = uniqueTracks.reduce(
+    (sum: number, track: any) => sum + (track.info?.length || 0),
     0,
   );
   const totalDurationMinutes = Math.floor(totalDuration / 60000);
@@ -148,7 +163,7 @@ export default defineEventHandler(async (event) => {
       totalItems,
       totalSongs,
       totalSongMappings,
-      avgSongsPerItem: parseFloat(avgSongsPerItem),
+      avgSongsPerItem: parseFloat(avgSongsPerItem as string),
       totalDurationMinutes,
       totalDurationHours: parseFloat(totalDurationHours),
     },
