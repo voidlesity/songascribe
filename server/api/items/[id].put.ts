@@ -1,32 +1,3 @@
-// Helper function to extract track ID from URL or use direct track ID
-function extractTrackId(urlOrId: string): string | null {
-  // If it's already a Lavalink track ID (base64 encoded), return it
-  if (!urlOrId.includes("://")) {
-    return urlOrId;
-  }
-
-  // For URLs, we'll search for the track later
-  return null;
-}
-
-// Helper function to fetch track info from Lavalink
-async function fetchLavalinkTrackInfo(query: string) {
-  try {
-    // If it's a URL, search directly
-    if (query.startsWith("http")) {
-      const tracks = await searchTracks(query);
-      return tracks.length > 0 ? tracks[0] : null;
-    }
-
-    // If it's a track ID, get info directly
-    const trackInfo = await getTrackInfo(query);
-    return trackInfo;
-  } catch (error) {
-    console.error("Error fetching Lavalink track info:", error);
-    return null;
-  }
-}
-
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
   const itemId = parseInt(getRouterParam(event, "id") || "0");
@@ -73,16 +44,17 @@ export default defineEventHandler(async (event) => {
     // Remove existing song mappings
     await db.delete(tables.songsMap).where(eq(tables.songsMap.item, itemId));
 
-    // Add new songs
+    // Re-add songs
     for (const songData of body.songs) {
-      const trackId = extractTrackId(songData.url || songData.trackId);
+      const queryKey: string = songData.trackId || songData.url;
+      if (!queryKey) continue;
 
-      // Check if song already exists by track ID or URL
-      let song = trackId
+      // Check if song already exists in the DB
+      let song = songData.trackId
         ? db
             .select()
             .from(tables.songs)
-            .where(eq(tables.songs.track_id, trackId))
+            .where(eq(tables.songs.track_id, songData.trackId))
             .get()
         : db
             .select()
@@ -90,32 +62,24 @@ export default defineEventHandler(async (event) => {
             .where(eq(tables.songs.url, songData.url))
             .get();
 
-      // Create song if it doesn't exist
+      // Create song if it doesn't exist in the DB yet
       if (!song) {
-        // Fetch full track info from Lavalink
-        let trackInfo = null;
-        if (trackId) {
-          trackInfo = await fetchLavalinkTrackInfo(trackId);
-        } else if (songData.url) {
-          trackInfo = await fetchLavalinkTrackInfo(songData.url);
-        }
-
+        const trackInfo = await resolveTrack(queryKey);
         const trackData = trackInfo ? formatTrackForDatabase(trackInfo) : null;
 
         const [newSong] = await db
           .insert(tables.songs)
           .values({
-            track_id: trackData?.track_id || trackId,
-            name: trackData?.name || songData.name,
-            artist: trackData?.artist || songData.artist,
-            album: trackData?.album || null,
-            album_art: trackData?.album_art || null,
-            duration: trackData?.duration || null,
-            url: trackData?.url || songData.url,
-            source: trackData?.source || null,
-            isrc: trackData?.isrc || null,
+            track_id: trackData?.track_id ?? songData.trackId ?? null,
+            name: trackData?.name ?? songData.name ?? null,
+            artist: trackData?.artist ?? songData.artist ?? null,
+            image: trackData?.image ?? null,
+            duration: trackData?.duration ?? null,
+            url: trackData?.url ?? songData.url ?? null,
+            source: trackData?.source ?? null,
           })
           .returning();
+
         song = newSong;
       }
 

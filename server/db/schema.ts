@@ -26,15 +26,13 @@ export const items = sqliteTable("items", {
 
 export const songs = sqliteTable("songs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  track_id: text("track_id").unique(), // Lavalink track identifier
+  track_id: text("track_id").unique(),
   name: text("name"),
   artist: text("artist"),
-  album: text("album"),
-  album_art: text("album_art"),
+  image: text("album_art"),
   duration: integer("duration"),
   url: text("url"),
-  source: text("source"), // e.g., "youtube", "soundcloud", etc.
-  isrc: text("isrc"), // International Standard Recording Code
+  source: text("source"),
 });
 
 export const songsMap = sqliteTable("songs_map", {

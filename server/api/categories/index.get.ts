@@ -1,13 +1,11 @@
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
 
-  // Get categories for the user
   const userCategories = await db
     .select()
     .from(tables.categories)
     .where(eq(tables.categories.user, user.id));
 
-  // For each category, get items with their songs
   const categoriesWithItems = await Promise.all(
     userCategories.map(async (category) => {
       const categoryItems = await db
@@ -17,13 +15,11 @@ export default defineEventHandler(async (event) => {
 
       const itemsWithSongs = await Promise.all(
         categoryItems.map(async (item) => {
-          // Get song mappings for this item
           const songMappings = await db
             .select()
             .from(tables.songsMap)
             .where(eq(tables.songsMap.item, item.id));
 
-          // Get actual song details
           const songIds = songMappings.map((m) => m.song);
           const songs =
             songIds.length > 0
@@ -43,16 +39,13 @@ export default defineEventHandler(async (event) => {
             name: item.name,
             songs: songs.map((song) => ({
               id: song.id,
+              track_id: song.track_id,
               name: song.name,
               artist: song.artist,
-              album: song.album,
-              album_art: song.album_art,
+              album_art: song.image,
               duration: song.duration,
               url: song.url,
-              track_id: song.track_id,
-              trackId: song.track_id,
               source: song.source,
-              isrc: song.isrc,
             })),
           };
         }),

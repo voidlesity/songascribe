@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
         id: song?.id,
         name: song?.name,
         artist: song?.artist,
-        album_art: song?.album_art,
+        album_art: song?.image,
         track_id: song?.track_id,
         source: song?.source,
         usageCount: count,

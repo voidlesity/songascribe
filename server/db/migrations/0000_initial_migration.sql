@@ -28,7 +28,6 @@ CREATE TABLE `songs` (
 	`track_id` text,
 	`name` text,
 	`artist` text,
-	`album` text,
 	`album_art` text,
 	`duration` integer,
 	`url` text,

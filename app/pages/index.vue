@@ -80,8 +80,8 @@
                   @click="addSearchResult(track)"
                 >
                   <img
-                    v-if="track.album?.images?.[2]?.url"
-                    :src="track.album.images[2].url"
+                    v-if="track.album?.images?.[0]?.url"
+                    :src="track.album.images[0].url"
                     alt="Album art"
                     class="w-10 h-10 rounded"
                   />
@@ -417,8 +417,8 @@
                 @click="openQuickAddDialog(track)"
               >
                 <img
-                  v-if="track.album?.images?.[2]?.url"
-                  :src="track.album.images[2].url"
+                  v-if="track.album?.images?.[0]?.url"
+                  :src="track.album.images[0].url"
                   alt="Album art"
                   class="w-12 h-12 rounded"
                 />

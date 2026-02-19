@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "50f6abe2-b301-4143-a6a4-8543eb2e9167",
+  "id": "87267b69-c2a6-48fd-b15d-1397ae564350",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -195,13 +195,6 @@
         },
         "artist": {
           "name": "artist",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "album": {
-          "name": "album",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

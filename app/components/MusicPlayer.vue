@@ -227,26 +227,28 @@ watch(
 );
 
 async function loadSongStream(song) {
-  if (!song) return;
+  if (!song || !audioElement.value) return;
 
   isLoadingStream.value = true;
+  currentTime.value = 0;
+  duration.value = 0;
 
   try {
-    // If we have a track_id, use it to get the stream URL
+    let src = null;
+
     if (song.track_id || song.trackId) {
       const streamData = await $fetch(
         `/api/lavalink/stream?trackId=${encodeURIComponent(song.track_id || song.trackId)}`,
       );
-      currentStreamUrl.value = streamData.streamUrl;
-      if (audioElement.value) {
-        audioElement.value.src = streamData.streamUrl;
-      }
+      src = streamData.streamUrl;
     } else if (song.url) {
-      // Fallback to direct URL if available
-      currentStreamUrl.value = song.url;
-      if (audioElement.value) {
-        audioElement.value.src = song.url;
-      }
+      src = song.url;
+    }
+
+    if (src) {
+      currentStreamUrl.value = src;
+      audioElement.value.src = src;
+      audioElement.value.load();
     }
   } catch (error) {
     console.error("Error loading stream:", error);
@@ -266,12 +268,11 @@ function togglePlay() {
 }
 
 function playAudio() {
-  if (audioElement.value && currentSong.value?.previewUrl) {
-    audioElement.value.play().catch((error) => {
-      console.error("Error playing audio:", error);
-      isPlaying.value = false;
-    });
-  }
+  if (!audioElement.value?.src) return;
+  audioElement.value.play().catch((error) => {
+    console.error("Error playing audio:", error);
+    isPlaying.value = false;
+  });
 }
 
 function pauseAudio() {
@@ -296,7 +297,7 @@ async function playSong(index) {
   currentIndex.value = index;
   if (currentSong.value) {
     await loadSongStream(currentSong.value);
-    setTimeout(() => playAudio(), 100);
+    playAudio();
   }
 }
 
