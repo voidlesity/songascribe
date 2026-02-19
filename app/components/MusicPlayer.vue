@@ -6,9 +6,9 @@
         <div class="avatar">
           <div class="w-16 h-16 rounded-lg">
             <img
-              v-if="currentSong?.album_art"
-              :src="currentSong.album_art"
-              :alt="currentSong.name"
+              v-if="currentSong?.info?.artworkUrl"
+              :src="currentSong.info.artworkUrl"
+              :alt="currentSong.info?.title"
             />
             <div
               v-else
@@ -21,10 +21,10 @@
 
         <div class="flex-1 min-w-0">
           <div class="font-semibold truncate text-sm">
-            {{ currentSong?.name || "No song selected" }}
+            {{ currentSong?.info?.title || "No song selected" }}
           </div>
           <div class="text-xs opacity-70 truncate">
-            {{ currentSong?.artist || "Unknown artist" }}
+            {{ currentSong?.info?.author || "Unknown artist" }}
           </div>
         </div>
 
@@ -56,6 +56,16 @@
           >
             <Icon name="ic:round-skip-next" size="1.2rem" />
           </button>
+
+          <a
+            v-if="currentSong?.info?.uri"
+            :href="currentSong.info.uri"
+            target="_blank"
+            class="btn btn-ghost btn-sm btn-circle"
+            title="Open in source"
+          >
+            <Icon name="ic:round-open-in-new" size="1.2rem" />
+          </a>
         </div>
       </div>
 
@@ -117,7 +127,7 @@
         <div v-if="showQueue" class="mt-2 space-y-1 max-h-48 overflow-y-auto">
           <div
             v-for="(song, index) in songs"
-            :key="song.id"
+            :key="song.encoded || index"
             class="flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 cursor-pointer transition-colors"
             :class="{ 'bg-base-300': index === currentIndex }"
             @click="playSong(index)"
@@ -125,9 +135,9 @@
             <div class="avatar">
               <div class="w-8 h-8 rounded">
                 <img
-                  v-if="song.album_art"
-                  :src="song.album_art"
-                  :alt="song.name"
+                  v-if="song.info?.artworkUrl"
+                  :src="song.info.artworkUrl"
+                  :alt="song.info?.title"
                 />
                 <div
                   v-else
@@ -138,8 +148,12 @@
               </div>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-xs font-semibold truncate">{{ song.name }}</div>
-              <div class="text-xs opacity-70 truncate">{{ song.artist }}</div>
+              <div class="text-xs font-semibold truncate">
+                {{ song.info?.title || "Unknown" }}
+              </div>
+              <div class="text-xs opacity-70 truncate">
+                {{ song.info?.author || "Unknown artist" }}
+              </div>
             </div>
             <Icon
               v-if="index === currentIndex && isPlaying"
@@ -169,6 +183,7 @@
       @ended="onSongEnd"
       @play="isPlaying = true"
       @pause="isPlaying = false"
+      @error="onAudioError"
     />
   </div>
 </template>
@@ -236,19 +251,34 @@ async function loadSongStream(song) {
   try {
     let src = null;
 
-    if (song.track_id || song.trackId) {
-      const streamData = await $fetch(
-        `/api/lavalink/stream?trackId=${encodeURIComponent(song.track_id || song.trackId)}`,
-      );
-      src = streamData.streamUrl;
-    } else if (song.url) {
-      src = song.url;
+    // Use the track's URI from Lavalink info as the source
+    if (song.info?.uri) {
+      src = song.info.uri;
+    }
+
+    // If we have an encoded track, try to decode it to get the URI
+    if (!src && song.encoded) {
+      try {
+        const trackData = await $fetch(
+          `/api/lavalink/track?trackId=${encodeURIComponent(song.encoded)}`,
+        );
+        if (trackData?.info?.uri) {
+          src = trackData.info.uri;
+        }
+      } catch (error) {
+        console.error("Error decoding track:", error);
+      }
     }
 
     if (src) {
       currentStreamUrl.value = src;
       audioElement.value.src = src;
       audioElement.value.load();
+
+      // Set duration from Lavalink track length if available (in ms)
+      if (song.info?.length) {
+        duration.value = song.info.length / 1000;
+      }
     }
   } catch (error) {
     console.error("Error loading stream:", error);
@@ -320,6 +350,14 @@ function onSongEnd() {
     isPlaying.value = false;
     currentTime.value = 0;
   }
+}
+
+function onAudioError() {
+  console.warn(
+    "Audio element error - source may not be directly playable in browser.",
+    currentSong.value?.info?.uri,
+  );
+  isLoadingStream.value = false;
 }
 
 function seek(event) {

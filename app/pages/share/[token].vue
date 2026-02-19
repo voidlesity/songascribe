@@ -55,15 +55,15 @@
             <div v-if="item.songs.length > 0" class="space-y-2">
               <div
                 v-for="song in item.songs"
-                :key="song.id"
+                :key="song.encoded"
                 class="flex items-center gap-3 p-3 bg-base-200 rounded-xl hover:bg-base-300 transition-colors"
               >
                 <div class="avatar">
                   <div class="w-12 h-12 rounded-lg">
                     <img
-                      v-if="song.album_art"
-                      :src="song.album_art"
-                      :alt="song.name"
+                      v-if="song.info?.artworkUrl"
+                      :src="song.info.artworkUrl"
+                      :alt="song.info?.title"
                     />
                     <div
                       v-else
@@ -74,14 +74,16 @@
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">{{ song.name }}</div>
+                  <div class="font-semibold truncate">
+                    {{ song.info?.title }}
+                  </div>
                   <div class="text-sm opacity-70 truncate">
-                    {{ song.artist }}
+                    {{ song.info?.author }}
                   </div>
                 </div>
                 <a
-                  v-if="song.url"
-                  :href="song.url"
+                  v-if="song.info?.uri"
+                  :href="song.info.uri"
                   target="_blank"
                   class="btn btn-sm btn-circle btn-ghost"
                   title="Open in source"

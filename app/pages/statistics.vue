@@ -93,7 +93,7 @@
             <div v-if="stats.mostUsedSongs.length > 0" class="space-y-3">
               <div
                 v-for="(song, index) in stats.mostUsedSongs"
-                :key="song.id"
+                :key="song.encoded || index"
                 class="flex items-center gap-4 p-4 bg-base-200 rounded-box hover:bg-base-300 transition-all"
               >
                 <div class="avatar avatar-placeholder">
@@ -106,9 +106,9 @@
                 <div class="avatar">
                   <div class="w-16 rounded-xl">
                     <img
-                      v-if="song.albumArt"
-                      :src="song.albumArt"
-                      :alt="song.name"
+                      v-if="song.info?.artworkUrl"
+                      :src="song.info.artworkUrl"
+                      :alt="song.info?.title"
                     />
                     <div
                       v-else
@@ -119,9 +119,11 @@
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">{{ song.name }}</div>
+                  <div class="font-semibold truncate">
+                    {{ song.info?.title }}
+                  </div>
                   <div class="text-sm opacity-70 truncate">
-                    {{ song.artist }}
+                    {{ song.info?.author }}
                   </div>
                 </div>
                 <div class="badge badge-primary badge-lg">

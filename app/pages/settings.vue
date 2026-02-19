@@ -244,7 +244,9 @@ onMounted(async () => {
 
 async function loadUserData() {
   try {
-    const userData = await $fetch("/api/user/me");
+    const userDataRaw = await $fetch("/api/user/me");
+    const userData = Array.isArray(userDataRaw) ? userDataRaw[0] : userDataRaw;
+    if (!userData) return;
     profileForm.value.name = userData.name;
     profileForm.value.avatar = userData.avatar;
     selectedTheme.value = userData.theme || "dark";

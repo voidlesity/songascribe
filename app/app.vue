@@ -93,8 +93,11 @@ const { loggedIn, user, clear } = useUserSession();
 onMounted(async () => {
   if (loggedIn.value && user.value) {
     try {
-      const userData = await $fetch("/api/user/me");
-      if (userData.theme) {
+      const userDataRaw = await $fetch("/api/user/me");
+      const userData = Array.isArray(userDataRaw)
+        ? userDataRaw[0]
+        : userDataRaw;
+      if (userData?.theme) {
         document.documentElement.setAttribute("data-theme", userData.theme);
       }
     } catch (error) {
