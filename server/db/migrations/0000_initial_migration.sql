@@ -23,25 +23,11 @@ CREATE TABLE `shares` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `shares_share_token_unique` ON `shares` (`share_token`);--> statement-breakpoint
-CREATE TABLE `songs` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`track_id` text,
-	`name` text,
-	`artist` text,
-	`album_art` text,
-	`duration` integer,
-	`url` text,
-	`source` text,
-	`isrc` text
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `songs_track_id_unique` ON `songs` (`track_id`);--> statement-breakpoint
 CREATE TABLE `songs_map` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`item` integer,
-	`song` integer,
-	FOREIGN KEY (`item`) REFERENCES `items`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`song`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE no action
+	`song` text,
+	FOREIGN KEY (`item`) REFERENCES `items`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

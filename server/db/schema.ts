@@ -24,21 +24,10 @@ export const items = sqliteTable("items", {
   name: text("name"),
 });
 
-export const songs = sqliteTable("songs", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  track_id: text("track_id").unique(),
-  name: text("name"),
-  artist: text("artist"),
-  image: text("album_art"),
-  duration: integer("duration"),
-  url: text("url"),
-  source: text("source"),
-});
-
 export const songsMap = sqliteTable("songs_map", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   item: integer("item").references(() => items.id),
-  song: integer("song").references(() => songs.id),
+  song: text("song"),
 });
 
 export const shares = sqliteTable("shares", {

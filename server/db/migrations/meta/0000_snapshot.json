@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "87267b69-c2a6-48fd-b15d-1397ae564350",
+  "id": "87c0dd07-3a5e-419a-afa1-876fa2409d05",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -169,87 +169,6 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "songs": {
-      "name": "songs",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "track_id": {
-          "name": "track_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "artist": {
-          "name": "artist",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "album_art": {
-          "name": "album_art",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "duration": {
-          "name": "duration",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "isrc": {
-          "name": "isrc",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "songs_track_id_unique": {
-          "name": "songs_track_id_unique",
-          "columns": [
-            "track_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "songs_map": {
       "name": "songs_map",
       "columns": {
@@ -269,7 +188,7 @@
         },
         "song": {
           "name": "song",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -283,19 +202,6 @@
           "tableTo": "items",
           "columnsFrom": [
             "item"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "songs_map_song_songs_id_fk": {
-          "name": "songs_map_song_songs_id_fk",
-          "tableFrom": "songs_map",
-          "tableTo": "songs",
-          "columnsFrom": [
-            "song"
           ],
           "columnsTo": [
             "id"

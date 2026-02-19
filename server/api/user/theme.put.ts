@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     .set({
       theme: body.theme,
     })
-    .where(eq(tables.users.id_spotify, sessionUser.id_spotify))
+    .where(eq(tables.users.id, sessionUser.id))
     .returning();
 
   if (!updatedUser.length) {

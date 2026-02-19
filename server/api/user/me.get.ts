@@ -22,13 +22,5 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const userData = user[0];
-
-  return {
-    id: userData.id,
-    email: userData.email,
-    name: userData.name,
-    avatar: userData.avatar,
-    theme: userData.theme,
-  };
+  return user;
 });
