@@ -84,6 +84,7 @@
     </div>
   </div>
   <NuxtPage />
+  <MusicPlayerBar />
 </template>
 
 <script setup>

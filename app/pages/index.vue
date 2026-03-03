@@ -584,12 +584,7 @@
             </div>
 
             <!-- Custom Music Player -->
-            <MusicPlayer v-if="item.songs.length > 0" :songs="item.songs" />
-
-            <!-- No Songs -->
-            <div v-else class="text-center py-4 opacity-50">
-              No songs added yet
-            </div>
+            <SongList :songs="item.songs" :item-name="item.name" />
           </div>
         </div>
       </div>

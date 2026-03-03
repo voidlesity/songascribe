@@ -51,50 +51,7 @@
           <div class="card-body p-6">
             <h2 class="card-title text-2xl mb-4">{{ item.name }}</h2>
 
-            <!-- Songs List -->
-            <div v-if="item.songs.length > 0" class="space-y-2">
-              <div
-                v-for="song in item.songs"
-                :key="song.encoded"
-                class="flex items-center gap-3 p-3 bg-base-200 rounded-xl hover:bg-base-300 transition-colors"
-              >
-                <div class="avatar">
-                  <div class="w-12 h-12 rounded-lg">
-                    <img
-                      v-if="song.info?.artworkUrl"
-                      :src="song.info.artworkUrl"
-                      :alt="song.info?.title"
-                    />
-                    <div
-                      v-else
-                      class="bg-base-300 w-full h-full flex items-center justify-center"
-                    >
-                      <Icon name="ic:round-library-music" size="1.5rem" />
-                    </div>
-                  </div>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">
-                    {{ song.info?.title }}
-                  </div>
-                  <div class="text-sm opacity-70 truncate">
-                    {{ song.info?.author }}
-                  </div>
-                </div>
-                <a
-                  v-if="song.info?.uri"
-                  :href="song.info.uri"
-                  target="_blank"
-                  class="btn btn-sm btn-circle btn-ghost"
-                  title="Open in source"
-                >
-                  <Icon name="ic:round-open-in-new" size="1.2rem" />
-                </a>
-              </div>
-            </div>
-
-            <!-- No Songs -->
-            <div v-else class="text-center py-4 opacity-50">No songs added</div>
+            <SongList :songs="item.songs" :item-name="item.name" />
           </div>
         </div>
       </div>

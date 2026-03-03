@@ -207,10 +207,7 @@
           >
             <div class="card-body p-4">
               <h4 class="card-title text-xl mb-3">{{ item.name }}</h4>
-              <MusicPlayer v-if="item.songs.length > 0" :songs="item.songs" />
-              <div v-else class="text-center py-4 opacity-50">
-                No songs in this item
-              </div>
+              <SongList :songs="item.songs" :item-name="item.name" />
             </div>
           </div>
         </div>
