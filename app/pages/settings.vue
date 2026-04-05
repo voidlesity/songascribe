@@ -180,8 +180,12 @@
   </div>
 </template>
 
-<script setup>
-const { loggedIn, user, clear, fetch: fetchSession } = useUserSession();
+<script setup lang="ts">
+definePageMeta({
+  middleware: "logged-in",
+});
+
+const { clear, fetch: fetchSession } = useUserSession();
 
 // DaisyUI themes
 const themes = [
@@ -232,13 +236,7 @@ const profileMessageType = ref("success");
 const themeMessage = ref("");
 const themeMessageType = ref("success");
 
-// Check if user is logged in
 onMounted(async () => {
-  if (!loggedIn.value) {
-    navigateTo("/login");
-    return;
-  }
-
   await loadUserData();
 });
 
@@ -340,10 +338,4 @@ async function handleLogout() {
     navigateTo("/");
   }
 }
-
-watch(loggedIn, (value) => {
-  if (!value) {
-    navigateTo("/login");
-  }
-});
 </script>

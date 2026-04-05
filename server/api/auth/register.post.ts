@@ -13,13 +13,18 @@ export default defineEventHandler(async (event) => {
   const existingUser = await db
     .select()
     .from(tables.users)
-    .where(eq(tables.users.email, body.email.toLowerCase()))
+    .where(
+      or(
+        eq(tables.users.email, body.email.toLowerCase()),
+        eq(tables.users.name, body.name.toLowerCase()),
+      ),
+    )
     .limit(1);
 
   if (existingUser.length > 0) {
     throw createError({
       statusCode: 409,
-      message: "User with this email already exists",
+      message: "User with this email or username already exists",
     });
   }
 

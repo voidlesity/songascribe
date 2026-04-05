@@ -9,6 +9,9 @@ export default defineNuxtConfig({
   css: ["~/assets/app.css"],
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ["@vue/devtools-core", "@vue/devtools-kit"],
+    },
   },
   runtimeConfig: {
     lavalink: {

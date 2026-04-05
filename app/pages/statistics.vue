@@ -294,7 +294,9 @@
 </template>
 
 <script setup>
-const { loggedIn } = useUserSession();
+definePageMeta({
+  middleware: ["logged-in"],
+});
 
 const stats = ref(null);
 const loading = ref(true);
@@ -313,17 +315,6 @@ async function fetchStats() {
 
 // Load stats on mount
 onMounted(() => {
-  if (loggedIn.value) {
-    fetchStats();
-  }
-});
-
-// Redirect to login if not logged in
-watch(loggedIn, (value) => {
-  if (!value) {
-    navigateTo("/auth/spotify");
-  } else {
-    fetchStats();
-  }
+  fetchStats();
 });
 </script>

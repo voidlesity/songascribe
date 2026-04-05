@@ -1,109 +1,148 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-base-100 p-4">
-    <div class="card w-full max-w-md bg-base-200 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title text-3xl font-bold text-center mb-6">
-          Welcome Back
-        </h2>
+  <div class="hero min-h-[95vh]">
+    <div class="hero-content">
+      <div class="flex w-full flex-col lg:flex-row">
+        <fieldset
+          class="fieldset bg-base-100 border-base-200 rounded-box w-full border p-6"
+        >
+          <legend class="fieldset-legend">Sign In</legend>
 
-        <form @submit.prevent="handleLogin">
-          <div class="form-control mb-4">
-            <label class="label">
-              <span class="label-text">Email</span>
-            </label>
+          <label class="input">
+            <Icon name="mdi:user" size="1.25rem" style="opacity: 50%" />
             <input
-              v-model="email"
-              type="email"
-              placeholder="Enter your email"
-              class="input input-bordered"
-              required
-              :disabled="loading"
+              v-on:keyup.enter="handleLogin()"
+              v-model="usermail"
+              type="search"
+              placeholder="Username or Email"
             />
-          </div>
+          </label>
 
-          <div class="form-control mb-4">
-            <label class="label">
-              <span class="label-text">Password</span>
-            </label>
+          <label class="input">
+            <Icon name="mdi:key" size="1.25rem" style="opacity: 50%" />
             <input
+              v-on:keyup.enter="handleLogin()"
               v-model="password"
               type="password"
-              placeholder="Enter your password"
-              class="input input-bordered"
-              required
-              :disabled="loading"
+              placeholder="Password"
             />
-          </div>
+          </label>
 
-          <div v-if="error" class="alert alert-error mb-4">
-            <Icon name="ic:round-error" size="1.2rem" />
-            <span>{{ error }}</span>
-          </div>
+          <button @click="handleLogin()" class="btn btn-primary mt-4">
+            <Icon name="mdi:login" size="1.25rem" />
+            Login
+          </button>
+        </fieldset>
 
-          <div class="form-control mt-6">
-            <button type="submit" class="btn btn-primary" :disabled="loading">
-              <span v-if="loading" class="loading loading-spinner"></span>
-              <span v-else>Login</span>
-            </button>
-          </div>
-        </form>
+        <div class="divider lg:divider-horizontal">or</div>
 
-        <div class="divider">OR</div>
+        <fieldset
+          class="fieldset bg-base-100 border-base-200 rounded-box w-full border p-6"
+        >
+          <legend class="fieldset-legend">Register</legend>
 
-        <div class="text-center">
-          <p class="text-sm">
-            Don't have an account?
-            <button
-              @click="$router.push('/register')"
-              class="link link-primary"
-            >
-              Register here
-            </button>
-          </p>
-        </div>
+          <label class="input">
+            <Icon name="mdi:account" size="1.25rem" style="opacity: 50%" />
+            <input
+              v-on:keyup.enter="handleRegister()"
+              v-model="name"
+              type="search"
+              placeholder="Name"
+            />
+          </label>
+
+          <label class="input">
+            <Icon name="mdi:email" size="1.25rem" style="opacity: 50%" />
+            <input
+              v-on:keyup.enter="handleRegister()"
+              v-model="email"
+              type="email"
+              placeholder="Email"
+            />
+          </label>
+
+          <label class="input">
+            <Icon name="mdi:key" size="1.25rem" style="opacity: 50%" />
+            <input
+              v-on:keyup.enter="handleRegister()"
+              v-model="regPassword"
+              type="password"
+              placeholder="Password"
+            />
+          </label>
+
+          <label class="input">
+            <Icon name="mdi:key-outline" size="1.25rem" style="opacity: 50%" />
+            <input
+              v-on:keyup.enter="handleRegister()"
+              v-model="confirmPassword"
+              type="password"
+              placeholder="Confirm Password"
+            />
+          </label>
+
+          <button @click="handleRegister()" class="btn btn-secondary mt-4">
+            <Icon name="mdi-register" size="1.25rem" />
+            Register
+          </button>
+        </fieldset>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-const email = ref("");
-const password = ref("");
-const loading = ref(false);
-const error = ref("");
-
-const { loggedIn } = useUserSession();
-
-// Redirect if already logged in
-watchEffect(() => {
-  if (loggedIn.value) {
-    navigateTo("/");
-  }
+<script setup lang="ts">
+definePageMeta({
+  middleware: ["logged-in"],
 });
 
-async function handleLogin() {
-  error.value = "";
-  loading.value = true;
+const usermail = ref("");
+const password = ref("");
 
+const name = ref("");
+const email = ref("");
+const regPassword = ref("");
+const confirmPassword = ref("");
+
+async function handleLogin() {
   try {
     const response = await $fetch("/api/auth/login", {
       method: "POST",
       body: {
-        email: email.value,
+        usermail: usermail.value,
         password: password.value,
       },
     });
 
     if (response.success) {
-      // Refresh the page to update session
       await navigateTo("/");
       window.location.reload();
     }
   } catch (err) {
     console.error("Login error:", err);
-    error.value = err.data?.message || "Invalid email or password";
-  } finally {
-    loading.value = false;
+  }
+}
+
+async function handleRegister() {
+  if (regPassword.value !== confirmPassword.value) {
+    console.error("Passwords do not match");
+    return;
+  }
+  try {
+    const response = await $fetch("/api/auth/register", {
+      method: "POST",
+      body: {
+        name: name.value,
+        email: email.value,
+        password: regPassword.value,
+      },
+    });
+
+    if (response.success) {
+      await navigateTo("/");
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error("Registration error:", err);
   }
 }
 </script>
