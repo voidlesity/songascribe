@@ -1,3 +1,45 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Share"],
+    summary: "Create share link",
+    description:
+      "Generate a shareable token for a public category owned by the authenticated user. Returns the existing token if one already exists.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["categoryId"],
+            properties: {
+              categoryId: { type: "integer" },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Share token",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                shareToken: { type: "string" },
+                shareUrl: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing category ID" },
+      401: { description: "Unauthorized" },
+      404: { description: "Category not found" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
   const body = await readBody(event);

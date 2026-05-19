@@ -6,6 +6,24 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   modules: ["@nuxt/eslint", "@nuxt/icon", "nuxt-auth-utils"],
+  nitro: {
+    experimental: {
+      openAPI: true,
+    },
+    openAPI: {
+      production: "runtime",
+      route: "/api/openapi.json",
+      ui: {
+        scalar: { route: "/api/scalar" },
+        swagger: { route: "/api/swagger" },
+      },
+      meta: {
+        title: "Songascribe API",
+        description: "REST API for Songascribe",
+        version: "0.1.0",
+      },
+    },
+  },
   css: ["~/assets/app.css"],
   vite: {
     plugins: [tailwindcss()],

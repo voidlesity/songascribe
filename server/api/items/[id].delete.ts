@@ -1,3 +1,37 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Items"],
+    summary: "Delete item",
+    description:
+      "Delete an item and its song mappings. The item must belong to the authenticated user.",
+    parameters: [
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        schema: { type: "integer" },
+        description: "Item ID",
+      },
+    ],
+    responses: {
+      200: {
+        description: "Deletion result",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: { success: { type: "boolean" } },
+            },
+          },
+        },
+      },
+      400: { description: "Invalid item ID" },
+      401: { description: "Unauthorized" },
+      404: { description: "Item not found" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
   const itemId = parseInt(getRouterParam(event, "id") || "0");

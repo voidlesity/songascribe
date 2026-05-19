@@ -1,3 +1,52 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Statistics"],
+    summary: "Get statistics",
+    description:
+      "Returns detailed usage statistics for the authenticated user: category counts, top songs, top artists, and total listening time.",
+    responses: {
+      200: {
+        description: "User statistics",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                overview: {
+                  type: "object",
+                  properties: {
+                    totalCategories: { type: "integer" },
+                    totalItems: { type: "integer" },
+                    totalSongs: { type: "integer" },
+                    totalSongMappings: { type: "integer" },
+                    avgSongsPerItem: { type: "number" },
+                    totalDurationMinutes: { type: "integer" },
+                    totalDurationHours: { type: "number" },
+                  },
+                },
+                mostUsedSongs: { type: "array", items: { type: "object" } },
+                categoryStats: { type: "array", items: { type: "object" } },
+                topArtists: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      songCount: { type: "integer" },
+                    },
+                  },
+                },
+                recentItems: { type: "array", items: { type: "object" } },
+              },
+            },
+          },
+        },
+      },
+      401: { description: "Unauthorized" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
 

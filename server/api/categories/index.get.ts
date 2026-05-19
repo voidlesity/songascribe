@@ -1,3 +1,45 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Categories"],
+    summary: "List categories",
+    description:
+      "Returns all categories (with items and songs) belonging to the authenticated user.",
+    responses: {
+      200: {
+        description: "List of categories",
+        content: {
+          "application/json": {
+            schema: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "integer" },
+                  name: { type: "string" },
+                  is_public: { type: "boolean" },
+                  created_at: { type: "string", format: "date-time" },
+                  items: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        id: { type: "integer" },
+                        name: { type: "string" },
+                        songs: { type: "array", items: { type: "object" } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: "Unauthorized" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
 

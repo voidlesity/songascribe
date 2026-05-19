@@ -1,3 +1,49 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Categories"],
+    summary: "Get public category",
+    description: "Returns items and songs for a single public category.",
+    parameters: [
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        schema: { type: "integer" },
+        description: "Category ID",
+      },
+    ],
+    responses: {
+      200: {
+        description: "Public category with items",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+                items: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "integer" },
+                      name: { type: "string" },
+                      songs: { type: "array", items: { type: "object" } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Invalid category ID" },
+      404: { description: "Category not found or not public" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const categoryId = parseInt(getRouterParam(event, "id") || "0");
 

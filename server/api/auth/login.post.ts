@@ -1,3 +1,57 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Auth"],
+    summary: "Login",
+    description:
+      "Authenticate with username/email and password. Sets a session cookie.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["usermail", "password"],
+            properties: {
+              usermail: {
+                type: "string",
+                description: "Username or email address",
+              },
+              password: { type: "string", format: "password" },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Login successful",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                success: { type: "boolean" },
+                user: {
+                  type: "object",
+                  properties: {
+                    id: { type: "integer" },
+                    email: { type: "string" },
+                    name: { type: "string" },
+                    avatar: { type: "string", nullable: true },
+                    theme: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing required fields" },
+      401: { description: "Invalid credentials" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 

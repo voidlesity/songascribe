@@ -1,3 +1,50 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Share"],
+    summary: "Get shared category",
+    description:
+      "Resolve a share token and return the associated category with all items and songs.",
+    parameters: [
+      {
+        in: "path",
+        name: "token",
+        required: true,
+        schema: { type: "string" },
+        description: "Share token (UUID)",
+      },
+    ],
+    responses: {
+      200: {
+        description: "Shared category",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+                items: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "integer" },
+                      name: { type: "string" },
+                      songs: { type: "array", items: { type: "object" } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing share token" },
+      404: { description: "Share or category not found" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const token = getRouterParam(event, "token");
 

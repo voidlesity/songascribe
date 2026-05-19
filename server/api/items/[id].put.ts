@@ -1,3 +1,57 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Items"],
+    summary: "Update item",
+    description:
+      "Update the name or songs of an item owned by the authenticated user. Providing `songs` replaces all existing songs.",
+    parameters: [
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        schema: { type: "integer" },
+        description: "Item ID",
+      },
+    ],
+    requestBody: {
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              songs: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["encoded"],
+                  properties: { encoded: { type: "string" } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Update result",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: { success: { type: "boolean" } },
+            },
+          },
+        },
+      },
+      400: { description: "Invalid item ID" },
+      401: { description: "Unauthorized" },
+      404: { description: "Item not found" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
   const itemId = parseInt(getRouterParam(event, "id") || "0");

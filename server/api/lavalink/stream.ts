@@ -1,3 +1,43 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Lavalink"],
+    summary: "Resolve audio stream",
+    description:
+      "Resolves a Lavalink encoded track ID to its streamable URI and metadata.",
+    parameters: [
+      {
+        in: "query",
+        name: "trackId",
+        required: true,
+        schema: { type: "string" },
+        description: "Base64-encoded Lavalink track ID",
+      },
+    ],
+    responses: {
+      200: {
+        description: "Resolved track info",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                sourceName: { type: "string" },
+                uri: { type: "string" },
+                identifier: { type: "string" },
+                encoded: { type: "string" },
+                info: { type: "object" },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing trackId" },
+      404: { description: "Track not found" },
+      500: { description: "Lavalink error" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { trackId } = getQuery(event);
 

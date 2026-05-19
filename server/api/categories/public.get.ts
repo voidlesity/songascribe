@@ -1,3 +1,64 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Categories"],
+    summary: "List public categories",
+    description:
+      "Returns a paginated list of all public categories. Supports search by name.",
+    parameters: [
+      {
+        in: "query",
+        name: "search",
+        schema: { type: "string" },
+        description: "Filter by category name",
+      },
+      { in: "query", name: "page", schema: { type: "integer", default: 1 } },
+      { in: "query", name: "limit", schema: { type: "integer", default: 20 } },
+    ],
+    responses: {
+      200: {
+        description: "Paginated public categories",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                categories: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "integer" },
+                      name: { type: "string" },
+                      createdAt: { type: "string", format: "date-time" },
+                      itemCount: { type: "integer" },
+                      songCount: { type: "integer" },
+                      owner: {
+                        type: "object",
+                        properties: {
+                          name: { type: "string" },
+                          avatar: { type: "string", nullable: true },
+                        },
+                      },
+                    },
+                  },
+                },
+                pagination: {
+                  type: "object",
+                  properties: {
+                    page: { type: "integer" },
+                    limit: { type: "integer" },
+                    total: { type: "integer" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { search, page = 1, limit = 20 } = getQuery(event);
 

@@ -1,3 +1,58 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Items"],
+    summary: "Create item",
+    description:
+      "Create a new item (playlist entry) inside one of the authenticated user's categories. Optionally attach Lavalink tracks.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["name", "categoryId"],
+            properties: {
+              name: { type: "string" },
+              categoryId: { type: "integer" },
+              songs: {
+                type: "array",
+                description: "Lavalink track objects",
+                items: {
+                  type: "object",
+                  required: ["encoded"],
+                  properties: {
+                    encoded: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Created item",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+                categorie: { type: "integer" },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing required fields" },
+      401: { description: "Unauthorized" },
+      404: { description: "Category not found" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
   const body = await readBody(event);

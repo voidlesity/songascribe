@@ -1,3 +1,55 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Auth"],
+    summary: "Register",
+    description: "Create a new user account and start a session.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["email", "password", "name"],
+            properties: {
+              email: { type: "string", format: "email" },
+              password: { type: "string", format: "password" },
+              name: { type: "string" },
+              avatar: { type: "string", nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Registration successful",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                success: { type: "boolean" },
+                user: {
+                  type: "object",
+                  properties: {
+                    id: { type: "integer" },
+                    email: { type: "string" },
+                    name: { type: "string" },
+                    avatar: { type: "string", nullable: true },
+                    theme: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing required fields" },
+      409: { description: "Email or username already taken" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 

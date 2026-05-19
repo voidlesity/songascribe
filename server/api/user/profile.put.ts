@@ -1,3 +1,48 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["User"],
+    summary: "Update profile",
+    description: "Update the name and avatar of the authenticated user.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["name", "avatar"],
+            properties: {
+              name: { type: "string" },
+              avatar: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Updated user profile",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                email: { type: "string" },
+                name: { type: "string" },
+                avatar: { type: "string", nullable: true },
+                theme: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing name or avatar" },
+      401: { description: "Unauthorized" },
+      404: { description: "User not found" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
 

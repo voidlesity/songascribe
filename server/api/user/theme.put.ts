@@ -1,3 +1,49 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["User"],
+    summary: "Update theme",
+    description: "Update the UI theme preference of the authenticated user.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["theme"],
+            properties: {
+              theme: {
+                type: "string",
+                description: "Theme name (e.g. dark, light)",
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Updated user",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                email: { type: "string" },
+                name: { type: "string" },
+                theme: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      400: { description: "Missing theme" },
+      401: { description: "Unauthorized" },
+      404: { description: "User not found" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
 
