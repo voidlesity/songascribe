@@ -9,7 +9,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // TODO also check for username
   // Find user by username or email
   const users = await db
     .select()
