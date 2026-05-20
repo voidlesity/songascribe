@@ -27,9 +27,9 @@
           <div class="avatar shrink-0">
             <div class="w-12 h-12 rounded-lg">
               <img
-                v-if="currentSong.info?.artworkUrl"
-                :src="currentSong.info.artworkUrl"
-                :alt="currentSong.info?.title"
+                v-if="currentSong.artworkUrl"
+                :src="currentSong.artworkUrl"
+                :alt="currentSong.title"
                 class="object-cover"
               />
               <div
@@ -42,15 +42,15 @@
           </div>
           <div class="min-w-0 flex-1">
             <div class="font-semibold text-sm truncate">
-              {{ currentSong.info?.title || "No song selected" }}
+              {{ currentSong.title || "No song selected" }}
             </div>
             <div class="text-xs opacity-70 truncate">
-              {{ currentSong.info?.author || "Unknown artist" }}
+              {{ currentSong.author || "Unknown artist" }}
             </div>
           </div>
           <a
-            v-if="currentSong.info?.uri"
-            :href="currentSong.info.uri"
+            v-if="currentSong.uri"
+            :href="currentSong.uri"
             target="_blank"
             class="btn btn-ghost btn-xs btn-circle shrink-0"
             title="Open in source"
@@ -220,9 +220,9 @@
             <div class="avatar shrink-0">
               <div class="w-8 h-8 rounded">
                 <img
-                  v-if="item.song.info?.artworkUrl"
-                  :src="item.song.info.artworkUrl"
-                  :alt="item.song.info?.title"
+                  v-if="item.song.artworkUrl"
+                  :src="item.song.artworkUrl"
+                  :alt="item.song.title"
                 />
                 <div
                   v-else
@@ -234,17 +234,17 @@
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-xs font-semibold truncate">
-                {{ item.song.info?.title || "Unknown" }}
+                {{ item.song.title || "Unknown" }}
               </div>
               <div class="text-xs opacity-70 truncate">
-                {{ item.song.info?.author || "Unknown artist" }}
+                {{ item.song.author || "Unknown artist" }}
                 <span v-if="item.itemName" class="opacity-50">
                   · {{ item.itemName }}
                 </span>
               </div>
             </div>
             <div class="text-xs opacity-50 shrink-0">
-              {{ formatTime((item.song.info?.length || 0) / 1000) }}
+              {{ formatTime((item.song.lengthMs || 0) / 1000) }}
             </div>
             <button
               class="btn btn-ghost btn-xs btn-circle shrink-0"
@@ -392,7 +392,7 @@ async function streamPcm(encodedTrack, positionMs, token) {
   let response;
   try {
     response = await fetch(
-      `/api/lavalink/pcm?encodedTrack=${encodeURIComponent(encodedTrack)}&position=${positionMs}`,
+      `/api/audio/stream?encoded=${encodeURIComponent(encodedTrack)}&position=${positionMs}`,
       { signal: controller.signal },
     );
   } catch (err) {
@@ -505,7 +505,7 @@ async function playTrack(song) {
   suppressTimeWatch = true;
   isLoading.value = true;
   currentTime.value = 0;
-  duration.value = (song.info?.length || 0) / 1000;
+  duration.value = (song.lengthMs || 0) / 1000;
   // Release the suppression after the watcher has had a chance to run.
   void nextTick().then(() => {
     suppressTimeWatch = false;

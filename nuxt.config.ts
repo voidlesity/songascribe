@@ -12,14 +12,22 @@ export default defineNuxtConfig({
     },
     openAPI: {
       production: "runtime",
-      route: "/api/openapi.json",
       ui: {
-        scalar: { route: "/api/" },
-        swagger: { route: "/api/_swagger" },
+        scalar: {
+          defaultOpenAllTags: true,
+          expandAllModelSections: true,
+          expandAllResponses: true,
+          layout: "classic",
+          persistAuth: true,
+          route: "/api/",
+          showDeveloperTools: "never",
+          telemetry: false,
+          theme: "deepSpace",
+        },
       },
       meta: {
-        title: "Songascribe API",
         description: "REST API for Songascribe",
+        title: "Songascribe API",
         version: "0.1.0",
       },
     },
@@ -32,10 +40,10 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    lavalink: {
-      host: process.env.LAVALINK_HOST || "localhost",
-      port: parseInt(process.env.LAVALINK_PORT || "2333"),
-      password: process.env.LAVALINK_PASSWORD || "youshallnotpass",
+    nodelink: {
+      host: process.env.NODELINK_HOST || "localhost",
+      port: parseInt(process.env.NODELINK_PORT || "2333"),
+      password: process.env.NODELINK_PASSWORD || "youshallnotpass",
     },
   },
   hooks: {

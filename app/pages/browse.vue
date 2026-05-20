@@ -50,7 +50,7 @@
                   <img
                     v-if="category.owner?.avatar"
                     :src="category.owner.avatar"
-                    :alt="category.owner.name"
+                    :alt="category.owner.displayName"
                   />
                   <div
                     v-else
@@ -63,7 +63,7 @@
               <div class="flex-1 min-w-0">
                 <h2 class="card-title text-xl mb-1">{{ category.name }}</h2>
                 <p class="text-sm opacity-70">
-                  by {{ category.owner?.name || "Unknown" }}
+                  by {{ category.owner?.displayName || "Unknown" }}
                 </p>
               </div>
               <div class="badge badge-success badge-sm">
@@ -80,9 +80,9 @@
                 </div>
               </div>
               <div class="stat p-3">
-                <div class="stat-title text-xs opacity-70">Songs</div>
+                <div class="stat-title text-xs opacity-70">Tracks</div>
                 <div class="stat-value text-2xl text-secondary">
-                  {{ category.songCount }}
+                  {{ category.trackCount }}
                 </div>
               </div>
             </div>
@@ -172,7 +172,7 @@
               <img
                 v-if="selectedCategory.owner?.avatar"
                 :src="selectedCategory.owner.avatar"
-                :alt="selectedCategory.owner.name"
+                :alt="selectedCategory.owner.displayName"
               />
               <div
                 v-else
@@ -185,7 +185,7 @@
           <div>
             <h3 class="text-3xl font-bold mb-1">{{ selectedCategory.name }}</h3>
             <p class="text-lg opacity-70">
-              by {{ selectedCategory.owner?.name || "Unknown" }}
+              by {{ selectedCategory.owner?.displayName || "Unknown" }}
             </p>
           </div>
         </div>
@@ -207,7 +207,7 @@
           >
             <div class="card-body p-4">
               <h4 class="card-title text-xl mb-3">{{ item.name }}</h4>
-              <SongList :songs="item.songs" :item-name="item.name" />
+              <SongList :songs="item.tracks" :item-name="item.name" />
             </div>
           </div>
         </div>
@@ -249,8 +249,8 @@ async function fetchPublicCategories() {
       params.append("search", searchQuery.value);
     }
 
-    const data = await $fetch(`/api/categories/public?${params}`);
-    publicCategories.value = data.categories;
+    const data = await $fetch(`/api/public/categories?${params}`);
+    publicCategories.value = data.data;
     pagination.value = data.pagination;
   } catch (error) {
     console.error("Error fetching public categories:", error);
@@ -280,8 +280,8 @@ async function viewCategory(category) {
   categoryDetails.value = null;
 
   try {
-    // Fetch full category details with items and songs
-    const data = await $fetch(`/api/categories/${category.id}/public`);
+    // Fetch full category details with items and tracks
+    const data = await $fetch(`/api/public/categories/${category.id}`);
     categoryDetails.value = data;
   } catch (error) {
     console.error("Error fetching category details:", error);

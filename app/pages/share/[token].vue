@@ -51,7 +51,7 @@
           <div class="card-body p-6">
             <h2 class="card-title text-2xl mb-4">{{ item.name }}</h2>
 
-            <SongList :songs="item.songs" :item-name="item.name" />
+            <SongList :songs="item.tracks" :item-name="item.name" />
           </div>
         </div>
       </div>
@@ -83,7 +83,7 @@ async function fetchSharedCategory() {
   error.value = null;
 
   try {
-    const data = await $fetch(`/api/share/${token}`);
+    const data = await $fetch(`/api/shares/${token}`);
     category.value = data;
   } catch (err) {
     console.error("Error fetching shared category:", err);

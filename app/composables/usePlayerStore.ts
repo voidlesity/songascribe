@@ -1,16 +1,16 @@
-interface SongInfo {
+interface Song {
+  id?: number;
+  encoded?: string;
   identifier?: string;
+  source?: string;
   title?: string;
   author?: string;
-  length?: number;
-  uri?: string;
-  artworkUrl?: string;
-  sourceName?: string;
-}
-
-interface Song {
-  encoded?: string;
-  info?: SongInfo;
+  lengthMs?: number;
+  uri?: string | null;
+  artworkUrl?: string | null;
+  isrc?: string | null;
+  isStream?: boolean;
+  isSeekable?: boolean;
 }
 
 interface QueueItem {
@@ -32,7 +32,7 @@ const repeat = ref<"off" | "one" | "all">("off");
 const currentQueueItem = computed(() =>
   currentIndex.value >= 0 && currentIndex.value < queue.value.length
     ? queue.value[currentIndex.value]
-    : null
+    : null,
 );
 
 const currentSong = computed(() => currentQueueItem.value?.song || null);
@@ -40,7 +40,7 @@ const currentSong = computed(() => currentQueueItem.value?.song || null);
 export function usePlayerStore() {
   function playSong(song: Song, itemName?: string) {
     const existingIndex = queue.value.findIndex(
-      (q) => q.song.encoded === song.encoded
+      (q) => q.song.encoded === song.encoded,
     );
 
     if (existingIndex >= 0) {

@@ -2,7 +2,6 @@ defineRouteMeta({
   openAPI: {
     tags: ["Categories"],
     summary: "Create category",
-    description: "Create a new category for the authenticated user.",
     requestBody: {
       required: true,
       content: {
@@ -12,6 +11,7 @@ defineRouteMeta({
             required: ["name"],
             properties: {
               name: { type: "string" },
+              description: { type: "string", nullable: true },
               isPublic: { type: "boolean", default: false },
             },
           },
@@ -19,48 +19,46 @@ defineRouteMeta({
       },
     },
     responses: {
-      200: {
-        description: "Created category",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                id: { type: "integer" },
-                name: { type: "string" },
-                is_public: { type: "boolean" },
-                created_at: { type: "string", format: "date-time" },
-              },
-            },
-          },
-        },
-      },
-      400: { description: "Missing category name" },
+      201: { description: "Created" },
+      400: { description: "Missing fields" },
       401: { description: "Unauthorized" },
     },
   },
 });
 
 export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event);
-  const body = await readBody(event);
+  const { user: sessionUser } = await requireUserSession(event);
+  const body = await readBody<{
+    name?: string;
+    description?: string | null;
+    isPublic?: boolean;
+  }>(event);
 
-  if (!body.name) {
-    throw createError({
-      statusCode: 400,
-      message: "Category name is required",
-    });
+  const name = body.name?.trim();
+  if (!name) {
+    throw createError({ statusCode: 400, statusMessage: "name is required" });
   }
 
-  const [newCategory] = await db
+  const now = new Date();
+  const [row] = await db
     .insert(tables.categories)
     .values({
-      user: user.id,
-      name: body.name,
-      is_public: body.isPublic || false,
-      created_at: new Date(),
+      userId: (sessionUser as { id: number }).id,
+      name,
+      description: body.description ?? null,
+      isPublic: Boolean(body.isPublic),
+      createdAt: now,
+      updatedAt: now,
     })
     .returning();
 
-  return newCategory;
+  setResponseStatus(event, 201);
+  return {
+    id: row!.id,
+    name: row!.name,
+    description: row!.description,
+    isPublic: row!.isPublic,
+    createdAt: row!.createdAt,
+    updatedAt: row!.updatedAt,
+  };
 });

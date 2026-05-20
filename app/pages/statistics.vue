@@ -38,8 +38,8 @@
             <div class="stat-figure text-accent">
               <Icon name="ic:round-music-note" size="2rem" />
             </div>
-            <div class="stat-value">{{ stats.overview.totalSongs }}</div>
-            <div class="stat-title">Unique Songs</div>
+            <div class="stat-value">{{ stats.overview.totalTracks }}</div>
+            <div class="stat-title">Unique Tracks</div>
           </div>
 
           <div class="stat bg-base-100 rounded-box shadow-xl p-6">
@@ -63,15 +63,15 @@
             <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
               <div class="stat">
                 <div class="stat-value text-primary">
-                  {{ stats.overview.avgSongsPerItem }}
+                  {{ stats.overview.avgTracksPerItem }}
                 </div>
-                <div class="stat-desc">Average songs per item</div>
+                <div class="stat-desc">Average tracks per item</div>
               </div>
               <div class="stat">
                 <div class="stat-value text-secondary">
-                  {{ stats.overview.totalSongMappings }}
+                  {{ stats.overview.totalTrackLinks }}
                 </div>
-                <div class="stat-desc">Total song assignments</div>
+                <div class="stat-desc">Total track assignments</div>
               </div>
               <div class="stat">
                 <div class="stat-value text-accent">
@@ -83,16 +83,16 @@
           </div>
         </div>
 
-        <!-- Most Used Songs -->
+        <!-- Most Used Tracks -->
         <div class="card bg-base-100 shadow-xl rounded-3xl">
           <div class="card-body">
             <h2 class="card-title text-2xl mb-4">
               <Icon name="ic:round-trending-up" size="1.5rem" />
-              Most Used Songs
+              Most Used Tracks
             </h2>
-            <div v-if="stats.mostUsedSongs.length > 0" class="space-y-3">
+            <div v-if="stats.mostUsedTracks.length > 0" class="space-y-3">
               <div
-                v-for="(song, index) in stats.mostUsedSongs"
+                v-for="(song, index) in stats.mostUsedTracks"
                 :key="song.encoded || index"
                 class="flex items-center gap-4 p-4 bg-base-200 rounded-box hover:bg-base-300 transition-all"
               >
@@ -106,9 +106,9 @@
                 <div class="avatar">
                   <div class="w-16 rounded-xl">
                     <img
-                      v-if="song.info?.artworkUrl"
-                      :src="song.info.artworkUrl"
-                      :alt="song.info?.title"
+                      v-if="song.artworkUrl"
+                      :src="song.artworkUrl"
+                      :alt="song.title"
                     />
                     <div
                       v-else
@@ -120,10 +120,10 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="font-semibold truncate">
-                    {{ song.info?.title }}
+                    {{ song.title }}
                   </div>
                   <div class="text-sm opacity-70 truncate">
-                    {{ song.info?.author }}
+                    {{ song.author }}
                   </div>
                 </div>
                 <div class="badge badge-primary badge-lg">
@@ -133,7 +133,7 @@
               </div>
             </div>
             <div v-else class="text-center py-8 opacity-50">
-              No songs added yet
+              No tracks added yet
             </div>
           </div>
         </div>
@@ -177,19 +177,21 @@
                         size="1rem"
                         class="opacity-70"
                       />
-                      <span>{{ category.songCount }} songs</span>
+                      <span>{{ category.trackCount }} tracks</span>
                     </div>
                   </div>
                 </div>
                 <div
                   class="radial-progress text-primary"
-                  :style="`--value:${((category.songCount / stats.overview.totalSongs) * 100).toFixed(0)}; --size:4rem;`"
+                  :style="`--value:${stats.overview.totalTracks ? ((category.trackCount / stats.overview.totalTracks) * 100).toFixed(0) : 0}; --size:4rem;`"
                 >
                   {{
-                    (
-                      (category.songCount / stats.overview.totalSongs) *
-                      100
-                    ).toFixed(0)
+                    stats.overview.totalTracks
+                      ? (
+                          (category.trackCount / stats.overview.totalTracks) *
+                          100
+                        ).toFixed(0)
+                      : 0
                   }}%
                 </div>
               </div>
@@ -226,14 +228,14 @@
                 <div class="flex-1 min-w-0">
                   <div class="font-semibold truncate">{{ artist.name }}</div>
                   <div class="text-xs opacity-70">
-                    {{ artist.songCount }}
-                    {{ artist.songCount === 1 ? "song" : "songs" }}
+                    {{ artist.trackCount }}
+                    {{ artist.trackCount === 1 ? "track" : "tracks" }}
                   </div>
                 </div>
                 <progress
                   class="progress progress-primary w-16"
-                  :value="artist.songCount"
-                  :max="stats.topArtists[0].songCount"
+                  :value="artist.trackCount"
+                  :max="stats.topArtists[0].trackCount"
                 ></progress>
               </div>
             </div>

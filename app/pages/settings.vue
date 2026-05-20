@@ -20,7 +20,7 @@
                 <span class="label-text font-semibold">Display Name</span>
               </label>
               <input
-                v-model="profileForm.name"
+                v-model="profileForm.displayName"
                 type="text"
                 placeholder="Your name"
                 class="input input-bordered w-full"
@@ -225,7 +225,7 @@ const themes = [
 
 const selectedTheme = ref("dark");
 const profileForm = ref({
-  name: "",
+  displayName: "",
   avatar: "",
 });
 
@@ -242,11 +242,10 @@ onMounted(async () => {
 
 async function loadUserData() {
   try {
-    const userDataRaw = await $fetch("/api/user/me");
-    const userData = Array.isArray(userDataRaw) ? userDataRaw[0] : userDataRaw;
+    const userData = await $fetch("/api/users/me");
     if (!userData) return;
-    profileForm.value.name = userData.name;
-    profileForm.value.avatar = userData.avatar;
+    profileForm.value.displayName = userData.displayName;
+    profileForm.value.avatar = userData.avatar ?? "";
     selectedTheme.value = userData.theme || "dark";
 
     // Apply the theme
@@ -263,15 +262,14 @@ async function saveProfile() {
   profileMessage.value = "";
 
   try {
-    await $fetch("/api/user/profile", {
-      method: "PUT",
+    await $fetch("/api/users/me", {
+      method: "PATCH",
       body: {
-        name: profileForm.value.name,
+        displayName: profileForm.value.displayName,
         avatar: profileForm.value.avatar,
       },
     });
 
-    // Refresh the session
     await fetchSession();
 
     profileMessage.value = "Profile updated successfully!";
@@ -293,20 +291,17 @@ async function changeTheme() {
   themeMessage.value = "";
 
   try {
-    // Apply theme immediately for instant feedback
     if (import.meta.client) {
       document.documentElement.setAttribute("data-theme", selectedTheme.value);
     }
 
-    // Save to database
-    await $fetch("/api/user/theme", {
-      method: "PUT",
+    await $fetch("/api/users/me", {
+      method: "PATCH",
       body: {
         theme: selectedTheme.value,
       },
     });
 
-    // Refresh the session
     await fetchSession();
 
     themeMessage.value = "Theme updated successfully!";

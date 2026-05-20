@@ -75,8 +75,8 @@
                 @click="addSearchResult(track)"
               >
                 <img
-                  v-if="track.info?.artworkUrl"
-                  :src="track.info.artworkUrl"
+                  v-if="track.artworkUrl"
+                  :src="track.artworkUrl"
                   alt="Album art"
                   class="w-10 h-10 rounded"
                 />
@@ -88,10 +88,10 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="font-semibold truncate">
-                    {{ track.info?.title }}
+                    {{ track.title }}
                   </div>
                   <div class="text-sm opacity-70 truncate">
-                    {{ track.info?.author }}
+                    {{ track.author }}
                   </div>
                 </div>
                 <Icon name="ic:round-add" size="1.5rem" class="text-primary" />
@@ -130,15 +130,15 @@
           </div>
 
           <!-- Added Songs List -->
-          <div v-if="itemForm.songs.length > 0" class="space-y-2">
+          <div v-if="itemForm.tracks.length > 0" class="space-y-2">
             <div
-              v-for="(song, idx) in itemForm.songs"
+              v-for="(song, idx) in itemForm.tracks"
               :key="song.encoded || idx"
               class="flex items-center gap-3 p-3 bg-base-200 rounded-lg"
             >
               <img
-                v-if="song.info?.artworkUrl"
-                :src="song.info.artworkUrl"
+                v-if="song.artworkUrl"
+                :src="song.artworkUrl"
                 alt="Album art"
                 class="w-10 h-10 rounded"
               />
@@ -150,10 +150,10 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="font-semibold truncate text-sm">
-                  {{ song.info?.title || "Unknown track" }}
+                  {{ song.title || "Unknown track" }}
                 </div>
                 <div class="text-xs opacity-70 truncate">
-                  {{ song.info?.author || "Unknown artist" }}
+                  {{ song.author || "Unknown artist" }}
                 </div>
               </div>
               <button
@@ -179,7 +179,7 @@
             class="btn btn-primary"
             :disabled="
               !itemForm.name ||
-              itemForm.songs.length === 0 ||
+              itemForm.tracks.length === 0 ||
               (!editingItem && !itemForm.categoryId)
             "
           >
@@ -271,8 +271,8 @@
       <div v-if="selectedTrack" class="mb-4">
         <div class="flex items-center gap-3 p-3 bg-base-200 rounded-box">
           <img
-            v-if="selectedTrack.info?.artworkUrl"
-            :src="selectedTrack.info.artworkUrl"
+            v-if="selectedTrack.artworkUrl"
+            :src="selectedTrack.artworkUrl"
             alt="Album art"
             class="w-16 h-16 rounded"
           />
@@ -284,10 +284,10 @@
           </div>
           <div class="flex-1 min-w-0">
             <div class="font-semibold truncate">
-              {{ selectedTrack.info?.title }}
+              {{ selectedTrack.title }}
             </div>
             <div class="text-sm opacity-70 truncate">
-              {{ selectedTrack.info?.author }}
+              {{ selectedTrack.author }}
             </div>
           </div>
         </div>
@@ -434,8 +434,8 @@
               @click="openQuickAddDialog(track)"
             >
               <img
-                v-if="track.info?.artworkUrl"
-                :src="track.info.artworkUrl"
+                v-if="track.artworkUrl"
+                :src="track.artworkUrl"
                 alt="Album art"
                 class="w-12 h-12 rounded"
               />
@@ -447,10 +447,10 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="font-semibold truncate">
-                  {{ track.info?.title }}
+                  {{ track.title }}
                 </div>
                 <div class="text-sm opacity-70 truncate">
-                  {{ track.info?.author }}
+                  {{ track.author }}
                 </div>
               </div>
               <Icon
@@ -493,7 +493,7 @@
         >
           {{ cat.name }}
           <Icon
-            v-if="cat.is_public"
+            v-if="cat.isPublic"
             name="ic:round-public"
             size="1rem"
             class="opacity-70"
@@ -516,11 +516,11 @@
           <button
             class="btn btn-ghost btn-circle"
             @click="toggleCategoryPublic"
-            :title="currentCategory.is_public ? 'Make Private' : 'Make Public'"
+            :title="currentCategory.isPublic ? 'Make Private' : 'Make Public'"
           >
             <Icon
               :name="
-                currentCategory.is_public ? 'ic:round-public' : 'ic:round-lock'
+                currentCategory.isPublic ? 'ic:round-public' : 'ic:round-lock'
               "
               size="1.5rem"
             />
@@ -562,7 +562,7 @@
           </div>
 
           <!-- Custom Music Player -->
-          <SongList :songs="item.songs" :item-name="item.name" />
+          <SongList :songs="item.tracks" :item-name="item.name" />
         </div>
       </div>
     </div>
@@ -605,7 +605,7 @@ const editingItem = ref(null);
 const itemForm = ref({
   name: "",
   categoryId: null,
-  songs: [],
+  tracks: [],
 });
 
 const categoryForm = ref({
@@ -654,25 +654,9 @@ const filteredItems = computed(() => {
   return currentCategory.value.items;
 });
 
-// Helper to extract tracks from Lavalink search result
+// Helper kept for compatibility — `/api/audio/search` already returns Track[].
 function extractTracks(result) {
-  if (!result) return [];
-  if (result.loadType === "search" || result.loadType === "track") {
-    if (Array.isArray(result.data)) {
-      return result.data;
-    }
-    if (result.data?.tracks) {
-      return result.data.tracks;
-    }
-    // Single track result
-    if (result.data?.encoded) {
-      return [result.data];
-    }
-  }
-  if (result.loadType === "playlist" && result.data?.tracks) {
-    return result.data.tracks;
-  }
-  return [];
+  return Array.isArray(result) ? result : [];
 }
 
 // Methods
@@ -697,7 +681,7 @@ async function searchSongs() {
   isSearching.value = true;
   try {
     const result = await $fetch(
-      `/api/lavalink/search?q=${encodeURIComponent(songSearchQuery.value)}`,
+      `/api/audio/search?q=${encodeURIComponent(songSearchQuery.value)}`,
     );
     searchResults.value = extractTracks(result);
   } catch (error) {
@@ -726,7 +710,7 @@ async function searchMainSongs() {
   isMainSearching.value = true;
   try {
     const result = await $fetch(
-      `/api/lavalink/search?q=${encodeURIComponent(mainSearchQuery.value)}`,
+      `/api/audio/search?q=${encodeURIComponent(mainSearchQuery.value)}`,
     );
     mainSearchResults.value = extractTracks(result);
     showMainSearchResults.value = true;
@@ -783,14 +767,14 @@ async function addToExistingItem(itemId) {
       return;
     }
 
-    // Add the new track to existing songs
-    const updatedSongs = [...item.songs, selectedTrack.value];
+    // Add the new track to existing tracks
+    const updatedTracks = [...item.tracks, selectedTrack.value];
 
     await $fetch(`/api/items/${itemId}`, {
-      method: "PUT",
+      method: "PATCH",
       body: {
         name: item.name,
-        songs: updatedSongs,
+        tracks: updatedTracks,
       },
     });
 
@@ -811,12 +795,11 @@ async function createNewItemWithSong() {
     return;
 
   try {
-    await $fetch("/api/items", {
+    await $fetch(`/api/categories/${quickAddCategoryId.value}/items`, {
       method: "POST",
       body: {
         name: quickAddItemName.value,
-        categoryId: quickAddCategoryId.value,
-        songs: [selectedTrack.value],
+        tracks: [selectedTrack.value],
       },
     });
 
@@ -830,7 +813,7 @@ async function createNewItemWithSong() {
 
 function addSearchResult(track) {
   // Add the full Lavalink track object
-  itemForm.value.songs.push(track);
+  itemForm.value.tracks.push(track);
 
   // Clear search
   songSearchQuery.value = "";
@@ -843,11 +826,11 @@ async function resolveManualUrl() {
   isResolvingUrl.value = true;
   try {
     const result = await $fetch(
-      `/api/lavalink/search?q=${encodeURIComponent(manualUrl.value)}`,
+      `/api/audio/search?q=${encodeURIComponent(manualUrl.value)}`,
     );
     const tracks = extractTracks(result);
     if (tracks.length > 0) {
-      itemForm.value.songs.push(tracks[0]);
+      itemForm.value.tracks.push(tracks[0]);
       manualUrl.value = "";
     } else {
       alert("Could not resolve the URL. Please check the link and try again.");
@@ -872,14 +855,14 @@ function openItemDialog(item = null) {
     itemForm.value = {
       name: item.name,
       categoryId: currentCategory.value.id,
-      songs: item.songs.map((s) => ({ ...s })),
+      tracks: item.tracks.map((s) => ({ ...s })),
     };
   } else {
     editingItem.value = null;
     itemForm.value = {
       name: "",
       categoryId: currentCategory.value?.id || categories.value[0]?.id || null,
-      songs: [],
+      tracks: [],
     };
   }
   manualUrl.value = "";
@@ -889,36 +872,34 @@ function openItemDialog(item = null) {
 function closeItemDialog() {
   showItemDialog.value = false;
   editingItem.value = null;
-  itemForm.value = { name: "", categoryId: null, songs: [] };
+  itemForm.value = { name: "", categoryId: null, tracks: [] };
   songSearchQuery.value = "";
   searchResults.value = [];
   manualUrl.value = "";
 }
 
 function removeSong(index) {
-  itemForm.value.songs.splice(index, 1);
+  itemForm.value.tracks.splice(index, 1);
 }
 
 async function saveItem() {
   try {
-    // Filter to only songs with encoded track data
-    const validSongs = itemForm.value.songs.filter((s) => s.encoded);
+    const validTracks = itemForm.value.tracks.filter((s) => s.encoded);
 
     if (editingItem.value) {
       await $fetch(`/api/items/${editingItem.value.id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: {
           name: itemForm.value.name,
-          songs: validSongs,
+          tracks: validTracks,
         },
       });
     } else {
-      await $fetch("/api/items", {
+      await $fetch(`/api/categories/${itemForm.value.categoryId}/items`, {
         method: "POST",
         body: {
           name: itemForm.value.name,
-          categoryId: itemForm.value.categoryId,
-          songs: validSongs,
+          tracks: validTracks,
         },
       });
     }
@@ -968,9 +949,9 @@ async function toggleCategoryPublic() {
 
   try {
     await $fetch(`/api/categories/${currentCategory.value.id}`, {
-      method: "PUT",
+      method: "PATCH",
       body: {
-        isPublic: !currentCategory.value.is_public,
+        isPublic: !currentCategory.value.isPublic,
       },
     });
 
@@ -985,7 +966,7 @@ function openCategoryManageDialog(category) {
   categoryManageForm.value = {
     id: category.id,
     name: category.name,
-    isPublic: category.is_public || false,
+    isPublic: category.isPublic || false,
   };
   showCategoryManageDialog.value = true;
 }
@@ -998,7 +979,7 @@ function closeCategoryManageDialog() {
 async function updateCategory() {
   try {
     await $fetch(`/api/categories/${categoryManageForm.value.id}`, {
-      method: "PUT",
+      method: "PATCH",
       body: {
         name: categoryManageForm.value.name,
         isPublic: categoryManageForm.value.isPublic,
@@ -1016,7 +997,7 @@ async function updateCategory() {
 async function deleteCategory() {
   if (
     !confirm(
-      `Are you sure you want to delete "${categoryManageForm.value.name}"? This will delete all items and songs in this category.`,
+      `Are you sure you want to delete "${categoryManageForm.value.name}"? This will delete all items and tracks in this category.`,
     )
   ) {
     return;
@@ -1040,12 +1021,11 @@ async function openShareDialog(category) {
   selectedCategory.value = category;
 
   try {
-    const result = await $fetch("/api/share/create", {
+    const result = await $fetch(`/api/categories/${category.id}/share`, {
       method: "POST",
-      body: { categoryId: category.id },
     });
 
-    shareUrl.value = window.location.origin + result.shareUrl;
+    shareUrl.value = window.location.origin + result.url;
     showShareDialog.value = true;
   } catch (error) {
     console.error("Error creating share link:", error);

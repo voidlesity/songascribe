@@ -44,9 +44,19 @@
             <Icon name="mdi:account" size="1.25rem" style="opacity: 50%" />
             <input
               v-on:keyup.enter="handleRegister()"
-              v-model="name"
+              v-model="displayName"
               type="search"
-              placeholder="Name"
+              placeholder="Display name"
+            />
+          </label>
+
+          <label class="input">
+            <Icon name="mdi:at" size="1.25rem" style="opacity: 50%" />
+            <input
+              v-on:keyup.enter="handleRegister()"
+              v-model="username"
+              type="search"
+              placeholder="Username (login handle)"
             />
           </label>
 
@@ -98,25 +108,23 @@ definePageMeta({
 const usermail = ref("");
 const password = ref("");
 
-const name = ref("");
+const displayName = ref("");
+const username = ref("");
 const email = ref("");
 const regPassword = ref("");
 const confirmPassword = ref("");
 
 async function handleLogin() {
   try {
-    const response = await $fetch("/api/auth/login", {
+    await $fetch("/api/auth/login", {
       method: "POST",
       body: {
-        usermail: usermail.value,
+        login: usermail.value,
         password: password.value,
       },
     });
-
-    if (response.success) {
-      await navigateTo("/");
-      window.location.reload();
-    }
+    await navigateTo("/");
+    window.location.reload();
   } catch (err) {
     console.error("Login error:", err);
   }
@@ -128,19 +136,17 @@ async function handleRegister() {
     return;
   }
   try {
-    const response = await $fetch("/api/auth/register", {
+    await $fetch("/api/auth/register", {
       method: "POST",
       body: {
-        name: name.value,
+        displayName: displayName.value,
+        username: username.value,
         email: email.value,
         password: regPassword.value,
       },
     });
-
-    if (response.success) {
-      await navigateTo("/");
-      window.location.reload();
-    }
+    await navigateTo("/");
+    window.location.reload();
   } catch (err) {
     console.error("Registration error:", err);
   }

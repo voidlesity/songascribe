@@ -14,9 +14,9 @@
         <div class="avatar">
           <div class="w-10 h-10 rounded-lg">
             <img
-              v-if="song.info?.artworkUrl"
-              :src="song.info.artworkUrl"
-              :alt="song.info?.title"
+              v-if="song.artworkUrl"
+              :src="song.artworkUrl"
+              :alt="song.title"
               class="object-cover"
             />
             <div
@@ -53,22 +53,22 @@
           class="font-medium text-sm truncate"
           :class="{ 'text-primary': isCurrentSong(song) }"
         >
-          {{ song.info?.title || "Unknown track" }}
+          {{ song.title || "Unknown track" }}
         </div>
         <div class="text-xs opacity-60 truncate">
-          {{ song.info?.author || "Unknown artist" }}
+          {{ song.author || "Unknown artist" }}
         </div>
       </div>
 
       <!-- Duration -->
       <div class="text-xs opacity-50 shrink-0 hidden sm:block">
-        {{ formatDuration(song.info?.length) }}
+        {{ formatDuration(song.lengthMs) }}
       </div>
 
       <!-- External Link -->
       <a
-        v-if="song.info?.uri"
-        :href="song.info.uri"
+        v-if="song.uri"
+        :href="song.uri"
         target="_blank"
         class="btn btn-ghost btn-xs btn-circle opacity-0 group-hover:opacity-70 shrink-0"
         title="Open in source"
