@@ -263,22 +263,6 @@
         </div>
       </div>
     </Transition>
-
-    <!-- Hidden YouTube IFrame player -->
-    <div class="hidden">
-      <div ref="ytPlayerContainer" id="yt-player-container"></div>
-    </div>
-
-    <!-- Hidden audio element for non-YouTube sources -->
-    <audio
-      ref="audioElement"
-      @timeupdate="onAudioTimeUpdate"
-      @loadedmetadata="onAudioMetadataLoaded"
-      @ended="onTrackEnd"
-      @play="onAudioPlay"
-      @pause="onAudioPause"
-      @error="onAudioError"
-    />
   </div>
 
   <!-- Spacer to prevent content from being hidden behind player bar -->
@@ -312,16 +296,22 @@ const {
 } = usePlayerStore();
 
 const showQueue = ref(false);
-const audioElement = ref(null);
-const ytPlayerContainer = ref(null);
 const previousVolume = ref(70);
 const isDragging = ref(false);
 
-let ytPlayer = null;
-let ytApiLoaded = false;
-let ytApiLoading = false;
-let currentSourceType = ref("none"); // "youtube" | "soundcloud" | "audio" | "none"
-let ytProgressInterval = null;
+let audioContext = null;
+let workletNode = null;
+let gainNode = null;
+let workletReadyPromise = null;
+let currentAbortController = null;
+let activeTrackToken = 0; // monotonically increasing; older fetches check it
+let initialPositionSec = 0; // start offset of the current stream
+let bufferedSamples = 0;
+
+const SAMPLE_RATE = 48000;
+const CHANNELS = 2;
+const BACKPRESSURE_SAMPLES = SAMPLE_RATE * CHANNELS * 8; // ~8 s of audio buffered
+const BACKPRESSURE_RESUME = SAMPLE_RATE * CHANNELS * 4;
 
 // Computed
 const progressPercent = computed(() => {
@@ -329,278 +319,228 @@ const progressPercent = computed(() => {
   return Math.min((currentTime.value / duration.value) * 100, 100);
 });
 
-// Load YouTube IFrame API
-function loadYouTubeApi() {
-  return new Promise((resolve) => {
-    if (ytApiLoaded) {
-      resolve();
-      return;
-    }
-    if (ytApiLoading) {
-      // Wait for existing load
-      const check = setInterval(() => {
-        if (ytApiLoaded) {
-          clearInterval(check);
-          resolve();
-        }
-      }, 100);
-      return;
-    }
+let suppressTimeWatch = false;
 
-    ytApiLoading = true;
+async function ensureAudioGraph() {
+  if (audioContext && workletNode && gainNode) return;
 
-    // Set up the callback
-    window.onYouTubeIframeAPIReady = () => {
-      ytApiLoaded = true;
-      ytApiLoading = false;
-      resolve();
-    };
+  if (!audioContext) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    audioContext = new Ctx({ sampleRate: SAMPLE_RATE });
+  }
+  if (!workletReadyPromise) {
+    workletReadyPromise = audioContext.audioWorklet.addModule(
+      "/pcm-player-worklet.js",
+    );
+  }
+  await workletReadyPromise;
 
-    // Load the script
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
-  });
-}
-
-function createYouTubePlayer(videoId) {
-  return new Promise((resolve) => {
-    // Destroy existing player
-    if (ytPlayer) {
-      try {
-        ytPlayer.destroy();
-      } catch {
-        // ignore
-      }
-      ytPlayer = null;
-    }
-
-    // Make sure the container element exists and has a child for the player
-    const container = ytPlayerContainer.value;
-    if (!container) {
-      resolve(null);
-      return;
-    }
-
-    // Create a new div for the player
-    container.innerHTML = '<div id="yt-player-element"></div>';
-
-    ytPlayer = new window.YT.Player("yt-player-element", {
-      height: "1",
-      width: "1",
-      videoId: videoId,
-      playerVars: {
-        autoplay: 1,
-        controls: 0,
-        disablekb: 1,
-        fs: 0,
-        modestbranding: 1,
-        rel: 0,
-        origin: window.location.origin,
-      },
-      events: {
-        onReady: (event) => {
-          event.target.setVolume(volume.value);
-          resolve(event.target);
-        },
-        onStateChange: (event) => {
-          onYtStateChange(event);
-        },
-        onError: (event) => {
-          console.error("[YT Player] Error:", event.data);
-          isLoading.value = false;
-          // Try next track on error
-          onTrackEnd();
-        },
-      },
+  if (!workletNode) {
+    workletNode = new AudioWorkletNode(audioContext, "pcm-player-processor", {
+      numberOfInputs: 0,
+      numberOfOutputs: 1,
+      outputChannelCount: [CHANNELS],
     });
-  });
-}
-
-function onYtStateChange(event) {
-  const YT = window.YT;
-  if (!YT) return;
-
-  switch (event.data) {
-    case YT.PlayerState.PLAYING:
-      isPlaying.value = true;
-      isLoading.value = false;
-      duration.value = ytPlayer?.getDuration?.() || 0;
-      startYtProgressTracking();
-      break;
-    case YT.PlayerState.PAUSED:
-      isPlaying.value = false;
-      stopYtProgressTracking();
-      break;
-    case YT.PlayerState.ENDED:
-      stopYtProgressTracking();
-      onTrackEnd();
-      break;
-    case YT.PlayerState.BUFFERING:
-      isLoading.value = true;
-      break;
+    workletNode.port.onmessage = onWorkletMessage;
+  }
+  if (!gainNode) {
+    gainNode = audioContext.createGain();
+    gainNode.gain.value = volume.value / 100;
+    workletNode.connect(gainNode).connect(audioContext.destination);
   }
 }
 
-function startYtProgressTracking() {
-  stopYtProgressTracking();
-  ytProgressInterval = setInterval(() => {
-    if (ytPlayer?.getCurrentTime) {
-      currentTime.value = ytPlayer.getCurrentTime();
+function onWorkletMessage(event) {
+  const msg = event.data;
+  if (!msg) return;
+  if (msg.type === "status") {
+    bufferedSamples = msg.bufferedSamples;
+    if (!isDragging.value) {
+      currentTime.value = initialPositionSec + msg.framesPlayed / SAMPLE_RATE;
     }
-    if (ytPlayer?.getDuration && duration.value <= 0) {
-      const d = ytPlayer.getDuration();
-      if (d > 0) duration.value = d;
-    }
-  }, 250);
-}
-
-function stopYtProgressTracking() {
-  if (ytProgressInterval) {
-    clearInterval(ytProgressInterval);
-    ytProgressInterval = null;
-  }
-}
-
-function extractYouTubeId(uri) {
-  if (!uri) return null;
-  // Match various YouTube URL formats
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-    /^([a-zA-Z0-9_-]{11})$/,
-  ];
-  for (const pattern of patterns) {
-    const match = uri.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
-}
-
-// Play a track based on its source
-async function playTrack(song) {
-  if (!song) return;
-
-  isLoading.value = true;
-  currentTime.value = 0;
-  duration.value = (song.info?.length || 0) / 1000;
-
-  // Stop any currently playing source
-  stopAllPlayback();
-
-  const sourceName = song.info?.sourceName || "";
-  const uri = song.info?.uri || "";
-  const identifier = song.info?.identifier || "";
-
-  // Determine source type
-  if (
-    sourceName === "youtube" ||
-    sourceName === "youtubemusic" ||
-    uri.includes("youtube.com") ||
-    uri.includes("youtu.be") ||
-    uri.includes("music.youtube.com")
-  ) {
-    // YouTube source - use IFrame API
-    currentSourceType.value = "youtube";
-
-    const videoId =
-      extractYouTubeId(uri) || extractYouTubeId(identifier) || identifier;
-
-    if (!videoId) {
-      console.error("[Player] Could not extract YouTube video ID from:", uri);
-      isLoading.value = false;
-      onTrackEnd();
-      return;
-    }
-
-    try {
-      await loadYouTubeApi();
-      const player = await createYouTubePlayer(videoId);
-      if (player) {
-        player.setVolume(volume.value);
-      }
-    } catch (error) {
-      console.error("[Player] YouTube player error:", error);
-      isLoading.value = false;
-      onTrackEnd();
-    }
-  } else if (sourceName === "soundcloud") {
-    // SoundCloud - try direct URI in audio element
-    currentSourceType.value = "audio";
-    if (audioElement.value && uri) {
-      audioElement.value.src = uri;
-      audioElement.value.volume = volume.value / 100;
-      audioElement.value.load();
-      try {
-        await audioElement.value.play();
-      } catch (error) {
-        console.warn("[Player] SoundCloud playback failed:", error);
-        isLoading.value = false;
-      }
-    }
-  } else {
-    // Other sources - try direct audio
-    currentSourceType.value = "audio";
-    if (audioElement.value && uri) {
-      audioElement.value.src = uri;
-      audioElement.value.volume = volume.value / 100;
-      audioElement.value.load();
-      try {
-        await audioElement.value.play();
-      } catch (error) {
-        console.warn("[Player] Audio playback failed:", error);
-        isLoading.value = false;
-      }
+  } else if (msg.type === "ended") {
+    if (repeat.value === "one" && currentSong.value) {
+      performSeek(0);
     } else {
-      isLoading.value = false;
+      onTrackEnd();
     }
   }
 }
 
-function stopAllPlayback() {
-  // Stop YouTube
-  stopYtProgressTracking();
-  if (ytPlayer) {
+function flushWorklet() {
+  if (workletNode) {
+    workletNode.port.postMessage({ type: "flush" });
+  }
+  bufferedSamples = 0;
+}
+
+function abortCurrentStream() {
+  if (currentAbortController) {
     try {
-      ytPlayer.stopVideo();
+      currentAbortController.abort();
     } catch {
       // ignore
     }
-  }
-
-  // Stop audio element
-  if (audioElement.value) {
-    audioElement.value.pause();
-    audioElement.value.src = "";
+    currentAbortController = null;
   }
 }
 
-// Audio element handlers
-function onAudioTimeUpdate() {
-  if (audioElement.value && !isDragging.value) {
-    currentTime.value = audioElement.value.currentTime;
+async function streamPcm(encodedTrack, positionMs, token) {
+  const controller = new AbortController();
+  currentAbortController = controller;
+
+  let response;
+  try {
+    response = await fetch(
+      `/api/lavalink/pcm?encodedTrack=${encodeURIComponent(encodedTrack)}&position=${positionMs}`,
+      { signal: controller.signal },
+    );
+  } catch (err) {
+    if (controller.signal.aborted) return;
+    console.error("[PCM] fetch failed:", err);
+    if (token === activeTrackToken) {
+      isLoading.value = false;
+      onTrackEnd();
+    }
+    return;
+  }
+
+  if (!response.ok || !response.body) {
+    console.error("[PCM] upstream status", response.status);
+    if (token === activeTrackToken) {
+      isLoading.value = false;
+      onTrackEnd();
+    }
+    return;
+  }
+
+  const reader = response.body.getReader();
+  let leftover = null; // Uint8Array containing a single dangling byte, if any
+
+  try {
+    while (true) {
+      if (token !== activeTrackToken) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+        return;
+      }
+
+      // Backpressure: wait until the worklet drains a bit.
+      while (
+        bufferedSamples > BACKPRESSURE_SAMPLES &&
+        token === activeTrackToken &&
+        !controller.signal.aborted
+      ) {
+        await new Promise((r) => setTimeout(r, 50));
+        if (bufferedSamples <= BACKPRESSURE_RESUME) break;
+      }
+
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!value || value.length === 0) continue;
+
+      // Stitch any leftover odd byte from the previous chunk.
+      let bytes = value;
+      if (leftover) {
+        const merged = new Uint8Array(leftover.length + value.length);
+        merged.set(leftover, 0);
+        merged.set(value, leftover.length);
+        bytes = merged;
+        leftover = null;
+      }
+      if (bytes.length % 2 !== 0) {
+        leftover = bytes.slice(bytes.length - 1);
+        bytes = bytes.slice(0, bytes.length - 1);
+      }
+      if (bytes.length === 0) continue;
+
+      const sampleCount = bytes.length >>> 1;
+      const view = new DataView(
+        bytes.buffer,
+        bytes.byteOffset,
+        bytes.byteLength,
+      );
+      const floats = new Float32Array(sampleCount);
+      for (let i = 0; i < sampleCount; i++) {
+        floats[i] = view.getInt16(i * 2, true) / 32768;
+      }
+      bufferedSamples += floats.length;
+
+      if (token !== activeTrackToken) return;
+      workletNode.port.postMessage({ type: "samples", data: floats }, [
+        floats.buffer,
+      ]);
+
+      if (isLoading.value) isLoading.value = false;
+    }
+
+    if (token === activeTrackToken) {
+      workletNode.port.postMessage({ type: "eos" });
+    }
+  } catch (err) {
+    if (!controller.signal.aborted) {
+      console.error("[PCM] stream error:", err);
+      if (token === activeTrackToken) {
+        isLoading.value = false;
+        onTrackEnd();
+      }
+    }
+  } finally {
+    if (currentAbortController === controller) {
+      currentAbortController = null;
+    }
   }
 }
 
-function onAudioMetadataLoaded() {
-  if (audioElement.value) {
-    duration.value = audioElement.value.duration;
+async function playTrack(song) {
+  if (!song?.encoded) return;
+
+  abortCurrentStream();
+  const token = ++activeTrackToken;
+  initialPositionSec = 0;
+
+  suppressTimeWatch = true;
+  isLoading.value = true;
+  currentTime.value = 0;
+  duration.value = (song.info?.length || 0) / 1000;
+  // Release the suppression after the watcher has had a chance to run.
+  void nextTick().then(() => {
+    suppressTimeWatch = false;
+  });
+
+  try {
+    await ensureAudioGraph();
+  } catch (err) {
+    console.error("[PCM] audio graph init failed:", err);
+    isLoading.value = false;
+    return;
   }
-}
 
-function onAudioPlay() {
-  isPlaying.value = true;
-  isLoading.value = false;
-}
+  if (token !== activeTrackToken) return;
 
-function onAudioPause() {
-  if (currentSourceType.value === "audio") {
-    isPlaying.value = false;
+  flushWorklet();
+  workletNode.port.postMessage({ type: "resetPosition" });
+
+  if (audioContext.state === "suspended") {
+    try {
+      await audioContext.resume();
+    } catch {
+      // ignore - autoplay policy will resume on next user interaction
+    }
   }
+
+  // Kick off the stream; intentionally not awaited so this function returns
+  // promptly and `process()` can start consuming as soon as bytes arrive.
+  void streamPcm(song.encoded, 0, token);
 }
 
-function onAudioError() {
-  console.warn("[Player] Audio element error");
-  isLoading.value = false;
+function stopAllPlayback() {
+  activeTrackToken++;
+  abortCurrentStream();
+  flushWorklet();
 }
 
 // UI handlers
@@ -649,13 +589,23 @@ function startDrag(event) {
 }
 
 function performSeek(time) {
+  if (!Number.isFinite(time) || time < 0) return;
   seekTo(time);
 
-  if (currentSourceType.value === "youtube" && ytPlayer?.seekTo) {
-    ytPlayer.seekTo(time, true);
-  } else if (currentSourceType.value === "audio" && audioElement.value) {
-    audioElement.value.currentTime = time;
-  }
+  if (!workletNode || !currentSong.value?.encoded) return;
+
+  // Restart the upstream stream at the requested position. NodeLink decodes
+  // and resumes from `position` server-side, so we discard everything we
+  // already had buffered locally and start fresh.
+  abortCurrentStream();
+  flushWorklet();
+  workletNode.port.postMessage({ type: "resetPosition" });
+
+  const token = ++activeTrackToken;
+  initialPositionSec = time;
+  isLoading.value = true;
+
+  void streamPcm(currentSong.value.encoded, Math.round(time * 1000), token);
 }
 
 function onVolumeChange(event) {
@@ -686,48 +636,31 @@ watch(currentSong, (newSong) => {
 });
 
 // Watch play/pause state changes (from external togglePlay calls)
-watch(isPlaying, (playing) => {
-  if (currentSourceType.value === "youtube" && ytPlayer) {
-    try {
-      if (playing) {
-        ytPlayer.playVideo();
-      } else {
-        ytPlayer.pauseVideo();
-      }
-    } catch {
-      // ignore
-    }
-  } else if (currentSourceType.value === "audio" && audioElement.value) {
+watch(isPlaying, async (playing) => {
+  if (!audioContext) return;
+  try {
     if (playing) {
-      audioElement.value.play().catch(() => {});
-    } else {
-      audioElement.value.pause();
+      if (audioContext.state === "suspended") await audioContext.resume();
+    } else if (audioContext.state === "running") {
+      await audioContext.suspend();
     }
+  } catch (err) {
+    console.warn("[PCM] audio context state change failed:", err);
   }
 });
 
 // Watch volume changes
 watch(volume, (newVolume) => {
-  if (currentSourceType.value === "youtube" && ytPlayer?.setVolume) {
-    ytPlayer.setVolume(newVolume);
-  }
-  if (audioElement.value) {
-    audioElement.value.volume = newVolume / 100;
-  }
+  if (gainNode) gainNode.gain.value = Math.max(0, Math.min(1, newVolume / 100));
 });
 
-// Watch for seekTo changes (when previous() resets time)
 watch(
   () => currentTime.value,
   (newTime) => {
-    // This is handled by performSeek for user interactions
-    // For programmatic resets (like repeat one), we need to handle it
-    if (newTime === 0 && isPlaying.value) {
-      if (currentSourceType.value === "youtube" && ytPlayer?.seekTo) {
-        ytPlayer.seekTo(0, true);
-      } else if (currentSourceType.value === "audio" && audioElement.value) {
-        audioElement.value.currentTime = 0;
-      }
+    if (suppressTimeWatch || isDragging.value) return;
+    if (newTime !== 0 || !isPlaying.value || !currentSong.value) return;
+    if (initialPositionSec > 0.5) {
+      performSeek(0);
     }
   },
 );
@@ -735,13 +668,25 @@ watch(
 // Cleanup on unmount
 onBeforeUnmount(() => {
   stopAllPlayback();
-  stopYtProgressTracking();
-  if (ytPlayer) {
+  if (workletNode) {
     try {
-      ytPlayer.destroy();
+      workletNode.disconnect();
     } catch {
       // ignore
     }
+    workletNode = null;
+  }
+  if (gainNode) {
+    try {
+      gainNode.disconnect();
+    } catch {
+      // ignore
+    }
+    gainNode = null;
+  }
+  if (audioContext) {
+    audioContext.close().catch(() => {});
+    audioContext = null;
   }
 });
 </script>
