@@ -14,8 +14,8 @@ export default defineNuxtConfig({
       production: "runtime",
       route: "/api/openapi.json",
       ui: {
-        scalar: { route: "/api/scalar" },
-        swagger: { route: "/api/swagger" },
+        scalar: { route: "/api/" },
+        swagger: { route: "/api/_swagger" },
       },
       meta: {
         title: "Songascribe API",
