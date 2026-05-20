@@ -1,6 +1,6 @@
 import { defineNuxtRouteMiddleware, navigateTo } from "nuxt/app";
 
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useUserSession();
 
   // If user is not logged in and not on login page already redirect to login page

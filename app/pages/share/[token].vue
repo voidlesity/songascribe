@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-base-200">
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
-      <span class="loading loading-spinner loading-lg"></span>
+      <span class="loading loading-spinner loading-lg" />
     </div>
 
     <div

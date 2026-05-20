@@ -25,7 +25,7 @@
                 placeholder="Your name"
                 class="input input-bordered w-full"
                 required
-              />
+              >
             </div>
 
             <div class="form-control mb-4">
@@ -38,7 +38,7 @@
                 placeholder="https://example.com/avatar.jpg"
                 class="input input-bordered w-full"
                 required
-              />
+              >
               <label class="label">
                 <span class="label-text-alt text-gray-500"
                   >Enter a valid image URL for your avatar</span
@@ -51,7 +51,7 @@
                 <div
                   class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2"
                 >
-                  <img :src="profileForm.avatar" alt="Avatar preview" />
+                  <img :src="profileForm.avatar" alt="Avatar preview" >
                 </div>
               </div>
             </div>
@@ -82,7 +82,7 @@
               :disabled="savingProfile"
             >
               <Icon v-if="!savingProfile" name="ic:round-save" size="1.2rem" />
-              <span v-if="savingProfile" class="loading loading-spinner"></span>
+              <span v-if="savingProfile" class="loading loading-spinner" />
               {{ savingProfile ? "Saving..." : "Save Profile" }}
             </button>
           </form>
@@ -137,19 +137,19 @@
             </label>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div class="flex flex-col items-center gap-1">
-                <div class="bg-primary w-full h-8 rounded"></div>
+                <div class="bg-primary w-full h-8 rounded" />
                 <span class="text-xs">Primary</span>
               </div>
               <div class="flex flex-col items-center gap-1">
-                <div class="bg-secondary w-full h-8 rounded"></div>
+                <div class="bg-secondary w-full h-8 rounded" />
                 <span class="text-xs">Secondary</span>
               </div>
               <div class="flex flex-col items-center gap-1">
-                <div class="bg-accent w-full h-8 rounded"></div>
+                <div class="bg-accent w-full h-8 rounded" />
                 <span class="text-xs">Accent</span>
               </div>
               <div class="flex flex-col items-center gap-1">
-                <div class="bg-neutral w-full h-8 rounded"></div>
+                <div class="bg-neutral w-full h-8 rounded" />
                 <span class="text-xs">Neutral</span>
               </div>
             </div>

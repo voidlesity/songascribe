@@ -10,24 +10,24 @@
           <label class="input">
             <Icon name="mdi:user" size="1.25rem" style="opacity: 50%" />
             <input
-              v-on:keyup.enter="handleLogin()"
               v-model="usermail"
               type="search"
               placeholder="Username or Email"
-            />
+              @keyup.enter="handleLogin()"
+            >
           </label>
 
           <label class="input">
             <Icon name="mdi:key" size="1.25rem" style="opacity: 50%" />
             <input
-              v-on:keyup.enter="handleLogin()"
               v-model="password"
               type="password"
               placeholder="Password"
-            />
+              @keyup.enter="handleLogin()"
+            >
           </label>
 
-          <button @click="handleLogin()" class="btn btn-primary mt-4">
+          <button class="btn btn-primary mt-4" @click="handleLogin()">
             <Icon name="mdi:login" size="1.25rem" />
             Login
           </button>
@@ -43,54 +43,54 @@
           <label class="input">
             <Icon name="mdi:account" size="1.25rem" style="opacity: 50%" />
             <input
-              v-on:keyup.enter="handleRegister()"
               v-model="displayName"
               type="search"
               placeholder="Display name"
-            />
+              @keyup.enter="handleRegister()"
+            >
           </label>
 
           <label class="input">
             <Icon name="mdi:at" size="1.25rem" style="opacity: 50%" />
             <input
-              v-on:keyup.enter="handleRegister()"
               v-model="username"
               type="search"
               placeholder="Username (login handle)"
-            />
+              @keyup.enter="handleRegister()"
+            >
           </label>
 
           <label class="input">
             <Icon name="mdi:email" size="1.25rem" style="opacity: 50%" />
             <input
-              v-on:keyup.enter="handleRegister()"
               v-model="email"
               type="email"
               placeholder="Email"
-            />
+              @keyup.enter="handleRegister()"
+            >
           </label>
 
           <label class="input">
             <Icon name="mdi:key" size="1.25rem" style="opacity: 50%" />
             <input
-              v-on:keyup.enter="handleRegister()"
               v-model="regPassword"
               type="password"
               placeholder="Password"
-            />
+              @keyup.enter="handleRegister()"
+            >
           </label>
 
           <label class="input">
             <Icon name="mdi:key-outline" size="1.25rem" style="opacity: 50%" />
             <input
-              v-on:keyup.enter="handleRegister()"
               v-model="confirmPassword"
               type="password"
               placeholder="Confirm Password"
-            />
+              @keyup.enter="handleRegister()"
+            >
           </label>
 
-          <button @click="handleRegister()" class="btn btn-secondary mt-4">
+          <button class="btn btn-secondary mt-4" @click="handleRegister()">
             <Icon name="mdi-register" size="1.25rem" />
             Register
           </button>

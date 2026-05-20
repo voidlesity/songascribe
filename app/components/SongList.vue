@@ -18,7 +18,7 @@
               :src="song.artworkUrl"
               :alt="song.title"
               class="object-cover"
-            />
+            >
             <div
               v-else
               class="bg-base-300 w-full h-full flex items-center justify-center"
@@ -89,7 +89,7 @@
 const props = defineProps({
   songs: {
     type: Array,
-    required: true,
+    required: false,
     default: () => [],
   },
   itemName: {

@@ -31,7 +31,7 @@
                 :src="currentSong.artworkUrl"
                 :alt="currentSong.title"
                 class="object-cover"
-              />
+              >
               <div
                 v-else
                 class="bg-base-200 w-full h-full flex items-center justify-center"
@@ -65,8 +65,8 @@
             <button
               class="btn btn-ghost btn-sm btn-circle"
               :class="{ 'text-primary': shuffle }"
-              @click="toggleShuffle"
               title="Shuffle"
+              @click="toggleShuffle"
             >
               <Icon name="ic:round-shuffle" size="1.2rem" />
             </button>
@@ -74,8 +74,8 @@
             <button
               class="btn btn-ghost btn-sm btn-circle"
               :disabled="queue.length === 0"
-              @click="previous"
               title="Previous"
+              @click="previous"
             >
               <Icon name="ic:round-skip-previous" size="1.5rem" />
             </button>
@@ -83,13 +83,13 @@
             <button
               class="btn btn-primary btn-sm btn-circle"
               :disabled="!currentSong"
-              @click="togglePlay"
               title="Play/Pause"
+              @click="togglePlay"
             >
               <span
                 v-if="isLoading"
                 class="loading loading-spinner loading-xs"
-              ></span>
+              />
               <Icon v-else-if="isPlaying" name="ic:round-pause" size="1.5rem" />
               <Icon v-else name="ic:round-play-arrow" size="1.5rem" />
             </button>
@@ -97,8 +97,8 @@
             <button
               class="btn btn-ghost btn-sm btn-circle"
               :disabled="queue.length === 0"
-              @click="next"
               title="Next"
+              @click="next"
             >
               <Icon name="ic:round-skip-next" size="1.5rem" />
             </button>
@@ -109,7 +109,6 @@
                 'text-primary': repeat === 'all',
                 'text-secondary': repeat === 'one',
               }"
-              @click="cycleRepeat"
               :title="
                 repeat === 'off'
                   ? 'Repeat off'
@@ -117,6 +116,7 @@
                     ? 'Repeat all'
                     : 'Repeat one'
               "
+              @click="cycleRepeat"
             >
               <Icon
                 v-if="repeat === 'one'"
@@ -158,15 +158,15 @@
               max="100"
               class="range range-xs range-primary w-24"
               @input="onVolumeChange"
-            />
+            >
           </div>
 
           <!-- Queue toggle -->
           <button
             class="btn btn-ghost btn-sm btn-circle"
             :class="{ 'text-primary': showQueue }"
-            @click="showQueue = !showQueue"
             title="Queue"
+            @click="showQueue = !showQueue"
           >
             <Icon name="ic:round-queue-music" size="1.2rem" />
             <span
@@ -223,7 +223,7 @@
                   v-if="item.song.artworkUrl"
                   :src="item.song.artworkUrl"
                   :alt="item.song.title"
-                />
+                >
                 <div
                   v-else
                   class="bg-base-300 w-full h-full flex items-center justify-center"
@@ -266,7 +266,7 @@
   </div>
 
   <!-- Spacer to prevent content from being hidden behind player bar -->
-  <div v-if="currentSong" class="h-18.5"></div>
+  <div v-if="currentSong" class="h-18.5" />
 </template>
 
 <script setup>
@@ -292,7 +292,6 @@ const {
   formatTime,
   setVolume,
   seekTo,
-  playMultiple,
 } = usePlayerStore();
 
 const showQueue = ref(false);

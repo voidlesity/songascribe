@@ -2,7 +2,7 @@
   <NuxtRouteAnnouncer />
   <div class="navbar bg-base-100 shadow-sm">
     <div class="flex-1">
-      <a @click="navigateTo('/')" class="btn btn-ghost text-xl"
+      <a class="btn btn-ghost text-xl" @click="navigateTo('/')"
         ><Icon name="mdi:book-music" />Songascribe</a
       >
     </div>

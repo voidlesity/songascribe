@@ -11,7 +11,7 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center min-h-100">
-        <span class="loading loading-spinner loading-lg"></span>
+        <span class="loading loading-spinner loading-lg" />
       </div>
 
       <!-- Stats Content -->
@@ -109,7 +109,7 @@
                       v-if="song.artworkUrl"
                       :src="song.artworkUrl"
                       :alt="song.title"
-                    />
+                    >
                     <div
                       v-else
                       class="bg-base-300 w-full h-full flex items-center justify-center"
@@ -236,7 +236,7 @@
                   class="progress progress-primary w-16"
                   :value="artist.trackCount"
                   :max="stats.topArtists[0].trackCount"
-                ></progress>
+                />
               </div>
             </div>
             <div v-else class="text-center py-8 opacity-50">

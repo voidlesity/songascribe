@@ -23,13 +23,13 @@
             class="input input-lg w-full pl-12 pr-4 rounded-full shadow-lg border-2 border-base-300 focus:border-primary"
             placeholder="Search public categories..."
             @input="debouncedSearch"
-          />
+          >
         </div>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center min-h-100">
-        <span class="loading loading-spinner loading-lg"></span>
+        <span class="loading loading-spinner loading-lg" />
       </div>
 
       <!-- Categories Grid -->
@@ -51,7 +51,7 @@
                     v-if="category.owner?.avatar"
                     :src="category.owner.avatar"
                     :alt="category.owner.displayName"
-                  />
+                  >
                   <div
                     v-else
                     class="bg-base-300 w-full h-full flex items-center justify-center"
@@ -173,7 +173,7 @@
                 v-if="selectedCategory.owner?.avatar"
                 :src="selectedCategory.owner.avatar"
                 :alt="selectedCategory.owner.displayName"
-              />
+              >
               <div
                 v-else
                 class="bg-base-300 w-full h-full flex items-center justify-center"
@@ -190,10 +190,10 @@
           </div>
         </div>
 
-        <div class="divider"></div>
+        <div class="divider" />
 
         <div v-if="loadingDetails" class="flex justify-center py-8">
-          <span class="loading loading-spinner loading-lg"></span>
+          <span class="loading loading-spinner loading-lg" />
         </div>
 
         <div
@@ -216,7 +216,7 @@
           Failed to load category details
         </div>
       </div>
-      <div class="modal-backdrop" @click="closeModal"></div>
+      <div class="modal-backdrop" @click="closeModal" />
     </dialog>
   </div>
 </template>
