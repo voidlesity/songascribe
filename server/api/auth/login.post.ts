@@ -54,7 +54,14 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await setUserSession(event, { user: { id: user.id } });
+  await setUserSession(event, {
+    user: {
+      id: user.id,
+      displayName: user.displayName,
+      avatar: user.avatar,
+      theme: user.theme,
+    },
+  });
 
   return {
     id: user.id,

@@ -59,6 +59,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "User not found" });
   }
 
+  await setUserSession(event, {
+    user: {
+      id: updated.id,
+      displayName: updated.displayName,
+      avatar: updated.avatar,
+      theme: updated.theme,
+    },
+  });
+
   return {
     id: updated.id,
     email: updated.email,

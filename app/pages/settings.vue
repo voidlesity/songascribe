@@ -72,6 +72,48 @@
             <span v-if="error" class="text-error text-sm">{{ error }}</span>
             <button class="btn btn-primary" @click="saveProfile">Save</button>
           </div>
+
+          <div class="divider" />
+
+          <div>
+            <h2 class="font-semibold text-error mb-1">Danger zone</h2>
+            <p class="text-sm opacity-60 mb-3">
+              Permanently delete your account and all associated data. This cannot be undone.
+            </p>
+            <button class="btn btn-error btn-outline btn-sm" @click="confirmDelete = true">
+              <Icon name="mdi:delete-forever" /> Delete account
+            </button>
+          </div>
+
+          <dialog v-if="confirmDelete" class="modal modal-open">
+            <div class="modal-box">
+              <h3 class="font-bold text-lg text-error">Delete account?</h3>
+              <p class="py-4 text-sm">
+                This will permanently delete your account and all your data. There is no way to recover it.
+              </p>
+              <p class="text-sm opacity-60 mb-4">
+                Type <strong>delete</strong> to confirm.
+              </p>
+              <input
+                v-model="deleteConfirmText"
+                type="text"
+                class="input input-bordered w-full mb-4"
+                placeholder="delete"
+              >
+              <div class="modal-action">
+                <button class="btn btn-ghost" @click="confirmDelete = false; deleteConfirmText = ''">Cancel</button>
+                <button
+                  class="btn btn-error"
+                  :disabled="deleteConfirmText !== 'delete' || deleting"
+                  @click="deleteAccount"
+                >
+                  <span v-if="deleting" class="loading loading-spinner loading-xs" />
+                  Delete account
+                </button>
+              </div>
+            </div>
+            <div class="modal-backdrop" @click="confirmDelete = false; deleteConfirmText = ''" />
+          </dialog>
         </div>
 
         <div v-else class="space-y-3">
@@ -125,6 +167,24 @@ watchEffect(() => {
     profile.avatar = u.avatar ?? "";
   }
 });
+
+const confirmDelete = ref(false);
+const deleteConfirmText = ref("");
+const deleting = ref(false);
+
+async function deleteAccount() {
+  deleting.value = true;
+  try {
+    await $fetch("/api/users/me", { method: "DELETE" });
+    await navigateTo("/login");
+  } catch (e) {
+    error.value = (e as { statusMessage?: string }).statusMessage || "Failed to delete account";
+    confirmDelete.value = false;
+    deleteConfirmText.value = "";
+  } finally {
+    deleting.value = false;
+  }
+}
 
 async function saveProfile() {
   error.value = "";
