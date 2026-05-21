@@ -11,7 +11,13 @@ export default defineNuxtConfig({
       openAPI: true,
     },
     openAPI: {
+      meta: {
+        description: "REST API for Songascribe",
+        title: "Songascribe API",
+        version: "0.1.0",
+      },
       production: "runtime",
+      route: "/api/_openapi.json",
       ui: {
         scalar: {
           defaultOpenAllTags: true,
@@ -24,11 +30,7 @@ export default defineNuxtConfig({
           telemetry: false,
           theme: "deepSpace",
         },
-      },
-      meta: {
-        description: "REST API for Songascribe",
-        title: "Songascribe API",
-        version: "0.1.0",
+        swagger: false,
       },
     },
   },
