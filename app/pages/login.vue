@@ -70,15 +70,6 @@
 
         <form v-else class="space-y-3" @submit.prevent="handleRegister">
           <label class="input w-full">
-            <Icon name="mdi:account-circle" class="opacity-60" />
-            <input
-              v-model="register.displayName"
-              type="text"
-              placeholder="Display name"
-              required
-            >
-          </label>
-          <label class="input w-full">
             <Icon name="mdi:at" class="opacity-60" />
             <input
               v-model="register.username"
@@ -130,6 +121,9 @@
             Create account
           </button>
         </form>
+        <NuxtLink to="/browse" class="btn btn-link">
+          Just want to browse public Categories?
+        </NuxtLink>
       </div>
     </div>
   </div>
@@ -144,7 +138,6 @@ const submitting = ref(false);
 
 const login = ref({ identifier: "", password: "" });
 const register = ref({
-  displayName: "",
   username: "",
   email: "",
   password: "",
@@ -180,7 +173,6 @@ async function handleRegister() {
     await $fetch("/api/auth/register", {
       method: "POST",
       body: {
-        displayName: register.value.displayName,
         username: register.value.username,
         email: register.value.email,
         password: register.value.password,
