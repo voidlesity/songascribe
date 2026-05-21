@@ -8,8 +8,8 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo("/login");
   }
 
-  // If user is logged in and tries to go to login page: DON'T
+  // If user is logged in and tries to go to login page, redirect to home
   if (to.name == "login" && loggedIn.value) {
-    return abortNavigation();
+    return navigateTo("/");
   }
 });
