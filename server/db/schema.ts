@@ -3,36 +3,78 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   email: text("email").notNull().unique(),
-  password_hash: text("password_hash").notNull(),
-  name: text("name").notNull(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  displayName: text("display_name").notNull(),
   avatar: text("avatar"),
-  theme: text("theme").default("dark"),
-  created_at: integer("created_at", { mode: "timestamp" }).notNull(),
+  theme: text("theme").notNull().default("dark"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
 export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  user: integer("user").references(() => users.id),
-  name: text("name"),
-  is_public: integer("is_public", { mode: "boolean" }).default(false),
-  created_at: integer("created_at", { mode: "timestamp" }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  isPublic: integer("is_public", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
 export const items = sqliteTable("items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  categorie: integer("categorie").references(() => categories.id),
-  name: text("name"),
+  categoryId: integer("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  position: integer("position").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
-export const songsMap = sqliteTable("songs_map", {
+export const tracks = sqliteTable("tracks", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  item: integer("item").references(() => items.id),
-  song: text("song"),
+  encoded: text("encoded").notNull().unique(),
+  identifier: text("identifier").notNull(),
+  source: text("source").notNull(),
+  uri: text("uri"),
+  title: text("title").notNull(),
+  author: text("author").notNull(),
+  artworkUrl: text("artwork_url"),
+  lengthMs: integer("length_ms").notNull().default(0),
+  isrc: text("isrc"),
+  isStream: integer("is_stream", { mode: "boolean" }).notNull().default(false),
+  isSeekable: integer("is_seekable", { mode: "boolean" })
+    .notNull()
+    .default(true),
+  pluginInfo: text("plugin_info"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+
+export const itemTracks = sqliteTable("item_tracks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  itemId: integer("item_id")
+    .notNull()
+    .references(() => items.id, { onDelete: "cascade" }),
+  trackId: integer("track_id")
+    .notNull()
+    .references(() => tracks.id),
+  position: integer("position").notNull().default(0),
+  addedAt: integer("added_at", { mode: "timestamp" }).notNull(),
 });
 
 export const shares = sqliteTable("shares", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  category: integer("category").references(() => categories.id),
-  share_token: text("share_token").notNull().unique(),
-  created_at: integer("created_at", { mode: "timestamp" }).notNull(),
+  categoryId: integer("category_id")
+    .notNull()
+    .unique()
+    .references(() => categories.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }),
 });

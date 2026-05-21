@@ -1,175 +1,147 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ["Statistics"],
+    summary: "User statistics",
+    description:
+      "Aggregated usage statistics for the authenticated user, computed via SQL.",
+    responses: {
+      200: { description: "Statistics" },
+      401: { description: "Unauthorized" },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event);
+  const { user: sessionUser } = await requireUserSession(event);
+  const userId = (sessionUser as { id: number }).id;
 
-  // Get all categories for the user
-  const userCategories = await db
-    .select()
-    .from(tables.categories)
-    .where(eq(tables.categories.user, user.id));
-
-  // Get all items across all categories
-  const categoryIds = userCategories.map((c) => c.id);
-  const allItems =
-    categoryIds.length > 0
-      ? await db
-          .select()
-          .from(tables.items)
-          .where(
-            sql`${tables.items.categorie} IN (${sql.join(
-              categoryIds.map((id) => sql`${id}`),
-              sql`, `,
-            )})`,
-          )
-      : [];
-
-  // Get all song mappings for these items
-  const itemIds = allItems.map((i) => i.id);
-  const allSongMappings =
-    itemIds.length > 0
-      ? await db
-          .select()
-          .from(tables.songsMap)
-          .where(
-            sql`${tables.songsMap.item} IN (${sql.join(
-              itemIds.map((id) => sql`${id}`),
-              sql`, `,
-            )})`,
-          )
-      : [];
-
-  // Parse raw Lavalink track JSON from each mapping
-  const allTracks = allSongMappings
-    .map((m) => {
-      try {
-        return m.song ? JSON.parse(m.song) : null;
-      } catch {
-        return null;
-      }
+  const overviewRow = db
+    .select({
+      totalCategories: sql<number>`COUNT(DISTINCT ${tables.categories.id})`,
+      totalItems: sql<number>`COUNT(DISTINCT ${tables.items.id})`,
+      totalTrackLinks: sql<number>`COUNT(${tables.itemTracks.id})`,
+      uniqueTracks: sql<number>`COUNT(DISTINCT ${tables.itemTracks.trackId})`,
     })
-    .filter(Boolean);
+    .from(tables.categories)
+    .leftJoin(tables.items, eq(tables.items.categoryId, tables.categories.id))
+    .leftJoin(tables.itemTracks, eq(tables.itemTracks.itemId, tables.items.id))
+    .where(eq(tables.categories.userId, userId))
+    .get();
 
-  // Deduplicate tracks by encoded string
-  const uniqueTracksMap = new Map<string, any>();
-  for (const track of allTracks) {
-    if (track.encoded && !uniqueTracksMap.has(track.encoded)) {
-      uniqueTracksMap.set(track.encoded, track);
-    }
-  }
-  const uniqueTracks = Array.from(uniqueTracksMap.values());
+  const totalDurationRow = db
+    .select({
+      totalMs: sql<number>`COALESCE(SUM(DISTINCT ${tables.tracks.lengthMs}), 0)`,
+    })
+    .from(tables.tracks)
+    .innerJoin(
+      tables.itemTracks,
+      eq(tables.itemTracks.trackId, tables.tracks.id),
+    )
+    .innerJoin(tables.items, eq(tables.itemTracks.itemId, tables.items.id))
+    .innerJoin(
+      tables.categories,
+      eq(tables.items.categoryId, tables.categories.id),
+    )
+    .where(eq(tables.categories.userId, userId))
+    .get();
 
-  // Calculate statistics
-  const totalCategories = userCategories.length;
-  const totalItems = allItems.length;
-  const totalSongs = uniqueTracks.length;
-  const totalSongMappings = allSongMappings.length;
+  const totalDurationMs = totalDurationRow?.totalMs ?? 0;
+  const totalItems = overviewRow?.totalItems ?? 0;
+  const totalTrackLinks = overviewRow?.totalTrackLinks ?? 0;
 
-  // Most used songs (by encoded string frequency)
-  const songUsageMap = new Map<string, number>();
-  for (const track of allTracks) {
-    if (track.encoded) {
-      const count = songUsageMap.get(track.encoded) || 0;
-      songUsageMap.set(track.encoded, count + 1);
-    }
-  }
+  const mostUsedTracks = await db
+    .select({
+      track: tables.tracks,
+      usageCount: sql<number>`COUNT(${tables.itemTracks.id})`,
+    })
+    .from(tables.itemTracks)
+    .innerJoin(tables.tracks, eq(tables.itemTracks.trackId, tables.tracks.id))
+    .innerJoin(tables.items, eq(tables.itemTracks.itemId, tables.items.id))
+    .innerJoin(
+      tables.categories,
+      eq(tables.items.categoryId, tables.categories.id),
+    )
+    .where(eq(tables.categories.userId, userId))
+    .groupBy(tables.tracks.id)
+    .orderBy(desc(sql`COUNT(${tables.itemTracks.id})`))
+    .limit(10);
 
-  const mostUsedSongs = Array.from(songUsageMap.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([encoded, count]) => {
-      const track = uniqueTracksMap.get(encoded);
-      return {
-        ...track,
-        usageCount: count,
-      };
-    });
+  const topArtists = await db
+    .select({
+      name: tables.tracks.author,
+      trackCount: sql<number>`COUNT(DISTINCT ${tables.tracks.id})`,
+    })
+    .from(tables.tracks)
+    .innerJoin(
+      tables.itemTracks,
+      eq(tables.itemTracks.trackId, tables.tracks.id),
+    )
+    .innerJoin(tables.items, eq(tables.itemTracks.itemId, tables.items.id))
+    .innerJoin(
+      tables.categories,
+      eq(tables.items.categoryId, tables.categories.id),
+    )
+    .where(eq(tables.categories.userId, userId))
+    .groupBy(tables.tracks.author)
+    .orderBy(desc(sql`COUNT(DISTINCT ${tables.tracks.id})`))
+    .limit(10);
 
-  // Category statistics
-  const categoryStats = userCategories.map((category) => {
-    const items = allItems.filter((item) => item.categorie === category.id);
-    const catItemIds = items.map((i) => i.id);
-    const catMappings = allSongMappings.filter((m) =>
-      catItemIds.includes(m.item!),
-    );
+  const categoryStats = await db
+    .select({
+      id: tables.categories.id,
+      name: tables.categories.name,
+      isPublic: tables.categories.isPublic,
+      itemCount: sql<number>`COUNT(DISTINCT ${tables.items.id})`,
+      trackCount: sql<number>`COUNT(DISTINCT ${tables.itemTracks.trackId})`,
+    })
+    .from(tables.categories)
+    .leftJoin(tables.items, eq(tables.items.categoryId, tables.categories.id))
+    .leftJoin(tables.itemTracks, eq(tables.itemTracks.itemId, tables.items.id))
+    .where(eq(tables.categories.userId, userId))
+    .groupBy(tables.categories.id);
 
-    const catTracks = catMappings
-      .map((m) => {
-        try {
-          return m.song ? JSON.parse(m.song) : null;
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean);
-
-    const uniqueEncodedSet = new Set(
-      catTracks.map((t: any) => t.encoded).filter(Boolean),
-    );
-
-    return {
-      id: category.id,
-      name: category.name,
-      itemCount: items.length,
-      songCount: uniqueEncodedSet.size,
-      isPublic: category.is_public,
-    };
-  });
-
-  // Artist statistics
-  const artistMap = new Map<string, number>();
-  for (const track of uniqueTracks) {
-    const author = track.info?.author;
-    if (author) {
-      const count = artistMap.get(author) || 0;
-      artistMap.set(author, count + 1);
-    }
-  }
-
-  const topArtists = Array.from(artistMap.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([artist, count]) => ({
-      name: artist,
-      songCount: count,
-    }));
-
-  // Recent activity (last 10 items created)
-  const recentItems = allItems
-    .sort((a, b) => (b.id || 0) - (a.id || 0))
-    .slice(0, 10)
-    .map((item) => {
-      const category = userCategories.find((c) => c.id === item.categorie);
-      return {
-        id: item.id,
-        name: item.name,
-        categoryName: category?.name,
-      };
-    });
-
-  // Average songs per item
-  const avgSongsPerItem =
-    totalItems > 0 ? (totalSongMappings / totalItems).toFixed(2) : 0;
-
-  // Total listening time from Lavalink track lengths (in ms)
-  const totalDuration = uniqueTracks.reduce(
-    (sum: number, track: any) => sum + (track.info?.length || 0),
-    0,
-  );
-  const totalDurationMinutes = Math.floor(totalDuration / 60000);
-  const totalDurationHours = (totalDuration / 3600000).toFixed(1);
+  const recentItems = await db
+    .select({
+      id: tables.items.id,
+      name: tables.items.name,
+      createdAt: tables.items.createdAt,
+      categoryId: tables.categories.id,
+      categoryName: tables.categories.name,
+    })
+    .from(tables.items)
+    .innerJoin(
+      tables.categories,
+      eq(tables.items.categoryId, tables.categories.id),
+    )
+    .where(eq(tables.categories.userId, userId))
+    .orderBy(desc(tables.items.createdAt))
+    .limit(10);
 
   return {
     overview: {
-      totalCategories,
+      totalCategories: overviewRow?.totalCategories ?? 0,
       totalItems,
-      totalSongs,
-      totalSongMappings,
-      avgSongsPerItem: parseFloat(avgSongsPerItem as string),
-      totalDurationMinutes,
-      totalDurationHours: parseFloat(totalDurationHours),
+      totalTracks: overviewRow?.uniqueTracks ?? 0,
+      totalTrackLinks,
+      avgTracksPerItem:
+        totalItems > 0 ? Number((totalTrackLinks / totalItems).toFixed(2)) : 0,
+      totalDurationMs,
+      totalDurationMinutes: Math.floor(totalDurationMs / 60_000),
+      totalDurationHours: Number((totalDurationMs / 3_600_000).toFixed(2)),
     },
-    mostUsedSongs,
-    categoryStats,
+    mostUsedTracks: mostUsedTracks.map((r) => ({
+      id: r.track.id,
+      encoded: r.track.encoded,
+      title: r.track.title,
+      author: r.track.author,
+      source: r.track.source,
+      uri: r.track.uri,
+      artworkUrl: r.track.artworkUrl,
+      lengthMs: r.track.lengthMs,
+      usageCount: r.usageCount,
+    })),
     topArtists,
+    categoryStats,
     recentItems,
   };
 });

@@ -1,177 +1,141 @@
 <template>
-  <div class="min-h-screen bg-base-200 p-4">
-    <div class="max-w-4xl mx-auto">
-      <h1 class="text-4xl font-bold mb-8 flex items-center gap-2">
-        <Icon name="ic:round-settings" size="2rem" />
-        Settings
-      </h1>
+  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-4">
+    <h1 class="text-2xl font-semibold">Settings</h1>
 
-      <!-- Profile Settings Card -->
-      <div class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">
-            <Icon name="ic:round-person" size="1.5rem" />
-            Profile Settings
-          </h2>
+    <div role="tablist" class="tabs tabs-box">
+      <button
+        role="tab"
+        class="tab"
+        :class="{ 'tab-active': tab === 'profile' }"
+        @click="tab = 'profile'"
+      >
+        <Icon name="mdi:account" /> Profile
+      </button>
+      <button
+        role="tab"
+        class="tab"
+        :class="{ 'tab-active': tab === 'appearance' }"
+        @click="tab = 'appearance'"
+      >
+        <Icon name="mdi:palette" /> Appearance
+      </button>
+    </div>
 
-          <form @submit.prevent="saveProfile">
-            <div class="form-control mb-4">
-              <label class="label">
-                <span class="label-text font-semibold">Display Name</span>
-              </label>
-              <input
-                v-model="profileForm.name"
-                type="text"
-                placeholder="Your name"
-                class="input input-bordered w-full"
-                required
-              />
-            </div>
+    <div class="card card-border bg-base-100">
+      <div class="card-body">
+        <div v-if="tab === 'profile'" class="space-y-3">
+          <h2 class="font-semibold">Profile</h2>
 
-            <div class="form-control mb-4">
-              <label class="label">
-                <span class="label-text font-semibold">Avatar URL</span>
-              </label>
-              <input
-                v-model="profileForm.avatar"
-                type="url"
-                placeholder="https://example.com/avatar.jpg"
-                class="input input-bordered w-full"
-                required
-              />
-              <label class="label">
-                <span class="label-text-alt text-gray-500"
-                  >Enter a valid image URL for your avatar</span
+          <div class="flex items-center gap-3">
+            <div class="avatar">
+              <div class="w-16 rounded-full bg-base-300">
+                <img
+                  v-if="profile.avatar"
+                  :src="profile.avatar"
+                  :alt="profile.displayName"
                 >
-              </label>
-            </div>
-
-            <div v-if="profileForm.avatar" class="mb-4">
-              <div class="avatar">
                 <div
-                  class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2"
+                  v-else
+                  class="w-full h-full flex items-center justify-center"
                 >
-                  <img :src="profileForm.avatar" alt="Avatar preview" />
+                  <Icon name="mdi:account" size="2rem" />
                 </div>
               </div>
             </div>
+            <span class="text-sm opacity-60">Preview</span>
+          </div>
 
-            <div
-              v-if="profileMessage"
-              class="alert mb-4"
-              :class="
-                profileMessageType === 'success'
-                  ? 'alert-success'
-                  : 'alert-error'
-              "
+          <label class="floating-label">
+            <span>Display name</span>
+            <input
+              v-model="profile.displayName"
+              type="text"
+              class="input w-full"
+              placeholder="Display name"
             >
-              <Icon
-                :name="
-                  profileMessageType === 'success'
-                    ? 'ic:round-check-circle'
-                    : 'ic:round-error'
-                "
-                size="1.5rem"
-              />
-              <span>{{ profileMessage }}</span>
-            </div>
+          </label>
 
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="savingProfile"
+          <label class="floating-label">
+            <span>Avatar URL</span>
+            <input
+              v-model="profile.avatar"
+              type="url"
+              class="input w-full"
+              placeholder="https://…"
             >
-              <Icon v-if="!savingProfile" name="ic:round-save" size="1.2rem" />
-              <span v-if="savingProfile" class="loading loading-spinner"></span>
-              {{ savingProfile ? "Saving..." : "Save Profile" }}
+          </label>
+
+          <div class="card-actions justify-end items-center gap-3">
+            <span v-if="message" class="text-success text-sm">{{
+              message
+            }}</span>
+            <span v-if="error" class="text-error text-sm">{{ error }}</span>
+            <button class="btn btn-primary" @click="saveProfile">Save</button>
+          </div>
+
+          <div class="divider" />
+
+          <div>
+            <h2 class="font-semibold text-error mb-1">Danger zone</h2>
+            <p class="text-sm opacity-60 mb-3">
+              Permanently delete your account and all associated data. This cannot be undone.
+            </p>
+            <button class="btn btn-error btn-outline btn-sm" @click="confirmDelete = true">
+              <Icon name="mdi:delete-forever" /> Delete account
             </button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Theme Settings Card -->
-      <div class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">
-            <Icon name="ic:round-palette" size="1.5rem" />
-            Theme Settings
-          </h2>
-
-          <div class="form-control mb-4">
-            <label class="label">
-              <span class="label-text font-semibold">Choose Theme</span>
-            </label>
-            <select
-              v-model="selectedTheme"
-              class="select select-bordered w-full"
-              @change="changeTheme"
-            >
-              <option v-for="theme in themes" :key="theme" :value="theme">
-                {{ formatThemeName(theme) }}
-              </option>
-            </select>
           </div>
 
-          <div
-            v-if="themeMessage"
-            class="alert mb-4"
-            :class="
-              themeMessageType === 'success' ? 'alert-success' : 'alert-error'
-            "
-          >
-            <Icon
-              :name="
-                themeMessageType === 'success'
-                  ? 'ic:round-check-circle'
-                  : 'ic:round-error'
-              "
-              size="1.5rem"
-            />
-            <span>{{ themeMessage }}</span>
-          </div>
-
-          <!-- Theme Preview -->
-          <div class="mt-4">
-            <label class="label">
-              <span class="label-text font-semibold">Theme Preview</span>
-            </label>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div class="flex flex-col items-center gap-1">
-                <div class="bg-primary w-full h-8 rounded"></div>
-                <span class="text-xs">Primary</span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <div class="bg-secondary w-full h-8 rounded"></div>
-                <span class="text-xs">Secondary</span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <div class="bg-accent w-full h-8 rounded"></div>
-                <span class="text-xs">Accent</span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <div class="bg-neutral w-full h-8 rounded"></div>
-                <span class="text-xs">Neutral</span>
+          <dialog v-if="confirmDelete" class="modal modal-open">
+            <div class="modal-box">
+              <h3 class="font-bold text-lg text-error">Delete account?</h3>
+              <p class="py-4 text-sm">
+                This will permanently delete your account and all your data. There is no way to recover it.
+              </p>
+              <p class="text-sm opacity-60 mb-4">
+                Type <strong>delete</strong> to confirm.
+              </p>
+              <input
+                v-model="deleteConfirmText"
+                type="text"
+                class="input input-bordered w-full mb-4"
+                placeholder="delete"
+              >
+              <div class="modal-action">
+                <button class="btn btn-ghost" @click="confirmDelete = false; deleteConfirmText = ''">Cancel</button>
+                <button
+                  class="btn btn-error"
+                  :disabled="deleteConfirmText !== 'delete' || deleting"
+                  @click="deleteAccount"
+                >
+                  <span v-if="deleting" class="loading loading-spinner loading-xs" />
+                  Delete account
+                </button>
               </div>
             </div>
-          </div>
+            <div class="modal-backdrop" @click="confirmDelete = false; deleteConfirmText = ''" />
+          </dialog>
         </div>
-      </div>
 
-      <!-- Danger Zone Card -->
-      <div class="card bg-base-100 shadow-xl border-2 border-error">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4 text-error">
-            <Icon name="ic:round-warning" size="1.5rem" />
-            Account Information
-          </h2>
-          <p class="text-sm opacity-70 mb-4">
-            Logging out will clear your session and return you to the login
-            page.
-          </p>
-          <div class="flex gap-2">
-            <button class="btn btn-error" @click="handleLogout">
-              <Icon name="ic:round-logout" size="1.2rem" />
-              Logout
+        <div v-else class="space-y-3">
+          <h2 class="font-semibold">Theme</h2>
+          <p class="text-sm opacity-60">Click a theme to apply it instantly.</p>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            <button
+              v-for="t in DAISY_THEMES"
+              :key="t"
+              :data-theme="t"
+              class="rounded-box border border-base-300 p-2 text-left hover:scale-[1.02] transition cursor-pointer bg-base-100"
+              :class="{ 'ring-2 ring-primary': theme === t }"
+              @click="setTheme(t)"
+            >
+              <div class="flex items-center gap-1 mb-2">
+                <div class="w-3 h-3 rounded-full bg-primary" />
+                <div class="w-3 h-3 rounded-full bg-secondary" />
+                <div class="w-3 h-3 rounded-full bg-accent" />
+                <div class="w-3 h-3 rounded-full bg-neutral" />
+              </div>
+              <span class="text-xs font-medium capitalize">{{ t }}</span>
             </button>
           </div>
         </div>
@@ -180,170 +144,61 @@
   </div>
 </template>
 
-<script setup>
-const { loggedIn, user, clear, fetch: fetchSession } = useUserSession();
+<script setup lang="ts">
+definePageMeta({ middleware: ["logged-in"] });
 
-// DaisyUI themes
-const themes = [
-  "light",
-  "dark",
-  "cupcake",
-  "bumblebee",
-  "emerald",
-  "corporate",
-  "synthwave",
-  "retro",
-  "cyberpunk",
-  "valentine",
-  "halloween",
-  "garden",
-  "forest",
-  "aqua",
-  "lofi",
-  "pastel",
-  "fantasy",
-  "wireframe",
-  "black",
-  "luxury",
-  "dracula",
-  "cmyk",
-  "autumn",
-  "business",
-  "acid",
-  "lemonade",
-  "night",
-  "coffee",
-  "winter",
-  "dim",
-  "nord",
-  "sunset",
-];
+const { user, fetch: refreshSession } = useUserSession();
+const { theme, setTheme } = useTheme();
 
-const selectedTheme = ref("dark");
-const profileForm = ref({
-  name: "",
+const tab = ref<"profile" | "appearance">("profile");
+
+const profile = reactive({
+  displayName: "",
   avatar: "",
 });
 
-const savingProfile = ref(false);
-const profileMessage = ref("");
-const profileMessageType = ref("success");
+const message = ref("");
+const error = ref("");
 
-const themeMessage = ref("");
-const themeMessageType = ref("success");
-
-// Check if user is logged in
-onMounted(async () => {
-  if (!loggedIn.value) {
-    navigateTo("/login");
-    return;
+watchEffect(() => {
+  const u = user.value as { displayName?: string; avatar?: string } | null;
+  if (u) {
+    profile.displayName = u.displayName ?? "";
+    profile.avatar = u.avatar ?? "";
   }
-
-  await loadUserData();
 });
 
-async function loadUserData() {
-  try {
-    const userDataRaw = await $fetch("/api/user/me");
-    const userData = Array.isArray(userDataRaw) ? userDataRaw[0] : userDataRaw;
-    if (!userData) return;
-    profileForm.value.name = userData.name;
-    profileForm.value.avatar = userData.avatar;
-    selectedTheme.value = userData.theme || "dark";
+const confirmDelete = ref(false);
+const deleteConfirmText = ref("");
+const deleting = ref(false);
 
-    // Apply the theme
-    if (import.meta.client) {
-      document.documentElement.setAttribute("data-theme", selectedTheme.value);
-    }
-  } catch (error) {
-    console.error("Failed to load user data:", error);
+async function deleteAccount() {
+  deleting.value = true;
+  try {
+    await $fetch("/api/users/me", { method: "DELETE" });
+    await navigateTo("/login");
+  } catch (e) {
+    error.value = (e as { statusMessage?: string }).statusMessage || "Failed to delete account";
+    confirmDelete.value = false;
+    deleteConfirmText.value = "";
+  } finally {
+    deleting.value = false;
   }
 }
 
 async function saveProfile() {
-  savingProfile.value = true;
-  profileMessage.value = "";
-
+  error.value = "";
+  message.value = "";
   try {
-    await $fetch("/api/user/profile", {
-      method: "PUT",
-      body: {
-        name: profileForm.value.name,
-        avatar: profileForm.value.avatar,
-      },
+    await $fetch("/api/users/me", {
+      method: "PATCH",
+      body: { displayName: profile.displayName, avatar: profile.avatar },
     });
-
-    // Refresh the session
-    await fetchSession();
-
-    profileMessage.value = "Profile updated successfully!";
-    profileMessageType.value = "success";
-
-    setTimeout(() => {
-      profileMessage.value = "";
-    }, 3000);
-  } catch (error) {
-    console.error("Failed to update profile:", error);
-    profileMessage.value = "Failed to update profile. Please try again.";
-    profileMessageType.value = "error";
-  } finally {
-    savingProfile.value = false;
+    await refreshSession();
+    message.value = "Saved";
+    setTimeout(() => (message.value = ""), 1500);
+  } catch (e) {
+    error.value = (e as { statusMessage?: string }).statusMessage || "Failed";
   }
 }
-
-async function changeTheme() {
-  themeMessage.value = "";
-
-  try {
-    // Apply theme immediately for instant feedback
-    if (import.meta.client) {
-      document.documentElement.setAttribute("data-theme", selectedTheme.value);
-    }
-
-    // Save to database
-    await $fetch("/api/user/theme", {
-      method: "PUT",
-      body: {
-        theme: selectedTheme.value,
-      },
-    });
-
-    // Refresh the session
-    await fetchSession();
-
-    themeMessage.value = "Theme updated successfully!";
-    themeMessageType.value = "success";
-
-    setTimeout(() => {
-      themeMessage.value = "";
-    }, 3000);
-  } catch (error) {
-    console.error("Failed to update theme:", error);
-    themeMessage.value = "Failed to update theme. Please try again.";
-    themeMessageType.value = "error";
-  }
-}
-
-function formatThemeName(theme) {
-  return theme
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-async function handleLogout() {
-  try {
-    await clear();
-    navigateTo("/");
-  } catch (error) {
-    console.error("Logout error:", error);
-    navigateTo("/");
-  }
-}
-
-watch(loggedIn, (value) => {
-  if (!value) {
-    navigateTo("/login");
-  }
-});
 </script>

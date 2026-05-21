@@ -1,4 +1,4 @@
-FROM node:25.6.0-alpine AS build
+FROM node:24.15-alpine AS build
 WORKDIR /app
 
 RUN corepack enable
@@ -15,7 +15,7 @@ COPY . ./
 RUN npm run build
 
 # Run the application
-FROM node:23.11.1-alpine
+FROM node:24.15-alpine
 WORKDIR /app
 
 COPY --from=build /app/.output/ ./

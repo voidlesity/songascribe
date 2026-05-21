@@ -1,52 +1,55 @@
-export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event);
+defineRouteMeta({
+  openAPI: {
+    tags: ["Categories"],
+    summary: "List own categories",
+    description:
+      "Returns all categories owned by the authenticated user, including items and tracks (ordered).",
+    responses: {
+      200: { description: "List of categories" },
+      401: { description: "Unauthorized" },
+    },
+  },
+});
 
-  const userCategories = await db
+export default defineEventHandler(async (event) => {
+  const { user: sessionUser } = await requireUserSession(event);
+  const userId = (sessionUser as { id: number }).id;
+
+  const cats = await db
     .select()
     .from(tables.categories)
-    .where(eq(tables.categories.user, user.id));
+    .where(eq(tables.categories.userId, userId))
+    .orderBy(asc(tables.categories.createdAt));
 
-  const categoriesWithItems = await Promise.all(
-    userCategories.map(async (category) => {
-      const categoryItems = await db
+  return Promise.all(
+    cats.map(async (c) => {
+      const its = await db
         .select()
         .from(tables.items)
-        .where(eq(tables.items.categorie, category.id));
+        .where(eq(tables.items.categoryId, c.id))
+        .orderBy(asc(tables.items.position), asc(tables.items.id));
 
-      const itemsWithSongs = await Promise.all(
-        categoryItems.map(async (item) => {
-          const songMappings = await db
-            .select()
-            .from(tables.songsMap)
-            .where(eq(tables.songsMap.item, item.id));
-
-          const songs = songMappings
-            .map((m) => {
-              try {
-                return m.song ? JSON.parse(m.song) : null;
-              } catch {
-                return null;
-              }
-            })
-            .filter(Boolean);
-
-          return {
-            id: item.id,
-            name: item.name,
-            songs,
-          };
-        }),
+      const itemsOut = await Promise.all(
+        its.map(async (i) => ({
+          id: i.id,
+          name: i.name,
+          description: i.description,
+          position: i.position,
+          createdAt: i.createdAt,
+          updatedAt: i.updatedAt,
+          tracks: await getItemTracks(i.id),
+        })),
       );
 
       return {
-        id: category.id,
-        name: category.name,
-        is_public: category.is_public,
-        created_at: category.created_at,
-        items: itemsWithSongs,
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        isPublic: c.isPublic,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        items: itemsOut,
       };
     }),
   );
-
-  return categoriesWithItems;
 });

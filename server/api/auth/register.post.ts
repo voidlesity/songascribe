@@ -1,63 +1,110 @@
-export default defineEventHandler(async (event) => {
-  const body = await readBody(event);
+defineRouteMeta({
+  openAPI: {
+    tags: ["Auth"],
+    summary: "Register",
+    description: "Create a new user account and start a session.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["email", "username", "displayName", "password"],
+            properties: {
+              email: { type: "string", format: "email" },
+              username: { type: "string" },
+              displayName: { type: "string" },
+              password: { type: "string", format: "password" },
+              avatar: { type: "string", nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      201: { description: "User created" },
+      400: { description: "Missing or invalid fields" },
+      409: { description: "Email or username already taken" },
+    },
+  },
+});
 
-  // Validate input
-  if (!body.email || !body.password || !body.name) {
+export default defineEventHandler(async (event) => {
+  const body = await readBody<{
+    email?: string;
+    username?: string;
+    displayName?: string;
+    password?: string;
+    avatar?: string | null;
+  }>(event);
+
+  const email = body.email?.trim().toLowerCase();
+  const username = body.username?.trim().toLowerCase();
+  const displayName = body.displayName?.trim();
+  const password = body.password;
+
+  if (!email || !username || !displayName || !password) {
     throw createError({
       statusCode: 400,
-      message: "Email, password, and name are required",
+      statusMessage: "email, username, displayName and password are required",
+    });
+  }
+  if (!/^[a-z0-9_.-]{3,32}$/.test(username)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        "username must be 3-32 chars, lowercase letters/digits/._- only",
     });
   }
 
-  // Check if user already exists
-  const existingUser = await db
+  const existing = await db
     .select()
     .from(tables.users)
-    .where(eq(tables.users.email, body.email.toLowerCase()))
+    .where(
+      or(eq(tables.users.email, email), eq(tables.users.username, username)),
+    )
     .limit(1);
 
-  if (existingUser.length > 0) {
+  if (existing.length > 0) {
     throw createError({
       statusCode: 409,
-      message: "User with this email already exists",
+      statusMessage: "Email or username already in use",
     });
   }
 
-  // Hash password
-  const passwordHash = await hashPassword(body.password);
-
-  // Create user
-  const [newUser] = await db
+  const passwordHash = await hashPassword(password);
+  const now = new Date();
+  const [user] = await db
     .insert(tables.users)
     .values({
-      email: body.email.toLowerCase(),
-      password_hash: passwordHash,
-      name: body.name,
-      avatar: body.avatar || null,
+      email,
+      username,
+      passwordHash,
+      displayName,
+      avatar: body.avatar ?? null,
       theme: "dark",
-      created_at: new Date(),
+      createdAt: now,
+      updatedAt: now,
     })
     .returning();
 
-  // Set user session
   await setUserSession(event, {
     user: {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      avatar: newUser.avatar,
-      theme: newUser.theme,
+      id: user!.id,
+      displayName: user!.displayName,
+      avatar: user!.avatar,
+      theme: user!.theme,
     },
   });
 
+  setResponseStatus(event, 201);
   return {
-    success: true,
-    user: {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      avatar: newUser.avatar,
-      theme: newUser.theme,
-    },
+    id: user!.id,
+    email: user!.email,
+    username: user!.username,
+    displayName: user!.displayName,
+    avatar: user!.avatar,
+    theme: user!.theme,
+    createdAt: user!.createdAt,
   };
 });

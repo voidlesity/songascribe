@@ -1,62 +1,75 @@
-export default defineEventHandler(async (event) => {
-  const body = await readBody(event);
+defineRouteMeta({
+  openAPI: {
+    tags: ["Auth"],
+    summary: "Login",
+    description: "Authenticate with username or email + password.",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["login", "password"],
+            properties: {
+              login: {
+                type: "string",
+                description: "Username or email address",
+              },
+              password: { type: "string", format: "password" },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: "Login successful" },
+      400: { description: "Missing fields" },
+      401: { description: "Invalid credentials" },
+    },
+  },
+});
 
-  // Validate input
-  if (!body.email || !body.password) {
+export default defineEventHandler(async (event) => {
+  const body = await readBody<{ login?: string; password?: string }>(event);
+  const login = body.login?.trim().toLowerCase();
+  const password = body.password;
+
+  if (!login || !password) {
     throw createError({
       statusCode: 400,
-      message: "Email and password are required",
+      statusMessage: "login and password are required",
     });
   }
 
-  // Find user by email
-  const users = await db
+  const [user] = await db
     .select()
     .from(tables.users)
-    .where(eq(tables.users.email, body.email.toLowerCase()))
+    .where(or(eq(tables.users.email, login), eq(tables.users.username, login)))
     .limit(1);
 
-  if (users.length === 0) {
+  if (!user || !(await verifyPassword(user.passwordHash, password))) {
     throw createError({
       statusCode: 401,
-      message: "Invalid email or password",
+      statusMessage: "Invalid credentials",
     });
   }
 
-  const user = users[0];
-
-  // Verify password
-  const isValidPassword = await verifyPassword(
-    user.password_hash,
-    body.password,
-  );
-
-  if (!isValidPassword) {
-    throw createError({
-      statusCode: 401,
-      message: "Invalid email or password",
-    });
-  }
-
-  // Set user session
   await setUserSession(event, {
     user: {
       id: user.id,
-      email: user.email,
-      name: user.name,
+      displayName: user.displayName,
       avatar: user.avatar,
       theme: user.theme,
     },
   });
 
   return {
-    success: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      avatar: user.avatar,
-      theme: user.theme,
-    },
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    avatar: user.avatar,
+    theme: user.theme,
+    createdAt: user.createdAt,
   };
 });

@@ -1,329 +1,235 @@
 <template>
-  <div class="min-h-screen bg-base-200">
-    <div class="container mx-auto p-4 max-w-7xl">
-      <!-- Header -->
-      <div class="mb-6">
-        <h1 class="text-4xl font-bold mb-2">Statistics</h1>
-        <p class="text-lg opacity-70">
-          Your Songascribe analytics and insights
-        </p>
+  <div class="max-w-6xl mx-auto p-4 md:p-6 space-y-4">
+    <h1 class="text-2xl font-semibold">Statistics</h1>
+
+    <div v-if="loading" class="flex justify-center py-16">
+      <span class="loading loading-spinner loading-lg" />
+    </div>
+
+    <div v-else-if="stats" class="space-y-4">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="card card-border bg-base-100">
+          <div class="card-body p-4 flex-row items-center gap-3">
+            <Icon name="mdi:folder-multiple" size="2rem" class="text-primary" />
+            <div>
+              <div class="text-2xl font-semibold">
+                {{ stats.overview.totalCategories }}
+              </div>
+              <div class="text-xs opacity-60">Categories</div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-border bg-base-100">
+          <div class="card-body p-4 flex-row items-center gap-3">
+            <Icon name="mdi:library-music" size="2rem" class="text-secondary" />
+            <div>
+              <div class="text-2xl font-semibold">
+                {{ stats.overview.totalItems }}
+              </div>
+              <div class="text-xs opacity-60">Items</div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-border bg-base-100">
+          <div class="card-body p-4 flex-row items-center gap-3">
+            <Icon name="mdi:music-note" size="2rem" class="text-accent" />
+            <div>
+              <div class="text-2xl font-semibold">
+                {{ stats.overview.totalTracks }}
+              </div>
+              <div class="text-xs opacity-60">Tracks</div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-border bg-base-100">
+          <div class="card-body p-4 flex-row items-center gap-3">
+            <Icon name="mdi:clock-outline" size="2rem" class="text-info" />
+            <div>
+              <div class="text-2xl font-semibold">
+                {{ stats.overview.totalDurationHours }}h
+              </div>
+              <div class="text-xs opacity-60">Total</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="flex items-center justify-center min-h-100">
-        <span class="loading loading-spinner loading-lg"></span>
-      </div>
-
-      <!-- Stats Content -->
-      <div v-else-if="stats" class="space-y-6">
-        <!-- Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="stat bg-base-100 rounded-box shadow-xl p-6">
-            <div class="stat-figure text-primary">
-              <Icon name="ic:round-category" size="2rem" />
-            </div>
-            <div class="stat-value">{{ stats.overview.totalCategories }}</div>
-            <div class="stat-title">Categories</div>
-          </div>
-
-          <div class="stat bg-base-100 rounded-box shadow-xl p-6">
-            <div class="stat-figure text-secondary">
-              <Icon name="ic:round-library-music" size="2rem" />
-            </div>
-            <div class="stat-value">{{ stats.overview.totalItems }}</div>
-            <div class="stat-title">Items</div>
-          </div>
-
-          <div class="stat bg-base-100 rounded-box shadow-xl p-6">
-            <div class="stat-figure text-accent">
-              <Icon name="ic:round-music-note" size="2rem" />
-            </div>
-            <div class="stat-value">{{ stats.overview.totalSongs }}</div>
-            <div class="stat-title">Unique Songs</div>
-          </div>
-
-          <div class="stat bg-base-100 rounded-box shadow-xl p-6">
-            <div class="stat-figure text-info">
-              <Icon name="ic:round-access-time" size="2rem" />
-            </div>
-            <div class="stat-value">
-              {{ stats.overview.totalDurationHours }}h
-            </div>
-            <div class="stat-title">Total Duration</div>
-          </div>
-        </div>
-
-        <!-- Additional Overview Stats -->
-        <div class="card bg-base-100 shadow-xl rounded-3xl">
-          <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-              <Icon name="ic:round-analytics" size="1.5rem" />
-              Overview
+      <div class="grid lg:grid-cols-2 gap-4">
+        <section class="card card-border bg-base-100">
+          <div class="card-body p-4">
+            <h2 class="font-semibold mb-2 flex items-center gap-2">
+              <Icon name="mdi:trending-up" /> Most Used Tracks
             </h2>
-            <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
-              <div class="stat">
-                <div class="stat-value text-primary">
-                  {{ stats.overview.avgSongsPerItem }}
-                </div>
-                <div class="stat-desc">Average songs per item</div>
-              </div>
-              <div class="stat">
-                <div class="stat-value text-secondary">
-                  {{ stats.overview.totalSongMappings }}
-                </div>
-                <div class="stat-desc">Total song assignments</div>
-              </div>
-              <div class="stat">
-                <div class="stat-value text-accent">
-                  {{ stats.overview.totalDurationMinutes }}m
-                </div>
-                <div class="stat-desc">Total duration (minutes)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Most Used Songs -->
-        <div class="card bg-base-100 shadow-xl rounded-3xl">
-          <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-              <Icon name="ic:round-trending-up" size="1.5rem" />
-              Most Used Songs
-            </h2>
-            <div v-if="stats.mostUsedSongs.length > 0" class="space-y-3">
-              <div
-                v-for="(song, index) in stats.mostUsedSongs"
-                :key="song.encoded || index"
-                class="flex items-center gap-4 p-4 bg-base-200 rounded-box hover:bg-base-300 transition-all"
+            <ul v-if="stats.mostUsedTracks.length" class="list">
+              <li
+                v-for="(track, i) in stats.mostUsedTracks"
+                :key="track.encoded ?? i"
+                class="list-row"
               >
-                <div class="avatar avatar-placeholder">
-                  <div
-                    class="bg-primary text-primary-content rounded-full w-10"
-                  >
-                    <span class="text-xl font-bold">{{ index + 1 }}</span>
+                <span class="text-sm opacity-50 w-5 text-center">{{
+                  i + 1
+                }}</span>
+                <TrackArt
+                  :artwork-url="track.artworkUrl"
+                  :title="track.title"
+                  size="sm"
+                />
+                <div class="list-col-grow min-w-0">
+                  <div class="font-medium truncate">{{ track.title }}</div>
+                  <div class="text-xs opacity-60 truncate">
+                    {{ track.author }}
                   </div>
                 </div>
-                <div class="avatar">
-                  <div class="w-16 rounded-xl">
-                    <img
-                      v-if="song.info?.artworkUrl"
-                      :src="song.info.artworkUrl"
-                      :alt="song.info?.title"
-                    />
-                    <div
-                      v-else
-                      class="bg-base-300 w-full h-full flex items-center justify-center"
-                    >
-                      <Icon name="ic:round-library-music" size="1.5rem" />
-                    </div>
-                  </div>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">
-                    {{ song.info?.title }}
-                  </div>
-                  <div class="text-sm opacity-70 truncate">
-                    {{ song.info?.author }}
-                  </div>
-                </div>
-                <div class="badge badge-primary badge-lg">
-                  {{ song.usageCount }}
-                  {{ song.usageCount === 1 ? "use" : "uses" }}
-                </div>
-              </div>
-            </div>
-            <div v-else class="text-center py-8 opacity-50">
-              No songs added yet
-            </div>
+                <span class="badge badge-primary">{{ track.usageCount }}</span>
+              </li>
+            </ul>
+            <p v-else class="opacity-60 text-sm py-4 text-center">
+              No tracks yet
+            </p>
           </div>
-        </div>
+        </section>
 
-        <!-- Category Statistics -->
-        <div class="card bg-base-100 shadow-xl rounded-3xl">
-          <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-              <Icon name="ic:round-category" size="1.5rem" />
-              Categories Breakdown
+        <section class="card card-border bg-base-100">
+          <div class="card-body p-4">
+            <h2 class="font-semibold mb-2 flex items-center gap-2">
+              <Icon name="mdi:account-music" /> Top Artists
             </h2>
-            <div v-if="stats.categoryStats.length > 0" class="space-y-3">
-              <div
-                v-for="category in stats.categoryStats"
-                :key="category.id"
-                class="flex items-center gap-4 p-4 bg-base-200 rounded-box"
-              >
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="font-semibold text-lg">{{ category.name }}</div>
-                    <div
-                      v-if="category.isPublic"
-                      class="badge badge-success badge-sm"
-                    >
-                      <Icon name="ic:round-public" size="0.875rem" />
-                      Public
-                    </div>
-                  </div>
-                  <div class="flex gap-4 text-sm">
-                    <div class="flex items-center gap-1">
-                      <Icon
-                        name="ic:round-library-music"
-                        size="1rem"
-                        class="opacity-70"
-                      />
-                      <span>{{ category.itemCount }} items</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <Icon
-                        name="ic:round-music-note"
-                        size="1rem"
-                        class="opacity-70"
-                      />
-                      <span>{{ category.songCount }} songs</span>
-                    </div>
+            <ul v-if="stats.topArtists.length" class="list">
+              <li v-for="(a, i) in stats.topArtists" :key="i" class="list-row">
+                <span class="text-sm opacity-50 w-5 text-center">{{
+                  i + 1
+                }}</span>
+                <div class="list-col-grow min-w-0">
+                  <div class="font-medium truncate">{{ a.name }}</div>
+                  <progress
+                    class="progress progress-primary h-1"
+                    :value="a.trackCount"
+                    :max="stats.topArtists[0]!.trackCount"
+                  />
+                </div>
+                <span class="text-sm opacity-70">{{ a.trackCount }}</span>
+              </li>
+            </ul>
+            <p v-else class="opacity-60 text-sm py-4 text-center">
+              No artists yet
+            </p>
+          </div>
+        </section>
+
+        <section class="card card-border bg-base-100">
+          <div class="card-body p-4">
+            <h2 class="font-semibold mb-2 flex items-center gap-2">
+              <Icon name="mdi:folder-multiple-outline" /> Categories
+            </h2>
+            <ul v-if="stats.categoryStats.length" class="list">
+              <li v-for="c in stats.categoryStats" :key="c.id" class="list-row">
+                <Icon
+                  :name="c.isPublic ? 'mdi:earth' : 'mdi:folder'"
+                  class="opacity-70"
+                />
+                <div class="list-col-grow min-w-0">
+                  <div class="font-medium truncate">{{ c.name }}</div>
+                  <div class="text-xs opacity-60">
+                    {{ c.itemCount }} items · {{ c.trackCount }} tracks
                   </div>
                 </div>
-                <div
-                  class="radial-progress text-primary"
-                  :style="`--value:${((category.songCount / stats.overview.totalSongs) * 100).toFixed(0)}; --size:4rem;`"
+                <span
+                  v-if="stats.overview.totalTracks"
+                  class="text-xs opacity-60"
                 >
                   {{
-                    (
-                      (category.songCount / stats.overview.totalSongs) *
-                      100
-                    ).toFixed(0)
+                    ((c.trackCount / stats.overview.totalTracks) * 100).toFixed(
+                      0,
+                    )
                   }}%
-                </div>
-              </div>
-            </div>
-            <div v-else class="text-center py-8 opacity-50">
-              No categories created yet
-            </div>
+                </span>
+              </li>
+            </ul>
+            <p v-else class="opacity-60 text-sm py-4 text-center">
+              No categories yet
+            </p>
           </div>
-        </div>
+        </section>
 
-        <!-- Top Artists -->
-        <div class="card bg-base-100 shadow-xl rounded-3xl">
-          <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-              <Icon name="ic:round-person" size="1.5rem" />
-              Top Artists
+        <section class="card card-border bg-base-100">
+          <div class="card-body p-4">
+            <h2 class="font-semibold mb-2 flex items-center gap-2">
+              <Icon name="mdi:history" /> Recent Items
             </h2>
-            <div
-              v-if="stats.topArtists.length > 0"
-              class="grid grid-cols-1 md:grid-cols-2 gap-3"
-            >
-              <div
-                v-for="(artist, index) in stats.topArtists"
-                :key="index"
-                class="flex items-center gap-3 p-3 bg-base-200 rounded-box"
-              >
-                <div class="avatar avatar-placeholder">
-                  <div
-                    class="bg-linear-to-br from-primary to-secondary text-primary-content rounded-full w-8"
-                  >
-                    <span class="text-l font-bold">{{ index + 1 }}</span>
-                  </div>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">{{ artist.name }}</div>
-                  <div class="text-xs opacity-70">
-                    {{ artist.songCount }}
-                    {{ artist.songCount === 1 ? "song" : "songs" }}
-                  </div>
-                </div>
-                <progress
-                  class="progress progress-primary w-16"
-                  :value="artist.songCount"
-                  :max="stats.topArtists[0].songCount"
-                ></progress>
-              </div>
-            </div>
-            <div v-else class="text-center py-8 opacity-50">
-              No artists data available
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="card bg-base-100 shadow-xl rounded-3xl">
-          <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-              <Icon name="ic:round-history" size="1.5rem" />
-              Recent Activity
-            </h2>
-            <div v-if="stats.recentItems.length > 0" class="space-y-2">
-              <div
+            <ul v-if="stats.recentItems.length" class="list">
+              <li
                 v-for="item in stats.recentItems"
                 :key="item.id"
-                class="flex items-center gap-3 p-3 bg-base-200 rounded-box hover:bg-base-300 transition-all"
+                class="list-row"
               >
-                <Icon
-                  name="ic:round-library-music"
-                  size="1.5rem"
-                  class="opacity-50"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">{{ item.name }}</div>
-                  <div class="text-sm opacity-70">
+                <Icon name="mdi:library-music" class="opacity-70" />
+                <div class="list-col-grow min-w-0">
+                  <div class="font-medium truncate">{{ item.name }}</div>
+                  <div class="text-xs opacity-60 truncate">
                     in {{ item.categoryName }}
                   </div>
                 </div>
-              </div>
-            </div>
-            <div v-else class="text-center py-8 opacity-50">
-              No recent activity
-            </div>
+              </li>
+            </ul>
+            <p v-else class="opacity-60 text-sm py-4 text-center">
+              No activity yet
+            </p>
           </div>
-        </div>
+        </section>
       </div>
+    </div>
 
-      <!-- Error State -->
-      <div v-else class="flex items-center justify-center min-h-100">
-        <div class="text-center">
-          <Icon
-            name="ic:round-error"
-            size="4rem"
-            class="opacity-30 mx-auto mb-4"
-          />
-          <h3 class="text-2xl font-bold mb-2">Failed to load statistics</h3>
-          <p class="opacity-70 mb-4">Please try again later</p>
-          <button class="btn btn-primary" @click="fetchStats">Retry</button>
-        </div>
-      </div>
+    <div v-else class="text-center py-16 opacity-60">
+      Failed to load statistics.
+      <button class="btn btn-sm ml-2" @click="load">Retry</button>
     </div>
   </div>
 </template>
 
-<script setup>
-const { loggedIn } = useUserSession();
+<script setup lang="ts">
+definePageMeta({ middleware: ["logged-in"] });
 
-const stats = ref(null);
+interface Stats {
+  overview: {
+    totalCategories: number;
+    totalItems: number;
+    totalTracks: number;
+    totalTrackLinks: number;
+    totalDurationHours: number;
+    totalDurationMinutes: number;
+    avgTracksPerItem: number;
+  };
+  mostUsedTracks: {
+    encoded?: string;
+    title: string;
+    author: string;
+    artworkUrl?: string;
+    usageCount: number;
+  }[];
+  categoryStats: {
+    id: number;
+    name: string;
+    isPublic: boolean;
+    itemCount: number;
+    trackCount: number;
+  }[];
+  topArtists: { name: string; trackCount: number }[];
+  recentItems: { id: number; name: string; categoryName: string }[];
+}
+
+const stats = ref<Stats | null>(null);
 const loading = ref(true);
 
-async function fetchStats() {
+async function load() {
   loading.value = true;
   try {
-    const data = await $fetch("/api/statistics");
-    stats.value = data;
-  } catch (error) {
-    console.error("Error fetching statistics:", error);
+    stats.value = await $fetch<Stats>("/api/statistics");
+  } catch (e) {
+    console.error(e);
   } finally {
     loading.value = false;
   }
 }
 
-// Load stats on mount
-onMounted(() => {
-  if (loggedIn.value) {
-    fetchStats();
-  }
-});
-
-// Redirect to login if not logged in
-watch(loggedIn, (value) => {
-  if (!value) {
-    navigateTo("/auth/spotify");
-  } else {
-    fetchStats();
-  }
-});
+onMounted(load);
 </script>

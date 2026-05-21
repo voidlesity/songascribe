@@ -1,326 +1,252 @@
 <template>
-  <div class="min-h-screen bg-base-200">
-    <div class="container mx-auto p-4 max-w-7xl">
-      <!-- Header -->
-      <div class="mb-6">
-        <h1 class="text-4xl font-bold mb-2">Browse Public Categories</h1>
-        <p class="text-lg opacity-70">
-          Discover categories shared by the community
-        </p>
-      </div>
+  <div class="max-w-6xl mx-auto p-4 md:p-6 space-y-4">
+    <header>
+      <h1 class="text-2xl font-semibold">Browse</h1>
+      <p class="text-sm opacity-60">
+        Public categories shared by the community
+      </p>
+    </header>
 
-      <!-- Search -->
-      <div class="mb-6">
-        <div class="relative">
-          <Icon
-            name="ic:baseline-search"
-            size="1.5rem"
-            class="absolute left-4 top-1/2 -translate-y-1/2 opacity-50"
-          />
-          <input
-            v-model="searchQuery"
-            type="search"
-            class="input input-lg w-full pl-12 pr-4 rounded-full shadow-lg border-2 border-base-300 focus:border-primary"
-            placeholder="Search public categories..."
-            @input="debouncedSearch"
-          />
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="loading" class="flex items-center justify-center min-h-100">
-        <span class="loading loading-spinner loading-lg"></span>
-      </div>
-
-      <!-- Categories Grid -->
-      <div
-        v-else-if="publicCategories.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    <label class="input w-full">
+      <Icon name="mdi:magnify" class="opacity-60" />
+      <input
+        v-model="search"
+        type="search"
+        placeholder="Search public categories…"
+        @input="onSearch"
       >
-        <div
-          v-for="category in publicCategories"
-          :key="category.id"
-          class="card bg-base-100 shadow-xl rounded-3xl hover:shadow-2xl transition-all cursor-pointer"
-          @click="viewCategory(category)"
-        >
-          <div class="card-body p-6">
-            <div class="flex items-start gap-3 mb-4">
-              <div class="avatar">
-                <div class="w-12 h-12 rounded-full">
-                  <img
-                    v-if="category.owner?.avatar"
-                    :src="category.owner.avatar"
-                    :alt="category.owner.name"
-                  />
-                  <div
-                    v-else
-                    class="bg-base-300 w-full h-full flex items-center justify-center"
-                  >
-                    <Icon name="ic:round-person" size="1.5rem" />
-                  </div>
-                </div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <h2 class="card-title text-xl mb-1">{{ category.name }}</h2>
-                <p class="text-sm opacity-70">
-                  by {{ category.owner?.name || "Unknown" }}
-                </p>
-              </div>
-              <div class="badge badge-success badge-sm">
-                <Icon name="ic:round-public" size="0.875rem" />
-                Public
-              </div>
-            </div>
+    </label>
 
-            <div class="stats stats-horizontal bg-base-200 shadow-sm">
-              <div class="stat p-3">
-                <div class="stat-title text-xs opacity-70">Items</div>
-                <div class="stat-value text-2xl text-primary">
-                  {{ category.itemCount }}
-                </div>
-              </div>
-              <div class="stat p-3">
-                <div class="stat-title text-xs opacity-70">Songs</div>
-                <div class="stat-value text-2xl text-secondary">
-                  {{ category.songCount }}
+    <div v-if="loading" class="flex justify-center py-16">
+      <span class="loading loading-spinner loading-lg" />
+    </div>
+
+    <div
+      v-else-if="list.length"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+    >
+      <button
+        v-for="c in list"
+        :key="c.id"
+        class="card card-border bg-base-100 text-left hover:border-primary transition cursor-pointer"
+        @click="open(c)"
+      >
+        <div class="card-body p-4 gap-2">
+          <div class="flex items-center gap-2">
+            <div class="avatar">
+              <div class="w-8 h-8 rounded-full bg-base-300">
+                <img
+                  v-if="c.owner?.avatar"
+                  :src="c.owner.avatar"
+                  :alt="c.owner.displayName"
+                >
+                <div
+                  v-else
+                  class="w-full h-full flex items-center justify-center"
+                >
+                  <Icon name="mdi:account" />
                 </div>
               </div>
             </div>
-
-            <div
-              v-if="category.createdAt"
-              class="text-xs opacity-50 mt-2 flex items-center gap-1"
-            >
-              <Icon name="ic:round-access-time" size="0.875rem" />
-              Created {{ formatDate(category.createdAt) }}
-            </div>
-
-            <div class="card-actions justify-end mt-4">
-              <button
-                class="btn btn-primary btn-sm rounded-full"
-                @click.stop="viewCategory(category)"
-              >
-                <Icon name="ic:round-visibility" size="1rem" />
-                View
-              </button>
+            <div class="flex-1 min-w-0">
+              <h2 class="font-semibold truncate">{{ c.name }}</h2>
+              <p class="text-xs opacity-60 truncate">
+                {{ c.owner?.displayName ?? "Unknown" }}
+              </p>
             </div>
           </div>
+          <div class="flex gap-3 text-xs opacity-70">
+            <span><Icon name="mdi:library-music" /> {{ c.itemCount }}</span>
+            <span><Icon name="mdi:music-note" /> {{ c.trackCount }}</span>
+          </div>
         </div>
-      </div>
+      </button>
+    </div>
 
-      <!-- Empty State -->
-      <div v-else class="flex items-center justify-center min-h-100">
-        <div class="text-center">
-          <Icon
-            name="ic:round-public"
-            size="4rem"
-            class="opacity-30 mx-auto mb-4"
-          />
-          <h3 class="text-2xl font-bold mb-2">No Public Categories Found</h3>
-          <p class="opacity-70 mb-4">
-            {{
-              searchQuery
-                ? "Try a different search term"
-                : "Be the first to share a category!"
-            }}
-          </p>
-          <NuxtLink to="/" class="btn btn-primary">
-            <Icon name="ic:round-home" size="1.2rem" />
-            Go Home
-          </NuxtLink>
-        </div>
-      </div>
+    <div v-else class="text-center py-20">
+      <Icon name="mdi:earth" size="3rem" class="opacity-30 mx-auto mb-2" />
+      <p class="opacity-60">
+        {{ search ? "No matches" : "Nothing shared yet" }}
+      </p>
+    </div>
 
-      <!-- Pagination -->
-      <div
-        v-if="pagination.total > pagination.limit"
-        class="flex justify-center mt-8"
-      >
-        <div class="join">
-          <button
-            class="join-item btn"
-            :disabled="pagination.page === 1"
-            @click="changePage(pagination.page - 1)"
-          >
-            «
-          </button>
-          <button class="join-item btn">Page {{ pagination.page }}</button>
-          <button
-            class="join-item btn"
-            :disabled="pagination.page * pagination.limit >= pagination.total"
-            @click="changePage(pagination.page + 1)"
-          >
-            »
-          </button>
-        </div>
+    <div v-if="totalPages > 1" class="flex justify-center">
+      <div class="join">
+        <button
+          class="join-item btn btn-sm"
+          :disabled="pagination.page === 1"
+          @click="changePage(pagination.page - 1)"
+        >
+          «
+        </button>
+        <button class="join-item btn btn-sm btn-ghost">
+          {{ pagination.page }} / {{ totalPages }}
+        </button>
+        <button
+          class="join-item btn btn-sm"
+          :disabled="pagination.page >= totalPages"
+          @click="changePage(pagination.page + 1)"
+        >
+          »
+        </button>
       </div>
     </div>
 
-    <!-- View Category Modal -->
-    <dialog v-if="selectedCategory" class="modal modal-open">
-      <div class="modal-box max-w-4xl">
+    <dialog :class="['modal', { 'modal-open': !!selected }]">
+      <div class="modal-box max-w-3xl">
         <button
           class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="closeModal"
+          @click="close"
         >
           ✕
         </button>
 
-        <div class="flex items-start gap-3 mb-6">
+        <div v-if="selected" class="flex items-center gap-3 mb-4">
           <div class="avatar">
-            <div class="w-16 h-16 rounded-full">
+            <div class="w-12 h-12 rounded-full bg-base-300">
               <img
-                v-if="selectedCategory.owner?.avatar"
-                :src="selectedCategory.owner.avatar"
-                :alt="selectedCategory.owner.name"
-              />
+                v-if="selected.owner?.avatar"
+                :src="selected.owner.avatar"
+                :alt="selected.owner.displayName"
+              >
               <div
                 v-else
-                class="bg-base-300 w-full h-full flex items-center justify-center"
+                class="w-full h-full flex items-center justify-center"
               >
-                <Icon name="ic:round-person" size="2rem" />
+                <Icon name="mdi:account" size="1.5rem" />
               </div>
             </div>
           </div>
           <div>
-            <h3 class="text-3xl font-bold mb-1">{{ selectedCategory.name }}</h3>
-            <p class="text-lg opacity-70">
-              by {{ selectedCategory.owner?.name || "Unknown" }}
+            <h3 class="text-xl font-semibold">{{ selected.name }}</h3>
+            <p class="text-sm opacity-60">
+              by {{ selected.owner?.displayName ?? "Unknown" }}
             </p>
           </div>
         </div>
 
-        <div class="divider"></div>
-
-        <div v-if="loadingDetails" class="flex justify-center py-8">
-          <span class="loading loading-spinner loading-lg"></span>
+        <div v-if="loadingDetail" class="flex justify-center py-8">
+          <span class="loading loading-spinner loading-lg" />
         </div>
 
-        <div
-          v-else-if="categoryDetails"
-          class="space-y-4 max-h-[60vh] overflow-y-auto"
-        >
-          <div
-            v-for="item in categoryDetails.items"
+        <div v-else-if="detail" class="space-y-3 max-h-[60vh] overflow-y-auto">
+          <article
+            v-for="item in detail.items"
             :key="item.id"
-            class="card bg-base-200 shadow-sm rounded-2xl"
+            class="card card-border bg-base-200"
           >
-            <div class="card-body p-4">
-              <h4 class="card-title text-xl mb-3">{{ item.name }}</h4>
-              <MusicPlayer v-if="item.songs.length > 0" :songs="item.songs" />
-              <div v-else class="text-center py-4 opacity-50">
-                No songs in this item
-              </div>
+            <div class="card-body p-3">
+              <h4 class="font-semibold mb-2">{{ item.name }}</h4>
+              <SongList :songs="item.tracks" :item-name="item.name" />
             </div>
-          </div>
-        </div>
-
-        <div v-else class="text-center py-8 opacity-50">
-          Failed to load category details
+          </article>
+          <p v-if="!detail.items.length" class="text-center opacity-60 py-8">
+            No items yet
+          </p>
         </div>
       </div>
-      <div class="modal-backdrop" @click="closeModal"></div>
+      <form method="dialog" class="modal-backdrop" @submit.prevent="close">
+        <button>close</button>
+      </form>
     </dialog>
   </div>
 </template>
 
-<script setup>
-const searchQuery = ref("");
-const publicCategories = ref([]);
+<script setup lang="ts">
+import type { Track } from "~/composables/useTrackSearch";
+
+interface Owner {
+  displayName?: string;
+  avatar?: string;
+}
+
+interface PublicCategoryListItem {
+  id: number;
+  name: string;
+  itemCount: number;
+  trackCount: number;
+  createdAt?: string;
+  owner?: Owner;
+}
+
+interface PublicCategoryDetail {
+  id: number;
+  name: string;
+  owner?: Owner;
+  items: { id: number; name: string; tracks: Track[] }[];
+}
+
+interface PageResponse {
+  data: PublicCategoryListItem[];
+  pagination: { page: number; limit: number; total: number };
+}
+
+const search = ref("");
+const list = ref<PublicCategoryListItem[]>([]);
 const loading = ref(true);
-const pagination = ref({
-  page: 1,
-  limit: 20,
-  total: 0,
-});
+const pagination = ref({ page: 1, limit: 20, total: 0 });
 
-const selectedCategory = ref(null);
-const categoryDetails = ref(null);
-const loadingDetails = ref(false);
+const selected = ref<PublicCategoryListItem | null>(null);
+const detail = ref<PublicCategoryDetail | null>(null);
+const loadingDetail = ref(false);
 
-let searchTimeout = null;
+let timer: ReturnType<typeof setTimeout> | null = null;
 
-async function fetchPublicCategories() {
+async function load() {
   loading.value = true;
   try {
     const params = new URLSearchParams({
-      page: pagination.value.page.toString(),
-      limit: pagination.value.limit.toString(),
+      page: String(pagination.value.page),
+      limit: String(pagination.value.limit),
     });
+    if (search.value) params.append("search", search.value);
 
-    if (searchQuery.value) {
-      params.append("search", searchQuery.value);
-    }
-
-    const data = await $fetch(`/api/categories/public?${params}`);
-    publicCategories.value = data.categories;
+    const data = await $fetch<PageResponse>(`/api/public/categories?${params}`);
+    list.value = data.data;
     pagination.value = data.pagination;
-  } catch (error) {
-    console.error("Error fetching public categories:", error);
-    publicCategories.value = [];
+  } catch (err) {
+    console.error(err);
+    list.value = [];
   } finally {
     loading.value = false;
   }
 }
 
-function debouncedSearch() {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
+function onSearch() {
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(() => {
     pagination.value.page = 1;
-    fetchPublicCategories();
-  }, 500);
+    load();
+  }, 400);
 }
 
-function changePage(page) {
-  pagination.value.page = page;
-  fetchPublicCategories();
+function changePage(p: number) {
+  pagination.value.page = p;
+  load();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-async function viewCategory(category) {
-  selectedCategory.value = category;
-  loadingDetails.value = true;
-  categoryDetails.value = null;
-
+async function open(c: PublicCategoryListItem) {
+  selected.value = c;
+  loadingDetail.value = true;
+  detail.value = null;
   try {
-    // Fetch full category details with items and songs
-    const data = await $fetch(`/api/categories/${category.id}/public`);
-    categoryDetails.value = data;
-  } catch (error) {
-    console.error("Error fetching category details:", error);
+    detail.value = await $fetch<PublicCategoryDetail>(
+      `/api/public/categories/${c.id}`,
+    );
   } finally {
-    loadingDetails.value = false;
+    loadingDetail.value = false;
   }
 }
 
-function closeModal() {
-  selectedCategory.value = null;
-  categoryDetails.value = null;
+function close() {
+  selected.value = null;
+  detail.value = null;
 }
 
-function formatDate(dateString) {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now - date);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(pagination.value.total / pagination.value.limit)),
+);
 
-  if (diffDays === 0) return "today";
-  if (diffDays === 1) return "yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-  return `${Math.floor(diffDays / 365)} years ago`;
-}
-
-// Load categories on mount
-onMounted(() => {
-  fetchPublicCategories();
-});
+onMounted(load);
 </script>
-
-<style scoped>
-.card {
-  transition: all 0.3s ease;
-}
-</style>
