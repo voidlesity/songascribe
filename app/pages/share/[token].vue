@@ -1,94 +1,83 @@
 <template>
-  <div class="min-h-screen bg-base-200">
-    <div v-if="loading" class="flex items-center justify-center min-h-screen">
+  <div class="max-w-5xl mx-auto p-4 md:p-6">
+    <div v-if="loading" class="flex justify-center py-20">
       <span class="loading loading-spinner loading-lg" />
     </div>
 
-    <div
-      v-else-if="error"
-      class="flex items-center justify-center min-h-screen"
-    >
-      <div class="text-center">
-        <Icon
-          name="ic:round-error"
-          size="4rem"
-          class="opacity-30 mx-auto mb-4"
-        />
-        <h3 class="text-2xl font-bold mb-2">{{ error }}</h3>
-        <p class="opacity-70 mb-4">The share link may be invalid or expired.</p>
-        <NuxtLink to="/" class="btn btn-primary">Go Home</NuxtLink>
-      </div>
+    <div v-else-if="error" class="text-center py-20">
+      <Icon
+        name="mdi:link-variant-off"
+        size="3rem"
+        class="opacity-30 mx-auto mb-2"
+      />
+      <h2 class="text-xl font-semibold mb-1">{{ error }}</h2>
+      <p class="opacity-60 mb-4">The share link may be invalid or expired.</p>
+      <NuxtLink to="/" class="btn btn-primary btn-sm">Home</NuxtLink>
     </div>
 
-    <div v-else-if="category" class="container mx-auto p-4 max-w-7xl">
-      <!-- Header -->
-      <div class="bg-base-100 rounded-3xl shadow-xl p-6 mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2 mb-2">
-              <Icon name="ic:round-share" size="1.5rem" class="opacity-50" />
-              <span class="text-sm opacity-70">Shared Category</span>
-            </div>
-            <h1 class="text-3xl font-bold">{{ category.name }}</h1>
-          </div>
-          <NuxtLink to="/" class="btn btn-ghost">
-            <Icon name="ic:round-home" size="1.2rem" />
-            Home
-          </NuxtLink>
-        </div>
-      </div>
-
-      <!-- Items Grid -->
-      <div
-        v-if="category.items.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 gap-4"
+    <div v-else-if="category" class="space-y-4">
+      <header
+        class="card card-border bg-base-100 flex-row items-center justify-between p-4"
       >
-        <div
+        <div>
+          <div class="flex items-center gap-2 text-xs opacity-60 mb-1">
+            <Icon name="mdi:share-variant" /> Shared category
+          </div>
+          <h1 class="text-2xl font-semibold">{{ category.name }}</h1>
+        </div>
+        <NuxtLink to="/" class="btn btn-ghost btn-sm">
+          <Icon name="mdi:home" /> Home
+        </NuxtLink>
+      </header>
+
+      <div
+        v-if="category.items.length"
+        class="grid grid-cols-1 lg:grid-cols-2 gap-3"
+      >
+        <article
           v-for="item in category.items"
           :key="item.id"
-          class="card bg-base-100 shadow-xl rounded-3xl hover:shadow-2xl transition-all"
+          class="card card-border bg-base-100"
         >
-          <div class="card-body p-6">
-            <h2 class="card-title text-2xl mb-4">{{ item.name }}</h2>
-
+          <div class="card-body p-4">
+            <h2 class="font-semibold mb-2">{{ item.name }}</h2>
             <SongList :songs="item.tracks" :item-name="item.name" />
           </div>
-        </div>
+        </article>
       </div>
 
-      <!-- Empty State -->
-      <div v-else class="text-center py-20">
-        <Icon
-          name="ic:round-library-music"
-          size="4rem"
-          class="opacity-30 mx-auto mb-4"
-        />
-        <h3 class="text-2xl font-bold mb-2">No Items Yet</h3>
-        <p class="opacity-70">This category doesn't have any items yet.</p>
+      <div v-else class="text-center py-16 opacity-60">
+        No items in this category yet
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { Track } from "~/composables/useTrackSearch";
+
+interface SharedCategory {
+  id: number;
+  name: string;
+  items: { id: number; name: string; tracks: Track[] }[];
+}
+
 const route = useRoute();
-const token = route.params.token;
+const token = route.params.token as string;
 
-const category = ref(null);
+const category = ref<SharedCategory | null>(null);
 const loading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 
-async function fetchSharedCategory() {
+async function load() {
   loading.value = true;
   error.value = null;
-
   try {
-    const data = await $fetch(`/api/shares/${token}`);
-    category.value = data;
+    category.value = await $fetch<SharedCategory>(`/api/shares/${token}`);
   } catch (err) {
-    console.error("Error fetching shared category:", err);
+    const e = err as { statusCode?: number };
     error.value =
-      err.statusCode === 404
+      e.statusCode === 404
         ? "Share not found"
         : "Failed to load shared category";
   } finally {
@@ -96,7 +85,5 @@ async function fetchSharedCategory() {
   }
 }
 
-onMounted(() => {
-  fetchSharedCategory();
-});
+onMounted(load);
 </script>

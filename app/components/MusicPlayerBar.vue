@@ -1,272 +1,221 @@
 <template>
-  <!-- Persistent bottom music player bar -->
   <div
     v-if="currentSong"
-    class="fixed bottom-0 left-0 right-0 z-50 bg-base-300 border-t border-base-content/10 shadow-2xl"
+    class="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-base-100 border-t border-base-300"
   >
-    <!-- Progress bar (thin clickable bar at very top) -->
     <div
-      class="relative h-1.5 bg-base-content/10 cursor-pointer group"
+      class="relative h-1 bg-base-300 cursor-pointer group"
       @click="onProgressClick"
       @mousedown="startDrag"
     >
       <div
-        class="absolute inset-y-0 left-0 bg-primary transition-all duration-100"
+        class="absolute inset-y-0 left-0 bg-primary"
         :style="{ width: progressPercent + '%' }"
       />
       <div
-        class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100"
         :style="{ left: `calc(${progressPercent}% - 6px)` }"
       />
     </div>
 
-    <div class="container mx-auto px-4">
-      <div class="flex items-center gap-3 h-18">
-        <!-- Song Info (left) -->
-        <div class="flex items-center gap-3 min-w-0 w-1/3">
-          <div class="avatar shrink-0">
-            <div class="w-12 h-12 rounded-lg">
-              <img
-                v-if="currentSong.artworkUrl"
-                :src="currentSong.artworkUrl"
-                :alt="currentSong.title"
-                class="object-cover"
-              >
-              <div
-                v-else
-                class="bg-base-200 w-full h-full flex items-center justify-center"
-              >
-                <Icon name="ic:round-library-music" size="1.5rem" />
-              </div>
-            </div>
+    <div class="px-3 py-2 flex items-center gap-3">
+      <div class="flex items-center gap-2 min-w-0 flex-1 md:w-1/3 md:flex-none">
+        <TrackArt
+          :artwork-url="currentSong.artworkUrl"
+          :title="currentSong.title"
+          size="sm"
+        />
+        <div class="min-w-0 flex-1">
+          <div class="font-medium text-sm truncate">
+            {{ currentSong.title || "Nothing playing" }}
           </div>
-          <div class="min-w-0 flex-1">
-            <div class="font-semibold text-sm truncate">
-              {{ currentSong.title || "No song selected" }}
-            </div>
-            <div class="text-xs opacity-70 truncate">
-              {{ currentSong.author || "Unknown artist" }}
-            </div>
-          </div>
-          <a
-            v-if="currentSong.uri"
-            :href="currentSong.uri"
-            target="_blank"
-            class="btn btn-ghost btn-xs btn-circle shrink-0"
-            title="Open in source"
-          >
-            <Icon name="ic:round-open-in-new" size="1rem" />
-          </a>
-        </div>
-
-        <!-- Playback Controls (center) -->
-        <div class="flex flex-col items-center justify-center flex-1">
-          <div class="flex items-center gap-1">
-            <button
-              class="btn btn-ghost btn-sm btn-circle"
-              :class="{ 'text-primary': shuffle }"
-              title="Shuffle"
-              @click="toggleShuffle"
-            >
-              <Icon name="ic:round-shuffle" size="1.2rem" />
-            </button>
-
-            <button
-              class="btn btn-ghost btn-sm btn-circle"
-              :disabled="queue.length === 0"
-              title="Previous"
-              @click="previous"
-            >
-              <Icon name="ic:round-skip-previous" size="1.5rem" />
-            </button>
-
-            <button
-              class="btn btn-primary btn-sm btn-circle"
-              :disabled="!currentSong"
-              title="Play/Pause"
-              @click="togglePlay"
-            >
-              <span
-                v-if="isLoading"
-                class="loading loading-spinner loading-xs"
-              />
-              <Icon v-else-if="isPlaying" name="ic:round-pause" size="1.5rem" />
-              <Icon v-else name="ic:round-play-arrow" size="1.5rem" />
-            </button>
-
-            <button
-              class="btn btn-ghost btn-sm btn-circle"
-              :disabled="queue.length === 0"
-              title="Next"
-              @click="next"
-            >
-              <Icon name="ic:round-skip-next" size="1.5rem" />
-            </button>
-
-            <button
-              class="btn btn-ghost btn-sm btn-circle"
-              :class="{
-                'text-primary': repeat === 'all',
-                'text-secondary': repeat === 'one',
-              }"
-              :title="
-                repeat === 'off'
-                  ? 'Repeat off'
-                  : repeat === 'all'
-                    ? 'Repeat all'
-                    : 'Repeat one'
-              "
-              @click="cycleRepeat"
-            >
-              <Icon
-                v-if="repeat === 'one'"
-                name="ic:round-repeat-one"
-                size="1.2rem"
-              />
-              <Icon v-else name="ic:round-repeat" size="1.2rem" />
-            </button>
-          </div>
-
-          <!-- Time display -->
-          <div class="flex items-center gap-2 text-xs opacity-70">
-            <span>{{ formatTime(currentTime) }}</span>
-            <span>/</span>
-            <span>{{ formatTime(duration) }}</span>
+          <div class="text-xs opacity-60 truncate">
+            {{ currentSong.author || "Unknown" }}
           </div>
         </div>
+        <a
+          v-if="currentSong.uri"
+          :href="currentSong.uri"
+          target="_blank"
+          class="btn btn-ghost btn-xs btn-square hidden sm:inline-flex"
+          title="Open source"
+        >
+          <Icon name="mdi:open-in-new" />
+        </a>
+      </div>
 
-        <!-- Volume & Queue (right) -->
-        <div class="flex items-center gap-2 w-1/3 justify-end">
-          <!-- Volume -->
-          <div class="hidden sm:flex items-center gap-2">
-            <button class="btn btn-ghost btn-xs btn-circle" @click="toggleMute">
-              <Icon
-                :name="
-                  volume === 0
-                    ? 'ic:round-volume-off'
-                    : volume < 50
-                      ? 'ic:round-volume-down'
-                      : 'ic:round-volume-up'
-                "
-                size="1.2rem"
-              />
-            </button>
-            <input
-              :value="volume"
-              type="range"
-              min="0"
-              max="100"
-              class="range range-xs range-primary w-24"
-              @input="onVolumeChange"
-            >
-          </div>
-
-          <!-- Queue toggle -->
+      <div class="flex flex-col items-center gap-0.5 md:flex-1">
+        <div class="flex items-center gap-1">
           <button
-            class="btn btn-ghost btn-sm btn-circle"
-            :class="{ 'text-primary': showQueue }"
-            title="Queue"
-            @click="showQueue = !showQueue"
+            class="btn btn-ghost btn-xs btn-square hidden sm:inline-flex"
+            :class="{ 'text-primary': shuffle }"
+            title="Shuffle"
+            @click="toggleShuffle"
           >
-            <Icon name="ic:round-queue-music" size="1.2rem" />
-            <span
-              v-if="queue.length > 0"
-              class="absolute -top-1 -right-1 badge badge-primary badge-xs"
-            >
-              {{ queue.length }}
-            </span>
+            <Icon name="mdi:shuffle" />
+          </button>
+          <button
+            class="btn btn-ghost btn-sm btn-square"
+            :disabled="queue.length === 0"
+            @click="previous"
+          >
+            <Icon name="mdi:skip-previous" size="1.25rem" />
+          </button>
+          <button
+            class="btn btn-primary btn-sm btn-circle"
+            :disabled="!currentSong"
+            @click="togglePlay"
+          >
+            <span v-if="isLoading" class="loading loading-spinner loading-xs" />
+            <Icon v-else-if="isPlaying" name="mdi:pause" size="1.25rem" />
+            <Icon v-else name="mdi:play" size="1.25rem" />
+          </button>
+          <button
+            class="btn btn-ghost btn-sm btn-square"
+            :disabled="queue.length === 0"
+            @click="next"
+          >
+            <Icon name="mdi:skip-next" size="1.25rem" />
+          </button>
+          <button
+            class="btn btn-ghost btn-xs btn-square hidden sm:inline-flex"
+            :class="{
+              'text-primary': repeat === 'all',
+              'text-secondary': repeat === 'one',
+            }"
+            @click="cycleRepeat"
+          >
+            <Icon :name="repeat === 'one' ? 'mdi:repeat-once' : 'mdi:repeat'" />
           </button>
         </div>
+        <div
+          class="hidden sm:flex items-center gap-1.5 text-[10px] opacity-60 tabular-nums"
+        >
+          <span>{{ formatTime(currentTime) }}</span>
+          <span>/</span>
+          <span>{{ formatTime(duration) }}</span>
+        </div>
       </div>
+
+      <div class="hidden md:flex items-center gap-2 w-1/3 justify-end">
+        <button class="btn btn-ghost btn-xs btn-square" @click="toggleMute">
+          <Icon
+            :name="
+              volume === 0
+                ? 'mdi:volume-off'
+                : volume < 50
+                  ? 'mdi:volume-medium'
+                  : 'mdi:volume-high'
+            "
+          />
+        </button>
+        <input
+          :value="volume"
+          type="range"
+          min="0"
+          max="100"
+          class="range range-xs range-primary w-24"
+          @input="onVolumeChange"
+        >
+        <button
+          class="btn btn-ghost btn-sm btn-square relative"
+          :class="{ 'text-primary': showQueue }"
+          @click="showQueue = !showQueue"
+        >
+          <Icon name="mdi:playlist-music" />
+          <span
+            v-if="queue.length > 0"
+            class="badge badge-primary badge-xs absolute -top-0.5 -right-0.5"
+          >
+            {{ queue.length }}
+          </span>
+        </button>
+      </div>
+
+      <button
+        class="md:hidden btn btn-ghost btn-sm btn-square relative"
+        :class="{ 'text-primary': showQueue }"
+        @click="showQueue = !showQueue"
+      >
+        <Icon name="mdi:playlist-music" />
+        <span
+          v-if="queue.length > 0"
+          class="badge badge-primary badge-xs absolute -top-0.5 -right-0.5"
+        >
+          {{ queue.length }}
+        </span>
+      </button>
     </div>
 
-    <!-- Queue Panel (slides up) -->
     <Transition name="slide-up">
       <div
         v-if="showQueue"
-        class="absolute bottom-full left-0 right-0 bg-base-200 border-t border-base-content/10 shadow-xl max-h-80 overflow-hidden flex flex-col"
+        class="absolute bottom-full left-0 right-0 bg-base-100 border-t border-base-300 shadow-xl max-h-80 flex flex-col"
       >
         <div
-          class="flex items-center justify-between px-4 py-3 border-b border-base-content/10"
+          class="flex items-center justify-between px-3 py-2 border-b border-base-300"
         >
-          <h3 class="font-bold text-sm">Queue ({{ queue.length }})</h3>
+          <h3 class="font-semibold text-sm">Queue ({{ queue.length }})</h3>
           <button
             v-if="queue.length > 0"
             class="btn btn-ghost btn-xs"
             @click="clearQueue"
           >
-            Clear all
+            Clear
           </button>
         </div>
-        <div class="overflow-y-auto flex-1">
-          <div
+        <ul class="list overflow-y-auto flex-1">
+          <li
             v-for="(item, index) in queue"
             :key="(item.song.encoded || '') + '-' + index"
-            class="flex items-center gap-3 px-4 py-2 hover:bg-base-300 cursor-pointer transition-colors"
-            :class="{
-              'bg-primary/10 border-l-2 border-primary': index === currentIndex,
-            }"
+            class="list-row cursor-pointer hover:bg-base-200"
+            :class="{ 'bg-primary/10': index === currentIndex }"
             @click="jumpToIndex(index)"
           >
-            <div class="text-xs opacity-50 w-6 text-center shrink-0">
+            <div class="text-xs opacity-50 w-5 text-center">
               <Icon
                 v-if="index === currentIndex && isPlaying"
-                name="ic:round-graphic-eq"
-                size="1rem"
+                name="mdi:equalizer"
                 class="text-primary"
               />
               <span v-else>{{ index + 1 }}</span>
             </div>
-            <div class="avatar shrink-0">
-              <div class="w-8 h-8 rounded">
-                <img
-                  v-if="item.song.artworkUrl"
-                  :src="item.song.artworkUrl"
-                  :alt="item.song.title"
-                >
-                <div
-                  v-else
-                  class="bg-base-300 w-full h-full flex items-center justify-center"
-                >
-                  <Icon name="ic:round-library-music" size="0.75rem" />
-                </div>
-              </div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="text-xs font-semibold truncate">
+            <TrackArt
+              :artwork-url="item.song.artworkUrl"
+              :title="item.song.title"
+              size="sm"
+            />
+            <div class="list-col-grow min-w-0">
+              <div class="text-sm font-medium truncate">
                 {{ item.song.title || "Unknown" }}
               </div>
-              <div class="text-xs opacity-70 truncate">
-                {{ item.song.author || "Unknown artist" }}
+              <div class="text-xs opacity-60 truncate">
+                {{ item.song.author || "Unknown" }}
                 <span v-if="item.itemName" class="opacity-50">
                   · {{ item.itemName }}
                 </span>
               </div>
             </div>
-            <div class="text-xs opacity-50 shrink-0">
+            <span class="text-xs opacity-50 tabular-nums">
               {{ formatTime((item.song.lengthMs || 0) / 1000) }}
-            </div>
+            </span>
             <button
-              class="btn btn-ghost btn-xs btn-circle shrink-0"
+              class="btn btn-ghost btn-xs btn-square"
               @click.stop="removeFromQueue(index)"
             >
-              <Icon name="ic:round-close" size="0.875rem" />
+              <Icon name="mdi:close" />
             </button>
-          </div>
-
-          <div
+          </li>
+          <li
             v-if="queue.length === 0"
-            class="text-center py-8 opacity-50 text-sm"
+            class="text-center py-6 opacity-50 text-sm"
           >
             Queue is empty
-          </div>
-        </div>
+          </li>
+        </ul>
       </div>
     </Transition>
   </div>
-
-  <!-- Spacer to prevent content from being hidden behind player bar -->
-  <div v-if="currentSong" class="h-18.5" />
 </template>
 
 <script setup>

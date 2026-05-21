@@ -1,25 +1,12 @@
-interface Song {
-  id?: number;
-  encoded?: string;
-  identifier?: string;
-  source?: string;
-  title?: string;
-  author?: string;
-  lengthMs?: number;
-  uri?: string | null;
-  artworkUrl?: string | null;
-  isrc?: string | null;
-  isStream?: boolean;
-  isSeekable?: boolean;
-}
+import type { Track } from "./useTrackSearch";
 
 interface QueueItem {
-  song: Song;
+  song: Track;
   itemName?: string;
 }
 
 const queue = ref<QueueItem[]>([]);
-const currentIndex = ref<number>(-1);
+const currentIndex = ref(-1);
 const isPlaying = ref(false);
 const currentTime = ref(0);
 const duration = ref(0);
@@ -38,31 +25,27 @@ const currentQueueItem = computed(() =>
 const currentSong = computed(() => currentQueueItem.value?.song || null);
 
 export function usePlayerStore() {
-  function playSong(song: Song, itemName?: string) {
-    const existingIndex = queue.value.findIndex(
+  function playSong(song: Track, itemName?: string) {
+    const existing = queue.value.findIndex(
       (q) => q.song.encoded === song.encoded,
     );
-
-    if (existingIndex >= 0) {
-      currentIndex.value = existingIndex;
+    if (existing >= 0) {
+      currentIndex.value = existing;
     } else {
       queue.value.push({ song, itemName });
       currentIndex.value = queue.value.length - 1;
     }
-
     isPlaying.value = true;
   }
 
-  function playMultiple(songs: Song[], itemName?: string, startIndex = 0) {
-    // Clear existing queue and add all songs
+  function playMultiple(songs: Track[], itemName?: string, startIndex = 0) {
     queue.value = songs.map((song) => ({ song, itemName }));
     currentIndex.value = Math.min(startIndex, songs.length - 1);
     isPlaying.value = true;
   }
 
-  function addToQueue(song: Song, itemName?: string) {
+  function addToQueue(song: Track, itemName?: string) {
     queue.value.push({ song, itemName });
-    // If nothing is playing, start playing
     if (currentIndex.value < 0) {
       currentIndex.value = 0;
       isPlaying.value = true;
@@ -71,7 +54,6 @@ export function usePlayerStore() {
 
   function removeFromQueue(index: number) {
     if (index < 0 || index >= queue.value.length) return;
-
     queue.value.splice(index, 1);
 
     if (queue.value.length === 0) {
@@ -82,11 +64,9 @@ export function usePlayerStore() {
     } else if (index < currentIndex.value) {
       currentIndex.value--;
     } else if (index === currentIndex.value) {
-      // If we removed the current song, keep index but cap it
       if (currentIndex.value >= queue.value.length) {
         currentIndex.value = queue.value.length - 1;
       }
-      // Trigger re-play of the new current song
       isPlaying.value = true;
     }
   }
@@ -110,10 +90,8 @@ export function usePlayerStore() {
 
   function next() {
     if (queue.value.length === 0) return;
-
     if (shuffle.value) {
-      const randomIndex = Math.floor(Math.random() * queue.value.length);
-      currentIndex.value = randomIndex;
+      currentIndex.value = Math.floor(Math.random() * queue.value.length);
     } else if (currentIndex.value < queue.value.length - 1) {
       currentIndex.value++;
     } else if (repeat.value === "all") {
@@ -126,12 +104,10 @@ export function usePlayerStore() {
   }
 
   function previous() {
-    // If more than 3 seconds in, restart the song
     if (currentTime.value > 3) {
       currentTime.value = 0;
       return;
     }
-
     if (currentIndex.value > 0) {
       currentIndex.value--;
       isPlaying.value = true;
@@ -163,25 +139,23 @@ export function usePlayerStore() {
   }
 
   function cycleRepeat() {
-    if (repeat.value === "off") repeat.value = "all";
-    else if (repeat.value === "all") repeat.value = "one";
-    else repeat.value = "off";
+    repeat.value =
+      repeat.value === "off" ? "all" : repeat.value === "all" ? "one" : "off";
   }
 
   function formatTime(seconds: number): string {
-    if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00";
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
-  function isCurrentSong(song: Song): boolean {
+  function isCurrentSong(song: Track | null | undefined): boolean {
     if (!currentSong.value || !song) return false;
     return currentSong.value.encoded === song.encoded;
   }
 
   return {
-    // State
     queue,
     currentIndex,
     isPlaying,
@@ -192,12 +166,8 @@ export function usePlayerStore() {
     iframeReady,
     shuffle,
     repeat,
-
-    // Computed
     currentQueueItem,
     currentSong,
-
-    // Actions
     playSong,
     playMultiple,
     addToQueue,

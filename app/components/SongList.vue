@@ -1,106 +1,72 @@
 <template>
-  <div class="space-y-1.5">
-    <div
+  <ul v-if="songs.length" class="list">
+    <li
       v-for="(song, index) in songs"
       :key="song.encoded || index"
-      class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-base-200 transition-colors group cursor-pointer"
-      :class="{
-        'bg-primary/10': isCurrentSong(song) && isPlaying,
-      }"
-      @click="onSongClick(song, index)"
+      class="list-row p-2 rounded-md hover:bg-base-200/60 cursor-pointer group"
+      :class="{ 'bg-primary/10': isCurrentSong(song) }"
+      @click="play(song, index)"
     >
-      <!-- Album Art with Play Overlay -->
-      <div class="relative shrink-0">
-        <div class="avatar">
-          <div class="w-10 h-10 rounded-lg">
-            <img
-              v-if="song.artworkUrl"
-              :src="song.artworkUrl"
-              :alt="song.title"
-              class="object-cover"
-            >
-            <div
-              v-else
-              class="bg-base-300 w-full h-full flex items-center justify-center"
-            >
-              <Icon name="ic:round-library-music" size="1.2rem" />
-            </div>
-          </div>
-        </div>
-        <!-- Play/Pause overlay -->
+      <div class="relative">
+        <TrackArt :track="song" size="sm" />
         <div
-          class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+          class="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
           :class="{ 'opacity-100': isCurrentSong(song) && isPlaying }"
         >
           <Icon
-            v-if="isCurrentSong(song) && isPlaying"
-            name="ic:round-graphic-eq"
-            size="1.2rem"
-            class="text-primary"
-          />
-          <Icon
-            v-else
-            name="ic:round-play-arrow"
-            size="1.2rem"
+            :name="
+              isCurrentSong(song) && isPlaying ? 'mdi:equalizer' : 'mdi:play'
+            "
             class="text-white"
           />
         </div>
       </div>
 
-      <!-- Song Info -->
-      <div class="flex-1 min-w-0">
+      <div class="list-col-grow min-w-0">
         <div
-          class="font-medium text-sm truncate"
+          class="truncate text-sm font-medium"
           :class="{ 'text-primary': isCurrentSong(song) }"
         >
           {{ song.title || "Unknown track" }}
         </div>
-        <div class="text-xs opacity-60 truncate">
+        <div class="truncate text-xs opacity-60">
           {{ song.author || "Unknown artist" }}
         </div>
       </div>
 
-      <!-- Duration -->
-      <div class="text-xs opacity-50 shrink-0 hidden sm:block">
-        {{ formatDuration(song.lengthMs) }}
-      </div>
+      <span class="hidden sm:inline text-xs opacity-50">
+        {{ fmtDuration(song.lengthMs) }}
+      </span>
 
-      <!-- External Link -->
       <a
         v-if="song.uri"
         :href="song.uri"
         target="_blank"
-        class="btn btn-ghost btn-xs btn-circle opacity-0 group-hover:opacity-70 shrink-0"
-        title="Open in source"
+        class="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-70"
         @click.stop
       >
-        <Icon name="ic:round-open-in-new" size="0.875rem" />
+        <Icon name="mdi:open-in-new" />
       </a>
-    </div>
+    </li>
+  </ul>
 
-    <!-- Empty State -->
-    <div v-if="songs.length === 0" class="text-center py-4 opacity-50 text-sm">
-      No songs added yet
-    </div>
-  </div>
+  <p v-else class="text-sm opacity-50 text-center py-3">
+    {{ empty ?? "No songs yet" }}
+  </p>
 </template>
 
-<script setup>
-const props = defineProps({
-  songs: {
-    type: Array,
-    required: false,
-    default: () => [],
-  },
-  itemName: {
-    type: String,
-    default: "",
-  },
-});
+<script setup lang="ts">
+import type { Track } from "~/composables/useTrackSearch";
+
+const props = defineProps<{
+  songs: Track[];
+  itemName?: string;
+  empty?: string;
+}>();
 
 const { isPlaying, isCurrentSong, playSong, playMultiple } = usePlayerStore();
 
-function onSongClick(song, index) {
+function play(song: Track, index: number) {
   if (props.songs.length > 1) {
     playMultiple(props.songs, props.itemName, index);
   } else {
@@ -108,11 +74,9 @@ function onSongClick(song, index) {
   }
 }
 
-function formatDuration(lengthMs) {
-  if (!lengthMs || isNaN(lengthMs)) return "";
-  const totalSeconds = Math.floor(lengthMs / 1000);
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
+function fmtDuration(ms?: number) {
+  if (!ms || !Number.isFinite(ms)) return "";
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 }
 </script>

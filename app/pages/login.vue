@@ -1,154 +1,198 @@
 <template>
-  <div class="hero min-h-[95vh]">
-    <div class="hero-content">
-      <div class="flex w-full flex-col lg:flex-row">
-        <fieldset
-          class="fieldset bg-base-100 border-base-200 rounded-box w-full border p-6"
-        >
-          <legend class="fieldset-legend">Sign In</legend>
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div
+      class="card bg-base-100 border border-base-300 w-full max-w-md shadow-xl"
+    >
+      <div class="card-body">
+        <div class="flex items-center gap-2 mb-2">
+          <Icon name="mdi:book-music" class="text-primary" size="1.6rem" />
+          <h1 class="text-xl font-semibold">Songascribe</h1>
+        </div>
 
-          <label class="input">
-            <Icon name="mdi:user" size="1.25rem" style="opacity: 50%" />
+        <div role="tablist" class="tabs tabs-box mb-4">
+          <button
+            role="tab"
+            class="tab"
+            :class="{ 'tab-active': mode === 'login' }"
+            @click="mode = 'login'"
+          >
+            Sign in
+          </button>
+          <button
+            role="tab"
+            class="tab"
+            :class="{ 'tab-active': mode === 'register' }"
+            @click="mode = 'register'"
+          >
+            Create account
+          </button>
+        </div>
+
+        <form
+          v-if="mode === 'login'"
+          class="space-y-3"
+          @submit.prevent="handleLogin"
+        >
+          <label class="input w-full">
+            <Icon name="mdi:account" class="opacity-60" />
             <input
-              v-model="usermail"
-              type="search"
-              placeholder="Username or Email"
-              @keyup.enter="handleLogin()"
+              v-model="login.identifier"
+              type="text"
+              placeholder="Username or email"
+              required
+              autofocus
             >
           </label>
-
-          <label class="input">
-            <Icon name="mdi:key" size="1.25rem" style="opacity: 50%" />
+          <label class="input w-full">
+            <Icon name="mdi:lock" class="opacity-60" />
             <input
-              v-model="password"
+              v-model="login.password"
               type="password"
               placeholder="Password"
-              @keyup.enter="handleLogin()"
+              required
             >
           </label>
 
-          <button class="btn btn-primary mt-4" @click="handleLogin()">
-            <Icon name="mdi:login" size="1.25rem" />
-            Login
+          <p v-if="error" class="text-error text-sm">{{ error }}</p>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full"
+            :disabled="submitting"
+          >
+            <span
+              v-if="submitting"
+              class="loading loading-spinner loading-xs"
+            />
+            Sign in
           </button>
-        </fieldset>
+        </form>
 
-        <div class="divider lg:divider-horizontal">or</div>
-
-        <fieldset
-          class="fieldset bg-base-100 border-base-200 rounded-box w-full border p-6"
-        >
-          <legend class="fieldset-legend">Register</legend>
-
-          <label class="input">
-            <Icon name="mdi:account" size="1.25rem" style="opacity: 50%" />
+        <form v-else class="space-y-3" @submit.prevent="handleRegister">
+          <label class="input w-full">
+            <Icon name="mdi:account-circle" class="opacity-60" />
             <input
-              v-model="displayName"
-              type="search"
+              v-model="register.displayName"
+              type="text"
               placeholder="Display name"
-              @keyup.enter="handleRegister()"
+              required
             >
           </label>
-
-          <label class="input">
-            <Icon name="mdi:at" size="1.25rem" style="opacity: 50%" />
+          <label class="input w-full">
+            <Icon name="mdi:at" class="opacity-60" />
             <input
-              v-model="username"
-              type="search"
-              placeholder="Username (login handle)"
-              @keyup.enter="handleRegister()"
+              v-model="register.username"
+              type="text"
+              placeholder="Username"
+              pattern="[a-z0-9_.\-]{3,32}"
+              required
             >
           </label>
-
-          <label class="input">
-            <Icon name="mdi:email" size="1.25rem" style="opacity: 50%" />
+          <label class="input w-full">
+            <Icon name="mdi:email" class="opacity-60" />
             <input
-              v-model="email"
+              v-model="register.email"
               type="email"
               placeholder="Email"
-              @keyup.enter="handleRegister()"
+              required
             >
           </label>
-
-          <label class="input">
-            <Icon name="mdi:key" size="1.25rem" style="opacity: 50%" />
+          <label class="input w-full">
+            <Icon name="mdi:lock" class="opacity-60" />
             <input
-              v-model="regPassword"
+              v-model="register.password"
               type="password"
               placeholder="Password"
-              @keyup.enter="handleRegister()"
+              required
             >
           </label>
-
-          <label class="input">
-            <Icon name="mdi:key-outline" size="1.25rem" style="opacity: 50%" />
+          <label class="input w-full">
+            <Icon name="mdi:lock-check" class="opacity-60" />
             <input
-              v-model="confirmPassword"
+              v-model="register.confirm"
               type="password"
-              placeholder="Confirm Password"
-              @keyup.enter="handleRegister()"
+              placeholder="Confirm password"
+              required
             >
           </label>
 
-          <button class="btn btn-secondary mt-4" @click="handleRegister()">
-            <Icon name="mdi-register" size="1.25rem" />
-            Register
+          <p v-if="error" class="text-error text-sm">{{ error }}</p>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full"
+            :disabled="submitting"
+          >
+            <span
+              v-if="submitting"
+              class="loading loading-spinner loading-xs"
+            />
+            Create account
           </button>
-        </fieldset>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({
-  middleware: ["logged-in"],
+definePageMeta({ middleware: ["logged-in"] });
+
+const mode = ref<"login" | "register">("login");
+const error = ref("");
+const submitting = ref(false);
+
+const login = ref({ identifier: "", password: "" });
+const register = ref({
+  displayName: "",
+  username: "",
+  email: "",
+  password: "",
+  confirm: "",
 });
 
-const usermail = ref("");
-const password = ref("");
-
-const displayName = ref("");
-const username = ref("");
-const email = ref("");
-const regPassword = ref("");
-const confirmPassword = ref("");
-
 async function handleLogin() {
+  error.value = "";
+  submitting.value = true;
   try {
     await $fetch("/api/auth/login", {
       method: "POST",
-      body: {
-        login: usermail.value,
-        password: password.value,
-      },
+      body: { login: login.value.identifier, password: login.value.password },
     });
     await navigateTo("/");
     window.location.reload();
-  } catch (err) {
-    console.error("Login error:", err);
+  } catch (e) {
+    error.value =
+      (e as { statusMessage?: string }).statusMessage || "Login failed";
+  } finally {
+    submitting.value = false;
   }
 }
 
 async function handleRegister() {
-  if (regPassword.value !== confirmPassword.value) {
-    console.error("Passwords do not match");
+  error.value = "";
+  if (register.value.password !== register.value.confirm) {
+    error.value = "Passwords don't match";
     return;
   }
+  submitting.value = true;
   try {
     await $fetch("/api/auth/register", {
       method: "POST",
       body: {
-        displayName: displayName.value,
-        username: username.value,
-        email: email.value,
-        password: regPassword.value,
+        displayName: register.value.displayName,
+        username: register.value.username,
+        email: register.value.email,
+        password: register.value.password,
       },
     });
     await navigateTo("/");
     window.location.reload();
-  } catch (err) {
-    console.error("Registration error:", err);
+  } catch (e) {
+    error.value =
+      (e as { statusMessage?: string }).statusMessage || "Registration failed";
+  } finally {
+    submitting.value = false;
   }
 }
 </script>
