@@ -38,7 +38,7 @@
                 <img
                   v-if="c.owner?.avatar"
                   :src="c.owner.avatar"
-                  :alt="c.owner.displayName"
+                  :alt="c.owner.username"
                 >
                 <div
                   v-else
@@ -51,7 +51,7 @@
             <div class="flex-1 min-w-0">
               <h2 class="font-semibold truncate">{{ c.name }}</h2>
               <p class="text-xs opacity-60 truncate">
-                {{ c.owner?.displayName ?? "Unknown" }}
+                {{ c.owner?.username ?? "Unknown" }}
               </p>
             </div>
           </div>
@@ -107,7 +107,7 @@
               <img
                 v-if="selected.owner?.avatar"
                 :src="selected.owner.avatar"
-                :alt="selected.owner.displayName"
+                :alt="selected.owner.username"
               >
               <div
                 v-else
@@ -120,7 +120,7 @@
           <div>
             <h3 class="text-xl font-semibold">{{ selected.name }}</h3>
             <p class="text-sm opacity-60">
-              by {{ selected.owner?.displayName ?? "Unknown" }}
+              by {{ selected.owner?.username ?? "Unknown" }}
             </p>
           </div>
         </div>
@@ -156,7 +156,7 @@
 import type { Track } from "~/composables/useTrackSearch";
 
 interface Owner {
-  displayName?: string;
+  username?: string;
   avatar?: string;
 }
 

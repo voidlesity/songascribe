@@ -32,7 +32,7 @@
                 <img
                   v-if="profile.avatar"
                   :src="profile.avatar"
-                  :alt="profile.displayName"
+                  :alt="username"
                 >
                 <div
                   v-else
@@ -44,16 +44,6 @@
             </div>
             <span class="text-sm opacity-60">Preview</span>
           </div>
-
-          <label class="floating-label">
-            <span>Display name</span>
-            <input
-              v-model="profile.displayName"
-              type="text"
-              class="input w-full"
-              placeholder="Display name"
-            >
-          </label>
 
           <label class="floating-label">
             <span>Avatar URL</span>
@@ -153,17 +143,19 @@ const { theme, setTheme } = useTheme();
 const tab = ref<"profile" | "appearance">("profile");
 
 const profile = reactive({
-  displayName: "",
   avatar: "",
 });
 
 const message = ref("");
 const error = ref("");
 
+const username = computed(
+  () => (user.value as { username?: string } | null)?.username ?? "",
+);
+
 watchEffect(() => {
-  const u = user.value as { displayName?: string; avatar?: string } | null;
+  const u = user.value as { avatar?: string } | null;
   if (u) {
-    profile.displayName = u.displayName ?? "";
     profile.avatar = u.avatar ?? "";
   }
 });
@@ -192,7 +184,7 @@ async function saveProfile() {
   try {
     await $fetch("/api/users/me", {
       method: "PATCH",
-      body: { displayName: profile.displayName, avatar: profile.avatar },
+      body: { avatar: profile.avatar },
     });
     await refreshSession();
     message.value = "Saved";

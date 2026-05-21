@@ -81,7 +81,6 @@ export default defineEventHandler(async (event) => {
         owner: owner
           ? {
               username: owner.username,
-              displayName: owner.displayName,
               avatar: owner.avatar,
             }
           : null,

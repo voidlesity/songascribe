@@ -8,6 +8,13 @@
       "when": 1779282075334,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1779386840326,
+      "tag": "0001_kind_zodiak",
+      "breakpoints": true
     }
   ]
 }

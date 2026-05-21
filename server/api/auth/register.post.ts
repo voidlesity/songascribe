@@ -9,11 +9,10 @@ defineRouteMeta({
         "application/json": {
           schema: {
             type: "object",
-            required: ["email", "username", "displayName", "password"],
+            required: ["email", "username", "password"],
             properties: {
               email: { type: "string", format: "email" },
               username: { type: "string" },
-              displayName: { type: "string" },
               password: { type: "string", format: "password" },
               avatar: { type: "string", nullable: true },
             },
@@ -33,20 +32,18 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<{
     email?: string;
     username?: string;
-    displayName?: string;
     password?: string;
     avatar?: string | null;
   }>(event);
 
   const email = body.email?.trim().toLowerCase();
   const username = body.username?.trim().toLowerCase();
-  const displayName = body.displayName?.trim();
   const password = body.password;
 
-  if (!email || !username || !displayName || !password) {
+  if (!email || !username || !password) {
     throw createError({
       statusCode: 400,
-      statusMessage: "email, username, displayName and password are required",
+      statusMessage: "email, username and password are required",
     });
   }
   if (!/^[a-z0-9_.-]{3,32}$/.test(username)) {
@@ -80,7 +77,6 @@ export default defineEventHandler(async (event) => {
       email,
       username,
       passwordHash,
-      displayName,
       avatar: body.avatar ?? null,
       theme: "dark",
       createdAt: now,
@@ -91,7 +87,7 @@ export default defineEventHandler(async (event) => {
   await setUserSession(event, {
     user: {
       id: user!.id,
-      displayName: user!.displayName,
+      username: user!.username,
       avatar: user!.avatar,
       theme: user!.theme,
     },
@@ -102,7 +98,6 @@ export default defineEventHandler(async (event) => {
     id: user!.id,
     email: user!.email,
     username: user!.username,
-    displayName: user!.displayName,
     avatar: user!.avatar,
     theme: user!.theme,
     createdAt: user!.createdAt,

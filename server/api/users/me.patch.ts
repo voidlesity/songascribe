@@ -9,7 +9,6 @@ defineRouteMeta({
           schema: {
             type: "object",
             properties: {
-              displayName: { type: "string" },
               avatar: { type: "string", nullable: true },
               theme: { type: "string" },
             },
@@ -29,14 +28,11 @@ defineRouteMeta({
 export default defineEventHandler(async (event) => {
   const { user: sessionUser } = await requireUserSession(event);
   const body = await readBody<{
-    displayName?: string;
     avatar?: string | null;
     theme?: string;
   }>(event);
 
   const patch: Record<string, unknown> = {};
-  if (typeof body.displayName === "string" && body.displayName.trim())
-    patch.displayName = body.displayName.trim();
   if (body.avatar !== undefined) patch.avatar = body.avatar;
   if (typeof body.theme === "string" && body.theme.trim())
     patch.theme = body.theme.trim();
@@ -62,7 +58,7 @@ export default defineEventHandler(async (event) => {
   await setUserSession(event, {
     user: {
       id: updated.id,
-      displayName: updated.displayName,
+      username: updated.username,
       avatar: updated.avatar,
       theme: updated.theme,
     },
@@ -72,7 +68,6 @@ export default defineEventHandler(async (event) => {
     id: updated.id,
     email: updated.email,
     username: updated.username,
-    displayName: updated.displayName,
     avatar: updated.avatar,
     theme: updated.theme,
     createdAt: updated.createdAt,

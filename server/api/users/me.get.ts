@@ -28,7 +28,6 @@ export default defineEventHandler(async (event) => {
     id: user.id,
     email: user.email,
     username: user.username,
-    displayName: user.displayName,
     avatar: user.avatar,
     theme: user.theme,
     createdAt: user.createdAt,

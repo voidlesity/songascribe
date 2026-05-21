@@ -68,7 +68,7 @@ const links = [
 ];
 
 const initials = computed(() => {
-  const name = (user.value as { displayName?: string } | null)?.displayName;
+  const name = (user.value as { username?: string } | null)?.username;
   return name?.charAt(0).toUpperCase() ?? "?";
 });
 
