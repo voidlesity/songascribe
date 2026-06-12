@@ -5,4 +5,7 @@
 .gitignore
 .sqlite.db
 
+.env
+.env.*
+
 README.md
