@@ -16,7 +16,7 @@ export default defineNuxtPlugin(async () => {
         apply(me.theme);
       }
     } catch {
-      // ignore – fall back to default
+      // ignore - fall back to default
     }
   }
 

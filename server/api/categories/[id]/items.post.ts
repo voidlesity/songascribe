@@ -17,7 +17,18 @@ defineRouteMeta({
             properties: {
               name: { type: "string" },
               description: { type: "string", nullable: true },
-              tracks: { type: "array", items: { type: "object" } },
+              tracks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    encoded: { type: "string" },
+                    title: { type: "string" },
+                    author: { type: "string" },
+                    reason: { type: "string", nullable: true },
+                  },
+                },
+              },
             },
           },
         },
@@ -56,11 +67,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Category not found" });
   }
 
-  const body = await readBody<{
+  const body = ((await readBody<{
     name?: string;
     description?: string | null;
     tracks?: Track[];
-  }>(event);
+  }>(event)) ?? {}) as {
+    name?: string;
+    description?: string | null;
+    tracks?: Track[];
+  };
 
   const name = body.name?.trim();
   if (!name) {

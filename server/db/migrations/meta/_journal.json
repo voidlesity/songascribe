@@ -15,6 +15,13 @@
       "when": 1779386840326,
       "tag": "0001_kind_zodiak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781249268863,
+      "tag": "0002_lush_silver_samurai",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 <template>
   <header class="navbar bg-base-100 border-b border-base-300 px-4">
     <div class="flex-1 gap-2">
-      <NuxtLink to="/" class="btn btn-ghost px-2 text-lg font-semibold gap-2">
+      <NuxtLink :to="homeTo" class="btn btn-ghost px-2 text-lg font-semibold gap-2">
         <Icon name="mdi:book-music" class="text-primary" size="1.4rem" />
         Songascribe
       </NuxtLink>
@@ -58,14 +58,23 @@
 </template>
 
 <script setup lang="ts">
-const { user, clear } = useUserSession();
+const { user, loggedIn, clear } = useUserSession();
 const route = useRoute();
 
-const links = [
-  { to: "/", label: "Home", icon: "mdi:home" },
-  { to: "/browse", label: "Browse", icon: "mdi:earth" },
-  { to: "/statistics", label: "Stats", icon: "mdi:chart-line" },
-];
+const links = computed(() => {
+  if (!loggedIn.value) {
+    return [
+      { to: "/intro", label: "Intro", icon: "mdi:book-open-variant" },
+      { to: "/browse", label: "Browse", icon: "mdi:earth" },
+    ];
+  }
+
+  return [
+    { to: "/", label: "Home", icon: "mdi:home" },
+    { to: "/browse", label: "Browse", icon: "mdi:earth" },
+    { to: "/statistics", label: "Stats", icon: "mdi:chart-line" },
+  ];
+});
 
 const initials = computed(() => {
   const name = (user.value as { username?: string } | null)?.username;
@@ -75,6 +84,8 @@ const initials = computed(() => {
 const avatar = computed(
   () => (user.value as { avatar?: string | null } | null)?.avatar,
 );
+
+const homeTo = computed(() => (loggedIn.value ? "/" : "/intro"));
 
 async function logout() {
   await clear();

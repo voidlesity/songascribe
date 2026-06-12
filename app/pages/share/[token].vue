@@ -17,7 +17,7 @@
 
     <div v-else-if="category" class="space-y-4">
       <header
-        class="card card-border bg-base-100 flex-row items-center justify-between p-4"
+        class="card card-border bg-base-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4"
       >
         <div>
           <div class="flex items-center gap-2 text-xs opacity-60 mb-1">

@@ -1,10 +1,11 @@
 <template>
   <NuxtRouteAnnouncer />
   <div class="min-h-screen flex flex-col bg-base-200">
-    <AppNav v-if="loggedIn" />
-    <main class="flex-1 pb-20 md:pb-0">
+    <AppNav />
+    <main class="flex-1" :class="mainPaddingClass">
       <NuxtPage />
     </main>
+    <AppFooter />
     <AppDock v-if="loggedIn" />
     <MusicPlayerBar />
   </div>
@@ -12,4 +13,8 @@
 
 <script setup lang="ts">
 const { loggedIn } = useUserSession();
+
+const mainPaddingClass = computed(() =>
+  loggedIn.value ? "pb-32 md:pb-0" : "pb-6",
+);
 </script>

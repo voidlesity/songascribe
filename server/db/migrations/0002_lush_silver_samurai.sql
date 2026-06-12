@@ -1,0 +1,1 @@
+ALTER TABLE `item_tracks` ADD `reason` text;

@@ -79,7 +79,7 @@ export async function getItemTracks(
     .where(eq(tables.itemTracks.itemId, itemId))
     .orderBy(asc(tables.itemTracks.position));
 
-  return rows.map(({ track }) => ({
+  return rows.map(({ track, link }) => ({
     id: track.id,
     encoded: track.encoded,
     identifier: track.identifier,
@@ -92,6 +92,7 @@ export async function getItemTracks(
     isrc: track.isrc,
     isStream: track.isStream,
     isSeekable: track.isSeekable,
+    reason: link.reason,
   }));
 }
 
@@ -116,6 +117,7 @@ export async function setItemTracks(
       itemId,
       trackId: persisted.id,
       position: position++,
+      reason: t.reason?.trim() ? t.reason.trim() : null,
       addedAt: now,
     });
   }

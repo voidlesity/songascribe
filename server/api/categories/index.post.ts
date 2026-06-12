@@ -28,11 +28,15 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const { user: sessionUser } = await requireUserSession(event);
-  const body = await readBody<{
+  const body = ((await readBody<{
     name?: string;
     description?: string | null;
     isPublic?: boolean;
-  }>(event);
+  }>(event)) ?? {}) as {
+    name?: string;
+    description?: string | null;
+    isPublic?: boolean;
+  };
 
   const name = body.name?.trim();
   if (!name) {

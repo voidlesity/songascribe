@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4">
+  <div class="min-h-[70vh] flex items-center justify-center p-4">
     <div
       class="card bg-base-100 border border-base-300 w-full max-w-md shadow-xl"
     >
@@ -121,9 +121,14 @@
             Create account
           </button>
         </form>
-        <NuxtLink to="/browse" class="btn btn-link">
-          Just want to browse public Categories?
-        </NuxtLink>
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-1">
+          <NuxtLink to="/intro" class="btn btn-link btn-sm">
+            What is Songascribe?
+          </NuxtLink>
+          <NuxtLink to="/browse" class="btn btn-link btn-sm">
+            Browse public categories
+          </NuxtLink>
+        </div>
       </div>
     </div>
   </div>

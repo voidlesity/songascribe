@@ -29,12 +29,17 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{
+  const body = ((await readBody<{
     email?: string;
     username?: string;
     password?: string;
     avatar?: string | null;
-  }>(event);
+  }>(event)) ?? {}) as {
+    email?: string;
+    username?: string;
+    password?: string;
+    avatar?: string | null;
+  };
 
   const email = body.email?.trim().toLowerCase();
   const username = body.username?.trim().toLowerCase();

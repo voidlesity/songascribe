@@ -38,18 +38,27 @@
           <li
             v-for="(song, idx) in form.tracks"
             :key="song.encoded || idx"
-            class="list-row p-2"
+            class="list-row p-2 items-start gap-2"
           >
             <TrackArt :track="song" size="sm" />
-            <div class="list-col-grow min-w-0">
+            <div class="list-col-grow min-w-0 space-y-1">
               <div class="truncate text-sm font-medium">
                 {{ song.title || "Unknown" }}
               </div>
               <div class="truncate text-xs opacity-60">
                 {{ song.author || "Unknown artist" }}
               </div>
+              <label class="input input-xs w-full">
+                <Icon name="mdi:comment-text-outline" class="opacity-60" />
+                <input
+                  :value="song.reason ?? ''"
+                  type="text"
+                  placeholder="Why this song fits this item"
+                  @input="onReasonInput(idx, $event)"
+                >
+              </label>
             </div>
-            <div class="join">
+            <div class="join self-start">
               <button
                 type="button"
                 class="btn btn-ghost btn-xs join-item"
@@ -171,11 +180,22 @@ watch(
 
 function addTrack(track: Track) {
   if (form.value.tracks.some((t) => t.encoded === track.encoded)) return;
-  form.value.tracks.push(track);
+  form.value.tracks.push({ ...track, reason: track.reason ?? "" });
 }
 
 function removeTrack(idx: number) {
   form.value.tracks.splice(idx, 1);
+}
+
+function updateReason(idx: number, value: string) {
+  const t = form.value.tracks[idx];
+  if (!t) return;
+  t.reason = value;
+}
+
+function onReasonInput(idx: number, event: Event) {
+  const target = event.target as HTMLInputElement | null;
+  updateReason(idx, target?.value ?? "");
 }
 
 function move(idx: number, dir: -1 | 1) {

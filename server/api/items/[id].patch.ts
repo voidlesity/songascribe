@@ -18,7 +18,18 @@ defineRouteMeta({
               name: { type: "string" },
               description: { type: "string", nullable: true },
               position: { type: "integer" },
-              tracks: { type: "array", items: { type: "object" } },
+              tracks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    encoded: { type: "string" },
+                    title: { type: "string" },
+                    author: { type: "string" },
+                    reason: { type: "string", nullable: true },
+                  },
+                },
+              },
             },
           },
         },
@@ -42,12 +53,17 @@ export default defineEventHandler(async (event) => {
 
   await getOwnedItem(id, (sessionUser as { id: number }).id);
 
-  const body = await readBody<{
+  const body = ((await readBody<{
     name?: string;
     description?: string | null;
     position?: number;
     tracks?: Track[];
-  }>(event);
+  }>(event)) ?? {}) as {
+    name?: string;
+    description?: string | null;
+    position?: number;
+    tracks?: Track[];
+  };
 
   const patch: Record<string, unknown> = {};
   if (typeof body.name === "string" && body.name.trim())

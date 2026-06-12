@@ -13,6 +13,7 @@ export interface Track {
   isrc?: string | null;
   isStream?: boolean;
   isSeekable?: boolean;
+  reason?: string | null;
 }
 
 export function useTrackSearch(query: Ref<string>, debounceMs = 400) {

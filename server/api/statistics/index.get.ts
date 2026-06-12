@@ -28,9 +28,10 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.categories.userId, userId))
     .get();
 
-  const totalDurationRow = db
-    .select({
-      totalMs: sql<number>`COALESCE(SUM(DISTINCT ${tables.tracks.lengthMs}), 0)`,
+  const distinctTracks = await db
+    .selectDistinct({
+      id: tables.tracks.id,
+      lengthMs: tables.tracks.lengthMs,
     })
     .from(tables.tracks)
     .innerJoin(
@@ -42,10 +43,12 @@ export default defineEventHandler(async (event) => {
       tables.categories,
       eq(tables.items.categoryId, tables.categories.id),
     )
-    .where(eq(tables.categories.userId, userId))
-    .get();
+    .where(eq(tables.categories.userId, userId));
 
-  const totalDurationMs = totalDurationRow?.totalMs ?? 0;
+  const totalDurationMs = distinctTracks.reduce(
+    (sum, t) => sum + (t.lengthMs ?? 0),
+    0,
+  );
   const totalItems = overviewRow?.totalItems ?? 0;
   const totalTrackLinks = overviewRow?.totalTrackLinks ?? 0;
 

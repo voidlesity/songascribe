@@ -64,6 +64,7 @@ export const itemTracks = sqliteTable("item_tracks", {
     .notNull()
     .references(() => tracks.id),
   position: integer("position").notNull().default(0),
+  reason: text("reason"),
   addedAt: integer("added_at", { mode: "timestamp" }).notNull(),
 });
 

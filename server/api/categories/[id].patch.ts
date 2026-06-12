@@ -52,11 +52,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Category not found" });
   }
 
-  const body = await readBody<{
+  const body = ((await readBody<{
     name?: string;
     description?: string | null;
     isPublic?: boolean;
-  }>(event);
+  }>(event)) ?? {}) as {
+    name?: string;
+    description?: string | null;
+    isPublic?: boolean;
+  };
 
   const patch: Record<string, unknown> = {};
   if (typeof body.name === "string" && body.name.trim())

@@ -52,6 +52,7 @@ export interface Track {
   isrc: string | null;
   isStream: boolean;
   isSeekable: boolean;
+  reason?: string | null;
 }
 
 function getBase() {

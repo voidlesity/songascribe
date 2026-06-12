@@ -30,7 +30,8 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{ login?: string; password?: string }>(event);
+  const body =
+    (await readBody<{ login?: string; password?: string }>(event)) ?? {};
   const login = body.login?.trim().toLowerCase();
   const password = body.password;
 

@@ -27,10 +27,13 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const { user: sessionUser } = await requireUserSession(event);
-  const body = await readBody<{
+  const body = ((await readBody<{
     avatar?: string | null;
     theme?: string;
-  }>(event);
+  }>(event)) ?? {}) as {
+    avatar?: string | null;
+    theme?: string;
+  };
 
   const patch: Record<string, unknown> = {};
   if (body.avatar !== undefined) patch.avatar = body.avatar;

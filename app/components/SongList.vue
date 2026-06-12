@@ -32,6 +32,9 @@
         <div class="truncate text-xs opacity-60">
           {{ song.author || "Unknown artist" }}
         </div>
+        <div v-if="song.reason?.trim()" class="text-xs opacity-80 mt-0.5">
+          {{ song.reason }}
+        </div>
       </div>
 
       <span class="hidden sm:inline text-xs opacity-50">
@@ -42,7 +45,7 @@
         v-if="song.uri"
         :href="song.uri"
         target="_blank"
-        class="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-70"
+        class="btn btn-ghost btn-xs btn-square opacity-70 sm:opacity-0 sm:group-hover:opacity-70"
         @click.stop
       >
         <Icon name="mdi:open-in-new" />
