@@ -16,7 +16,7 @@ COPY . ./
 RUN npm run build
 
 # Stage 2: Final Image
-FROM node:25-alpine
+FROM node:24.16-alpine
 WORKDIR /app
 
 # Copy NodeLink from its official image
