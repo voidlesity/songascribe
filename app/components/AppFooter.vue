@@ -20,9 +20,9 @@
         <NuxtLink to="/browse" class="btn btn-ghost btn-xs">
           <Icon name="mdi:earth" /> Browse
         </NuxtLink>
-        <NuxtLink to="/api/" class="btn btn-ghost btn-xs">
+        <a href="/api/" class="btn btn-ghost btn-xs">
           <Icon name="mdi:api" /> API Docs
-        </NuxtLink>
+        </a>
       </nav>
     </div>
   </footer>
