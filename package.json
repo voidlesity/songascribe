@@ -14,9 +14,8 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "better-sqlite3": "12.11.1",
-    "drizzle-orm": "0.45.2",
-    "h3": "2.0.1-rc.22"
+    "better-sqlite3": "^11.3.0",
+    "drizzle-orm": "0.45.2"
   },
   "devDependencies": {
     "@iconify-json/mdi": "1.2.3",
