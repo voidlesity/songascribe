@@ -1,5 +1,5 @@
 # Stage 1: Build the Nuxt app
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 
 RUN corepack enable
@@ -16,7 +16,7 @@ COPY . ./
 RUN npm run build
 
 # Stage 2: Final Image
-FROM node:24-alpine
+FROM node:26-alpine
 WORKDIR /app
 
 # Install runtime dependencies for NodeLink

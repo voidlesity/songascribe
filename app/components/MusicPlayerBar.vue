@@ -1,3 +1,5 @@
+<!-- TODO: Looping song will not reset bar and instead count up past the song limit instead of resetting -->
+
 <template>
   <div
     v-if="currentSong"
