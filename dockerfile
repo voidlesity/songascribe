@@ -2,8 +2,6 @@
 FROM node:26-alpine AS build
 WORKDIR /app
 
-RUN corepack enable
-
 COPY package.json package-lock.json ./
 
 # Install dependencies
