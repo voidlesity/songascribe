@@ -49,6 +49,7 @@ export default defineNuxtConfig({
     },
   },
   hooks: {
+    // TODO: migrate in a different place
     "build:before"() {
       const db = drizzle("./sqlite.db");
       migrate(db, { migrationsFolder: "./server/db/migrations" });
