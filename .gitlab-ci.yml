@@ -25,4 +25,4 @@ build-and-push:
       /kaniko/executor
       --context "$CI_PROJECT_DIR"
       --dockerfile "$CI_PROJECT_DIR/dockerfile"
-      $DESTINATIONS   
+      $DESTINATIONS
