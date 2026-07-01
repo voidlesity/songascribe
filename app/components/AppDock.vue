@@ -19,6 +19,5 @@ const links = [
   { to: "/", label: "Home", icon: "mdi:home" },
   { to: "/browse", label: "Browse", icon: "mdi:earth" },
   { to: "/statistics", label: "Stats", icon: "mdi:chart-line" },
-  { to: "/settings", label: "Settings", icon: "mdi:cog" },
 ];
 </script>

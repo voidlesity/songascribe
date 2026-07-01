@@ -80,7 +80,7 @@ export function toTrack(raw: NodelinkRawTrack): Track {
 }
 
 /**
- * Search NodeLink for tracks. Returns a normalized list — for `track` loadType
+ * Search NodeLink for tracks. Returns a normalized list for `track` loadType
  * a single-element array; for `playlist` the playlist tracks in order.
  */
 export async function searchTracks(query: string): Promise<Track[]> {

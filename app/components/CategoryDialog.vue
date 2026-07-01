@@ -24,7 +24,7 @@
             type="checkbox"
             class="toggle toggle-primary"
           >
-          <span class="text-sm">Public — discoverable on Browse</span>
+          <span class="text-sm">Public | discoverable on Browse</span>
         </label>
 
         <p v-if="error" class="text-error text-sm">{{ error }}</p>

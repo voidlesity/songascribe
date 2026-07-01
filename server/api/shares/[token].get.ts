@@ -2,7 +2,7 @@ defineRouteMeta({
   openAPI: {
     tags: ["Share"],
     summary: "Resolve share token",
-    description: "Public endpoint — resolves a share token to its category.",
+    description: "Public endpoint, resolves a share token to its category.",
     parameters: [
       { in: "path", name: "token", required: true, schema: { type: "string" } },
     ],

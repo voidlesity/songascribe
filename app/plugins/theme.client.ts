@@ -1,3 +1,4 @@
+// TODO: fix flickering default theme before loading correct theme when logged in
 export default defineNuxtPlugin(async () => {
   const { loggedIn } = useUserSession();
   const theme = useState<string>("theme", () => "dark");

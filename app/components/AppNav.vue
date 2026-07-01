@@ -2,10 +2,12 @@
   <header class="navbar bg-base-100 border-b border-base-300 px-4">
     <div class="flex-1 gap-2">
       <NuxtLink :to="homeTo" class="btn btn-ghost px-2 text-lg font-semibold gap-2">
-        <Icon name="mdi:book-music" class="text-primary" size="1.4rem" />
+        <Icon name="mdi:book-music" class="text-primary" size="1.5rem" />
         Songascribe
       </NuxtLink>
     </div>
+
+    <!-- TODO: add Global Search bar to directly search or paste an url to add/create to an Item, keep mobile ui in mind -->
 
     <nav class="hidden md:flex items-center gap-1">
       <NuxtLink

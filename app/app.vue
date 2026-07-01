@@ -5,7 +5,6 @@
     <main class="flex-1" :class="mainPaddingClass">
       <NuxtPage />
     </main>
-    <AppFooter />
     <AppDock v-if="loggedIn" />
     <MusicPlayerBar />
   </div>
