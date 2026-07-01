@@ -43,7 +43,10 @@ export default defineEventHandler(async (event) => {
   const rows = await db
     .select({
       category: tables.categories,
-      owner: tables.users,
+      owner: {
+        username: tables.users.username,
+        avatar: tables.users.avatar,
+      },
     })
     .from(tables.categories)
     .leftJoin(tables.users, eq(tables.categories.userId, tables.users.id))

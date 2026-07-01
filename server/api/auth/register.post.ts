@@ -14,7 +14,6 @@ defineRouteMeta({
               email: { type: "string", format: "email" },
               username: { type: "string" },
               password: { type: "string", format: "password" },
-              avatar: { type: "string", nullable: true },
             },
           },
         },
@@ -33,12 +32,10 @@ export default defineEventHandler(async (event) => {
     email?: string;
     username?: string;
     password?: string;
-    avatar?: string | null;
   }>(event)) ?? {}) as {
     email?: string;
     username?: string;
     password?: string;
-    avatar?: string | null;
   };
 
   const email = body.email?.trim().toLowerCase();
@@ -82,7 +79,7 @@ export default defineEventHandler(async (event) => {
       email,
       username,
       passwordHash,
-      avatar: body.avatar ?? null,
+      avatar: null,
       theme: "dark",
       createdAt: now,
       updatedAt: now,

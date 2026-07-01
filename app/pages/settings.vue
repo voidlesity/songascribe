@@ -23,44 +23,88 @@
 
     <div class="card card-border bg-base-100">
       <div class="card-body">
-        <div v-if="tab === 'profile'" class="space-y-3">
-          <h2 class="font-semibold">Profile</h2>
-
-          <div class="flex items-center gap-3">
-            <div class="avatar">
-              <div class="w-16 rounded-full bg-base-300">
-                <img
-                  v-if="profile.avatar"
-                  :src="profile.avatar"
-                  :alt="username"
-                >
-                <div
-                  v-else
-                  class="w-full h-full flex items-center justify-center"
-                >
-                  <Icon name="mdi:account" size="2rem" />
-                </div>
-              </div>
-            </div>
-            <span class="text-sm opacity-60">Preview</span>
+        <div v-if="tab === 'profile'" class="space-y-5">
+          <div>
+            <h2 class="font-semibold">Profile</h2>
+            <p class="text-sm opacity-60">Upload a picture to personalize your account.</p>
           </div>
 
-          <label class="floating-label">
-            <span>Avatar URL</span>
-            <input
-              v-model="profile.avatar"
-              type="url"
-              class="input w-full"
-              placeholder="https://…"
+          <div class="flex flex-col sm:flex-row items-center gap-6">
+            <button
+              type="button"
+              class="group relative shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+              :class="dragging ? 'ring-2 ring-primary ring-offset-2 ring-offset-base-100' : ''"
+              aria-label="Upload avatar"
+              @click="fileInput?.click()"
+              @dragover.prevent="dragging = true"
+              @dragleave.prevent="dragging = false"
+              @drop.prevent="onDrop"
             >
-          </label>
+              <div class="avatar">
+                <div class="w-28 rounded-full bg-base-300 ring-1 ring-base-300">
+                  <img
+                    v-if="profile.avatar"
+                    :src="profile.avatar"
+                    :alt="username"
+                  >
+                  <div
+                    v-else
+                    class="w-full h-full flex items-center justify-center opacity-40"
+                  >
+                    <Icon name="mdi:account" size="3rem" />
+                  </div>
+                </div>
+              </div>
+              <div
+                class="absolute inset-0 rounded-full bg-black/50 text-white flex flex-col items-center justify-center gap-1 opacity-0 transition group-hover:opacity-100"
+                :class="dragging ? 'opacity-100' : ''"
+              >
+                <Icon name="mdi:camera-plus-outline" size="1.5rem" />
+                <span class="text-xs font-medium">Change</span>
+              </div>
+              <div
+                v-if="uploading"
+                class="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center"
+              >
+                <span class="loading loading-spinner text-white" />
+              </div>
+            </button>
 
-          <div class="card-actions justify-end items-center gap-3">
-            <span v-if="message" class="text-success text-sm">{{
-              message
-            }}</span>
-            <span v-if="error" class="text-error text-sm">{{ error }}</span>
-            <button class="btn btn-primary" @click="saveProfile">Save</button>
+            <div class="flex-1 text-center sm:text-left space-y-2">
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="onFileChange"
+              >
+              <div class="flex flex-wrap justify-center sm:justify-start gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline"
+                  :disabled="uploading"
+                  @click="fileInput?.click()"
+                >
+                  <Icon name="mdi:upload" /> Upload image
+                </button>
+                <button
+                  v-if="profile.avatar"
+                  type="button"
+                  class="btn btn-sm btn-ghost text-error"
+                  :disabled="uploading"
+                  @click="clearAvatar"
+                >
+                  <Icon name="mdi:delete-outline" /> Remove
+                </button>
+              </div>
+              <p class="text-xs opacity-50">Drag &amp; drop or click. JPG, PNG or WebP, up to 2 MB.</p>
+              <Transition name="fade">
+                <p v-if="message" class="text-success text-xs flex items-center gap-1 justify-center sm:justify-start">
+                  <Icon name="mdi:check-circle" /> {{ message }}
+                </p>
+              </Transition>
+              <p v-if="uploadError" class="text-error text-xs">{{ uploadError }}</p>
+            </div>
           </div>
 
           <div class="divider" />
@@ -131,6 +175,13 @@
         </div>
       </div>
     </div>
+
+    <AvatarCropper
+      :open="cropperOpen"
+      :file="pendingFile"
+      @cancel="closeCropper"
+      @confirm="onCropConfirm"
+    />
   </div>
 </template>
 
@@ -148,6 +199,85 @@ const profile = reactive({
 
 const message = ref("");
 const error = ref("");
+const uploadError = ref("");
+const uploading = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
+const dragging = ref(false);
+
+const cropperOpen = ref(false);
+const pendingFile = ref<File | null>(null);
+
+function pickFile(file: File | undefined | null) {
+  uploadError.value = "";
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    uploadError.value = "Please select an image file.";
+    return;
+  }
+  pendingFile.value = file;
+  cropperOpen.value = true;
+}
+
+function onFileChange(e: Event) {
+  const input = e.target as HTMLInputElement;
+  pickFile(input.files?.[0]);
+  input.value = "";
+}
+
+function onDrop(e: DragEvent) {
+  dragging.value = false;
+  pickFile(e.dataTransfer?.files?.[0]);
+}
+
+function closeCropper() {
+  cropperOpen.value = false;
+  pendingFile.value = null;
+}
+
+async function onCropConfirm(blob: Blob) {
+  cropperOpen.value = false;
+  pendingFile.value = null;
+  uploadError.value = "";
+  error.value = "";
+  message.value = "";
+  uploading.value = true;
+  try {
+    const form = new FormData();
+    form.append("file", blob, "avatar.webp");
+    const res = await $fetch<{ avatar: string | null }>(
+      "/api/users/me/avatar",
+      { method: "POST", body: form },
+    );
+    profile.avatar = res.avatar ?? "";
+    await refreshSession();
+    message.value = "Avatar updated";
+    setTimeout(() => (message.value = ""), 2000);
+  } catch (e) {
+    uploadError.value =
+      (e as { statusMessage?: string }).statusMessage || "Upload failed";
+  } finally {
+    uploading.value = false;
+  }
+}
+
+async function clearAvatar() {
+  uploadError.value = "";
+  error.value = "";
+  message.value = "";
+  uploading.value = true;
+  try {
+    await $fetch("/api/users/me/avatar", { method: "DELETE" });
+    profile.avatar = "";
+    await refreshSession();
+    message.value = "Avatar removed";
+    setTimeout(() => (message.value = ""), 2000);
+  } catch (e) {
+    uploadError.value =
+      (e as { statusMessage?: string }).statusMessage || "Failed to remove";
+  } finally {
+    uploading.value = false;
+  }
+}
 
 const username = computed(
   () => (user.value as { username?: string } | null)?.username ?? "",
@@ -177,20 +307,16 @@ async function deleteAccount() {
     deleting.value = false;
   }
 }
-
-async function saveProfile() {
-  error.value = "";
-  message.value = "";
-  try {
-    await $fetch("/api/users/me", {
-      method: "PATCH",
-      body: { avatar: profile.avatar },
-    });
-    await refreshSession();
-    message.value = "Saved";
-    setTimeout(() => (message.value = ""), 1500);
-  } catch (e) {
-    error.value = (e as { statusMessage?: string }).statusMessage || "Failed";
-  }
-}
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
