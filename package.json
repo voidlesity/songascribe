@@ -1,0 +1,37 @@
+{
+  "name": "songascribe",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate",
+    "db:up": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "better-sqlite3": "12.11.1",
+    "drizzle-orm": "0.45.2",
+    "h3": "1.15.11"
+  },
+  "devDependencies": {
+    "@iconify-json/mdi": "1.2.3",
+    "@nuxt/eslint": "1.16.0",
+    "@nuxt/icon": "2.2.5",
+    "@tailwindcss/vite": "4.3.2",
+    "@types/node": "26.0.1",
+    "daisyui": "5.6.6",
+    "drizzle-kit": "0.31.10",
+    "eslint": "10.6.0",
+    "nuxt": "4.4.8",
+    "nuxt-auth-utils": "0.5.29",
+    "tailwindcss": "4.3.2"
+  },
+  "engines": {
+    "node": ">=26"
+  }
+}
