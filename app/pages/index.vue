@@ -126,16 +126,16 @@
       </section>
     </div>
 
-    <aside class="drawer-side z-30">
+    <aside class="drawer-side z-30 top-16!" :class="sidebarHeightClass">
       <label
         for="cat-drawer"
         aria-label="close sidebar"
         class="drawer-overlay"
       />
       <div
-        class="bg-base-100 border-r border-base-300 w-72 min-h-full flex flex-col"
+        class="bg-base-100 border-r border-base-300 w-72 h-full flex flex-col"
       >
-        <div class="p-3 border-b border-base-300 flex items-center gap-2">
+        <div class="p-3 border-b border-base-300 flex items-center gap-2 shrink-0">
           <span class="text-xs uppercase opacity-60 flex-1 font-medium">
             Categories
           </span>
@@ -148,7 +148,7 @@
           </button>
         </div>
 
-        <ul class="menu menu-sm p-2 flex-1">
+        <ul class="menu menu-sm p-2 flex-1 overflow-y-auto">
           <li v-for="c in categories" :key="c.id">
             <button
               class="justify-between"
@@ -203,6 +203,16 @@ import type { Category, Item } from "~/composables/useCategories";
 definePageMeta({ middleware: ["logged-in"] });
 
 const { categories, refresh, updateCategory, createShare } = useCategories();
+const { currentSong } = usePlayerStore();
+
+// The sidebar is sticky below the fixed header and spans to the bottom (or to
+// the music player bar when a song is loaded). Its own list scrolls
+// independently of the item grid.
+const sidebarHeightClass = computed(() =>
+  currentSong.value
+    ? "max-md:h-[calc(100dvh-4rem)]! md:h-[calc(100dvh-7.5rem)]!"
+    : "h-[calc(100dvh-4rem)]!",
+);
 
 const selectedId = ref<number | null>(null);
 const drawerOpen = ref(false);

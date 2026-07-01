@@ -1,6 +1,4 @@
 import tailwindcss from "@tailwindcss/vite";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
@@ -46,13 +44,6 @@ export default defineNuxtConfig({
       host: process.env.NODELINK_HOST || "localhost",
       port: parseInt(process.env.NODELINK_PORT || "2333"),
       password: process.env.NODELINK_PASSWORD || "youshallnotpass",
-    },
-  },
-  hooks: {
-    // TODO: migrate in a different place
-    "build:before"() {
-      const db = drizzle("./sqlite.db");
-      migrate(db, { migrationsFolder: "./server/db/migrations" });
     },
   },
 });

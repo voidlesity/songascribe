@@ -1,5 +1,3 @@
-<!-- TODO: Looping song will not reset bar and instead count up past the song limit instead of resetting -->
-
 <template>
   <div
     v-if="currentSong"
@@ -93,7 +91,7 @@
         <div
           class="hidden sm:flex items-center gap-1.5 text-[10px] opacity-60 tabular-nums"
         >
-          <span>{{ formatTime(currentTime) }}</span>
+          <span>{{ formatTime(displayTime) }}</span>
           <span>/</span>
           <span>{{ formatTime(duration) }}</span>
         </div>
@@ -269,6 +267,14 @@ const progressPercent = computed(() => {
   return Math.min((currentTime.value / duration.value) * 100, 100);
 });
 
+// Displayed time is clamped to the track length so a looping/seeking track
+// never shows a value past the total duration.
+const displayTime = computed(() =>
+  duration.value > 0
+    ? Math.min(currentTime.value, duration.value)
+    : currentTime.value,
+);
+
 let suppressTimeWatch = false;
 
 async function ensureAudioGraph() {
@@ -310,6 +316,7 @@ function onWorkletMessage(event) {
     }
   } else if (msg.type === "ended") {
     if (repeat.value === "one" && currentSong.value) {
+      currentTime.value = 0;
       performSeek(0);
     } else {
       onTrackEnd();

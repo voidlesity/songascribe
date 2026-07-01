@@ -12,8 +12,15 @@
 
 <script setup lang="ts">
 const { loggedIn } = useUserSession();
+const { currentSong } = usePlayerStore();
 
-const mainPaddingClass = computed(() =>
-  loggedIn.value ? "pb-32 md:pb-0" : "pb-6",
-);
+const mainPaddingClass = computed(() => {
+  const hasPlayer = !!currentSong.value;
+  const hasDock = loggedIn.value;
+
+  if (hasPlayer && hasDock) return "pb-36 md:pb-24";
+  if (hasPlayer) return "pb-28 md:pb-24";
+  if (hasDock) return "pb-20 md:pb-6";
+  return "pb-6";
+});
 </script>

@@ -39,10 +39,16 @@ export const DAISY_THEMES = [
 export type DaisyTheme = (typeof DAISY_THEMES)[number];
 
 export function useTheme() {
-  const theme = useState<string>("theme", () => "dark");
+  const themeCookie = useCookie<string>("app-theme", {
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+    default: () => "dark",
+  });
+  const theme = useState<string>("theme", () => themeCookie.value || "dark");
 
   async function setTheme(next: string) {
     theme.value = next;
+    themeCookie.value = next;
     try {
       await $fetch("/api/users/me", {
         method: "PATCH",
@@ -53,5 +59,5 @@ export function useTheme() {
     }
   }
 
-  return { theme, setTheme };
+  return { theme, setTheme, themeCookie };
 }
