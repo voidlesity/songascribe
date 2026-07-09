@@ -1,10 +1,10 @@
 <template>
   <div
     v-if="currentSong"
-    class="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-base-100 border-t border-base-300"
+    class="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-base-100"
   >
     <div
-      class="relative h-1 bg-base-300 cursor-pointer group"
+      class="relative h-1.25 bg-base-300 cursor-pointer group"
       @click="onProgressClick"
       @mousedown="startDrag"
     >

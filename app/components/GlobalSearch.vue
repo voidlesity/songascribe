@@ -10,13 +10,19 @@
         placeholder="Search or paste URL…"
         @focus="open = true"
         @keydown.escape="close"
-      >
+      />
       <kbd v-if="!query" class="kbd kbd-xs opacity-40">/</kbd>
-      <span v-if="loading" class="loading loading-spinner loading-xs opacity-60" />
+      <span
+        v-if="loading"
+        class="loading loading-spinner loading-xs opacity-60"
+      />
     </label>
 
     <!-- Mobile: search icon toggle -->
-    <button class="btn btn-ghost btn-sm btn-square md:hidden" @click="toggleMobile">
+    <button
+      class="btn btn-ghost btn-sm btn-square md:hidden"
+      @click="toggleMobile"
+    >
       <Icon name="mdi:magnify" size="1.25rem" />
     </button>
 
@@ -34,8 +40,11 @@
             type="search"
             placeholder="Search or paste URL…"
             @keydown.escape="closeMobile"
-          >
-          <span v-if="loading" class="loading loading-spinner loading-xs opacity-60" />
+          />
+          <span
+            v-if="loading"
+            class="loading loading-spinner loading-xs opacity-60"
+          />
         </label>
         <button class="btn btn-ghost btn-sm btn-square" @click="closeMobile">
           <Icon name="mdi:close" />
@@ -61,11 +70,17 @@
               <div class="text-sm font-medium truncate">{{ track.title }}</div>
               <div class="text-xs opacity-60 truncate">{{ track.author }}</div>
             </div>
-            <Icon name="mdi:plus-box-multiple-outline" class="text-primary shrink-0" />
+            <Icon
+              name="mdi:plus-box-multiple-outline"
+              class="text-primary shrink-0"
+            />
           </button>
         </li>
       </ul>
-      <p v-else-if="query && !loading" class="text-center text-sm opacity-60 p-4">
+      <p
+        v-else-if="query && !loading"
+        class="text-center text-sm opacity-60 p-4"
+      >
         No results
       </p>
     </div>
@@ -151,7 +166,9 @@ onBeforeUnmount(() => {
 <style scoped>
 .search-slide-enter-active,
 .search-slide-leave-active {
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 .search-slide-enter-from,
 .search-slide-leave-to {

@@ -33,7 +33,7 @@ export const DAISY_THEMES = [
   "sunset",
   "caramellatte",
   "abyss",
-  "silk"
+  "silk",
 ] as const;
 
 export type DaisyTheme = (typeof DAISY_THEMES)[number];

@@ -8,7 +8,7 @@
         type="search"
         :placeholder="placeholder"
         @focus="open = true"
-      >
+      />
       <span
         v-if="loading"
         class="loading loading-spinner loading-xs opacity-60"

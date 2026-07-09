@@ -41,7 +41,7 @@
               placeholder="Username or email"
               required
               autofocus
-            >
+            />
           </label>
           <label class="input w-full">
             <Icon name="mdi:lock" class="opacity-60" />
@@ -50,7 +50,7 @@
               type="password"
               placeholder="Password"
               required
-            >
+            />
           </label>
 
           <p v-if="error" class="text-error text-sm">{{ error }}</p>
@@ -77,7 +77,7 @@
               placeholder="Username"
               pattern="[a-z0-9_.\-]{3,32}"
               required
-            >
+            />
           </label>
           <label class="input w-full">
             <Icon name="mdi:email" class="opacity-60" />
@@ -86,7 +86,7 @@
               type="email"
               placeholder="Email"
               required
-            >
+            />
           </label>
           <label class="input w-full">
             <Icon name="mdi:lock" class="opacity-60" />
@@ -95,7 +95,7 @@
               type="password"
               placeholder="Password"
               required
-            >
+            />
           </label>
           <label class="input w-full">
             <Icon name="mdi:lock-check" class="opacity-60" />
@@ -104,7 +104,7 @@
               type="password"
               placeholder="Confirm password"
               required
-            >
+            />
           </label>
 
           <p v-if="error" class="text-error text-sm">{{ error }}</p>
@@ -157,7 +157,6 @@ async function handleLogin() {
       method: "POST",
       body: { login: login.value.identifier, password: login.value.password },
     });
-    await navigateTo("/");
     window.location.reload();
   } catch (e) {
     error.value =
@@ -183,7 +182,6 @@ async function handleRegister() {
         password: register.value.password,
       },
     });
-    await navigateTo("/");
     window.location.reload();
   } catch (e) {
     error.value =
