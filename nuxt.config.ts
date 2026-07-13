@@ -40,10 +40,12 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
+    databasePath: process.env.DATABASE_PATH || "./sqlite.db",
     nodelink: {
       host: process.env.NODELINK_HOST || "localhost",
-      port: parseInt(process.env.NODELINK_PORT || "2333"),
+      port: parseInt(process.env.NODELINK_PORT || "2333", 10),
       password: process.env.NODELINK_PASSWORD || "youshallnotpass",
+      timeoutMs: parseInt(process.env.NODELINK_TIMEOUT_MS || "8000", 10),
     },
   },
 });

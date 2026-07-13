@@ -10,17 +10,33 @@ dist
 # Node dependencies
 node_modules
 
+# Test and quality outputs
+coverage
+.nyc_output
+playwright-report
+test-results
+blob-report
+.playwright
+.eslintcache
+*.lcov
+
 # Logs
 logs
 *.log
 
-# Misc
+# Editor and OS metadata
 .DS_Store
+.idea
+.vscode
+.zed
+*.swp
 
 # Local env files
 .env
 .env.*
 !.env.example
 
-# Database
+# Local database data
 *.db
+*.db-*
+data

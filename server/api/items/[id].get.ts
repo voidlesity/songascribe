@@ -1,13 +1,16 @@
+import { getItemWithTracks, getOwnedItem } from "../../services/catalog/queries";
+import { parsePositiveId, requireSessionUserId } from "../../utils/validation";
+
 defineRouteMeta({
   openAPI: {
     tags: ["Items"],
     summary: "Get item",
     parameters: [
-      { in: "path", name: "id", required: true, schema: { type: "integer" } },
+      { in: "path", name: "id", required: true, schema: { type: "integer", minimum: 1 } },
     ],
     responses: {
-      200: { description: "Item with tracks" },
-      400: { description: "Invalid id" },
+      200: { description: "Item with ordered tracks" },
+      400: { description: "Invalid item id" },
       401: { description: "Unauthorized" },
       404: { description: "Item not found" },
     },
@@ -15,14 +18,12 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const id = Number(getRouterParam(event, "id"));
-  if (!Number.isInteger(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: "Invalid item id" });
+  const userId = await requireSessionUserId(event);
+  const id = parsePositiveId(event, "id", "item id");
+  if (!getOwnedItem(id, userId)) {
+    throw createError({ statusCode: 404, statusMessage: "Item not found" });
   }
-
-  const { item } = await getOwnedItem(id, (sessionUser as { id: number }).id);
-
+  const item = getItemWithTracks(id)!;
   return {
     id: item.id,
     categoryId: item.categoryId,
@@ -31,6 +32,6 @@ export default defineEventHandler(async (event) => {
     position: item.position,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-    tracks: await getItemTracks(item.id),
+    tracks: item.tracks,
   };
 });

@@ -1,3 +1,6 @@
+import { accountApi } from "~/services/account";
+import { getApiErrorMessage } from "~/services/api";
+
 export const DAISY_THEMES = [
   "light",
   "dark",
@@ -45,19 +48,22 @@ export function useTheme() {
     default: () => "dark",
   });
   const theme = useState<string>("theme", () => themeCookie.value || "dark");
+  const themeError = useState<string>("theme:error", () => "");
 
   async function setTheme(next: string) {
+    const previous = theme.value;
     theme.value = next;
     themeCookie.value = next;
+    themeError.value = "";
     try {
-      await $fetch("/api/users/me", {
-        method: "PATCH",
-        body: { theme: next },
-      });
-    } catch {
-      // ignore
+      await accountApi.update({ theme: next });
+    } catch (cause) {
+      theme.value = previous;
+      themeCookie.value = previous;
+      themeError.value = getApiErrorMessage(cause, "Failed to save theme");
+      throw cause;
     }
   }
 
-  return { theme, setTheme, themeCookie };
+  return { theme, themeError, setTheme, themeCookie };
 }

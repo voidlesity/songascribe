@@ -73,3 +73,11 @@
     </section>
   </div>
 </template>
+
+<script setup lang="ts">
+definePageMeta({ layout: "public" });
+useSeoMeta({
+  title: "About · Songascribe",
+  description: "Organize songs around ideas, moments, and meaningful context.",
+});
+</script>

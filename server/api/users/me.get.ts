@@ -1,3 +1,5 @@
+import { requireSessionUserId } from "../../utils/validation";
+
 defineRouteMeta({
   openAPI: {
     tags: ["Users"],
@@ -12,12 +14,12 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
+  const userId = await requireSessionUserId(event);
 
   const user = db
     .select()
     .from(tables.users)
-    .where(eq(tables.users.id, (sessionUser as { id: number }).id))
+    .where(eq(tables.users.id, userId))
     .get();
 
   if (!user) {

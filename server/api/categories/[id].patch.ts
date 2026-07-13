@@ -1,11 +1,26 @@
+import { eq } from "drizzle-orm";
+
+import { getOwnedCategory } from "../../services/catalog/queries";
+import { db, tables } from "../../utils/drizzle";
+import {
+  asObject,
+  badRequest,
+  booleanValue,
+  nullableDescription,
+  optionalString,
+  parsePositiveId,
+  requireSessionUserId,
+} from "../../utils/validation";
+
 defineRouteMeta({
   openAPI: {
     tags: ["Categories"],
     summary: "Update category",
     parameters: [
-      { in: "path", name: "id", required: true, schema: { type: "integer" } },
+      { in: "path", name: "id", required: true, schema: { type: "integer", minimum: 1 } },
     ],
     requestBody: {
+      required: true,
       content: {
         "application/json": {
           schema: {
@@ -21,73 +36,42 @@ defineRouteMeta({
     },
     responses: {
       200: { description: "Updated category" },
-      400: { description: "Invalid id or empty patch" },
+      400: { description: "Invalid fields or empty patch" },
       401: { description: "Unauthorized" },
-      404: { description: "Not found" },
+      404: { description: "Category not found" },
     },
   },
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const id = Number(getRouterParam(event, "id"));
-  if (!Number.isInteger(id) || id <= 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid category id",
-    });
-  }
-
-  const existing = db
-    .select()
-    .from(tables.categories)
-    .where(
-      and(
-        eq(tables.categories.id, id),
-        eq(tables.categories.userId, (sessionUser as { id: number }).id),
-      ),
-    )
-    .get();
-  if (!existing) {
+  const userId = await requireSessionUserId(event);
+  const id = parsePositiveId(event, "id", "category id");
+  if (!getOwnedCategory(id, userId)) {
     throw createError({ statusCode: 404, statusMessage: "Category not found" });
   }
-
-  const body = ((await readBody<{
-    name?: string;
-    description?: string | null;
-    isPublic?: boolean;
-  }>(event)) ?? {}) as {
-    name?: string;
-    description?: string | null;
-    isPublic?: boolean;
-  };
-
-  const patch: Record<string, unknown> = {};
-  if (typeof body.name === "string" && body.name.trim())
-    patch.name = body.name.trim();
-  if (body.description !== undefined) patch.description = body.description;
-  if (typeof body.isPublic === "boolean") patch.isPublic = body.isPublic;
-
-  if (Object.keys(patch).length === 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "No updatable fields provided",
-    });
+  const body = asObject((await readBody(event)) ?? {});
+  const name = optionalString(body.name, "name", 500);
+  const description = nullableDescription(body.description);
+  const isPublic =
+    body.isPublic === undefined
+      ? undefined
+      : booleanValue(body.isPublic, "isPublic");
+  if (name === undefined && description === undefined && isPublic === undefined) {
+    badRequest("No updatable fields provided");
   }
-  patch.updatedAt = new Date();
 
-  const [row] = await db
+  const row = db
     .update(tables.categories)
-    .set(patch)
+    .set({ name, description, isPublic, updatedAt: new Date() })
     .where(eq(tables.categories.id, id))
-    .returning();
-
+    .returning()
+    .get();
   return {
-    id: row!.id,
-    name: row!.name,
-    description: row!.description,
-    isPublic: row!.isPublic,
-    createdAt: row!.createdAt,
-    updatedAt: row!.updatedAt,
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    isPublic: row.isPublic,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 });

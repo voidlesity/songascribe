@@ -1,13 +1,35 @@
+import { createOrUpdateShare } from "../../../services/catalog/commands";
+import {
+  asObject,
+  parseOptionalExpiry,
+  parsePositiveId,
+  requireSessionUserId,
+} from "../../../utils/validation";
+
 defineRouteMeta({
   openAPI: {
     tags: ["Share"],
-    summary: "Create share link for category",
+    summary: "Create or retrieve category share",
+    description:
+      "Creates a share if absent. Optional expiresAt updates an existing share's expiry without rotating its token.",
     parameters: [
-      { in: "path", name: "id", required: true, schema: { type: "integer" } },
+      { in: "path", name: "id", required: true, schema: { type: "integer", minimum: 1 } },
     ],
+    requestBody: {
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              expiresAt: { type: "string", format: "date-time", nullable: true },
+            },
+          },
+        },
+      },
+    },
     responses: {
-      201: { description: "Share created or already exists" },
-      400: { description: "Invalid id" },
+      201: { description: "Share created or returned" },
+      400: { description: "Invalid category id or expiry" },
       401: { description: "Unauthorized" },
       404: { description: "Category not found" },
     },
@@ -15,60 +37,19 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const categoryId = Number(getRouterParam(event, "id"));
-  if (!Number.isInteger(categoryId) || categoryId <= 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid category id",
-    });
-  }
-
-  const category = db
-    .select()
-    .from(tables.categories)
-    .where(
-      and(
-        eq(tables.categories.id, categoryId),
-        eq(tables.categories.userId, (sessionUser as { id: number }).id),
-      ),
-    )
-    .get();
-  if (!category) {
-    throw createError({ statusCode: 404, statusMessage: "Category not found" });
-  }
-
-  const existing = db
-    .select()
-    .from(tables.shares)
-    .where(eq(tables.shares.categoryId, categoryId))
-    .get();
-
-  if (existing) {
-    return {
-      token: existing.token,
-      url: `/share/${existing.token}`,
-      createdAt: existing.createdAt,
-      expiresAt: existing.expiresAt,
-    };
-  }
-
-  const token = crypto.randomUUID();
-  const [row] = await db
-    .insert(tables.shares)
-    .values({
-      categoryId,
-      token,
-      createdAt: new Date(),
-      expiresAt: null,
-    })
-    .returning();
-
-  setResponseStatus(event, 201);
+  const userId = await requireSessionUserId(event);
+  const categoryId = parsePositiveId(event, "id", "category id");
+  const body = asObject((await readBody(event)) ?? {});
+  const { share, created } = createOrUpdateShare(
+    categoryId,
+    userId,
+    parseOptionalExpiry(body.expiresAt),
+  );
+  if (created) setResponseStatus(event, 201);
   return {
-    token: row!.token,
-    url: `/share/${row!.token}`,
-    createdAt: row!.createdAt,
-    expiresAt: row!.expiresAt,
+    token: share.token,
+    url: `/share/${share.token}`,
+    createdAt: share.createdAt,
+    expiresAt: share.expiresAt,
   };
 });

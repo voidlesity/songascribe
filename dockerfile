@@ -1,53 +1,32 @@
-# Stage 1: Build the Nuxt app
 FROM node:26-alpine AS build
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy the entire project
-COPY . ./
-
-# Build the project
+COPY . .
 RUN npm run build
 
-# Stage 2: Final Image
-FROM node:26-alpine
+FROM node:26-alpine AS runtime
+
 WORKDIR /app
 
-# Install runtime dependencies for NodeLink
-RUN apk add --no-cache ffmpeg
-
-# Copy NodeLink from its official image
-COPY --from=performanc/nodelink:latest /app /app/nodelink
-
-# Copy Nuxt app output
-COPY --from=build /app/.output/ ./
-COPY --from=build /app/sqlite.db ./
-
-# NodeLink & Server Defaults (Internal)
-ENV NODELINK_SERVER_HOST=127.0.0.1 \
-    NODELINK_SERVER_PORT=2333 \
-    NODELINK_SERVER_PASSWORD=youshallnotpass \
-    NODELINK_ENABLELOADSTREAMENDPOINT=true \
-    NODELINK_SOURCES_YOUTUBE_ENABLED=true \
-    NODELINK_SOURCES_SOUNDCLOUD_ENABLED=true \
-    NODELINK_SOURCES_BANDCAMP_ENABLED=true \
-    NODELINK_HOST=127.0.0.1 \
-    NODELINK_PORT=2333 \
-    NODELINK_PASSWORD=youshallnotpass \
-    PORT=80 \
+ENV NODE_ENV=production \
     HOST=0.0.0.0 \
-    NODE_ENV=production
+    PORT=3000 \
+    DATABASE_PATH=/data/sqlite.db
 
-# Create entrypoint script
-RUN printf "#!/bin/sh\n\
-cd /app/nodelink && npm start & \n\
-cd /app && exec node server/index.mjs\n" > /app/entrypoint.sh && \
-    chmod +x /app/entrypoint.sh
+RUN mkdir -p /data && chown node:node /app /data
 
-EXPOSE 80
+COPY --from=build --chown=node:node /app/.output/ ./
 
-CMD ["/app/entrypoint.sh"]
+USER node
+
+VOLUME ["/data"]
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -q --spider "http://127.0.0.1:${PORT}/api/health" || exit 1
+
+CMD ["node", "server/index.mjs"]

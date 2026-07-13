@@ -1,25 +1,32 @@
+import { eq } from "drizzle-orm";
+
+import { getCategoryDetail } from "../../services/catalog/queries";
+import { db, tables } from "../../utils/drizzle";
+import { requiredString } from "../../utils/validation";
+
 defineRouteMeta({
   openAPI: {
     tags: ["Share"],
     summary: "Resolve share token",
-    description: "Public endpoint, resolves a share token to its category.",
+    description: "Public endpoint that resolves a non-expired share token.",
     parameters: [
-      { in: "path", name: "token", required: true, schema: { type: "string" } },
+      {
+        in: "path",
+        name: "token",
+        required: true,
+        schema: { type: "string" },
+      },
     ],
     responses: {
-      200: { description: "Shared category" },
-      400: { description: "Missing token" },
+      200: { description: "Shared category detail" },
+      400: { description: "Invalid token" },
       404: { description: "Share not found or expired" },
     },
   },
 });
 
-export default defineEventHandler(async (event) => {
-  const token = getRouterParam(event, "token");
-  if (!token) {
-    throw createError({ statusCode: 400, statusMessage: "Missing token" });
-  }
-
+export default defineEventHandler((event) => {
+  const token = requiredString(getRouterParam(event, "token"), "token", 200);
   const share = db
     .select()
     .from(tables.shares)
@@ -29,39 +36,25 @@ export default defineEventHandler(async (event) => {
   if (!share) {
     throw createError({ statusCode: 404, statusMessage: "Share not found" });
   }
-  if (share.expiresAt && share.expiresAt.getTime() < Date.now()) {
+  if (share.expiresAt && share.expiresAt.getTime() <= Date.now()) {
     throw createError({ statusCode: 404, statusMessage: "Share has expired" });
   }
 
-  const category = db
-    .select()
-    .from(tables.categories)
-    .where(eq(tables.categories.id, share.categoryId))
-    .get();
+  const category = getCategoryDetail(share.categoryId);
   if (!category) {
     throw createError({ statusCode: 404, statusMessage: "Category not found" });
   }
-
-  const its = await db
-    .select()
-    .from(tables.items)
-    .where(eq(tables.items.categoryId, category.id))
-    .orderBy(asc(tables.items.position), asc(tables.items.id));
-
-  const items = await Promise.all(
-    its.map(async (i) => ({
-      id: i.id,
-      name: i.name,
-      description: i.description,
-      position: i.position,
-      tracks: await getItemTracks(i.id),
-    })),
-  );
 
   return {
     id: category.id,
     name: category.name,
     description: category.description,
-    items,
+    items: category.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      position: item.position,
+      tracks: item.tracks,
+    })),
   };
 });

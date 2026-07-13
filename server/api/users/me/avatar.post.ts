@@ -1,3 +1,5 @@
+import { requireSessionUserId } from "../../../utils/validation";
+
 defineRouteMeta({
   openAPI: {
     tags: ["Users"],
@@ -27,8 +29,7 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const userId = (sessionUser as { id: number }).id;
+  const userId = await requireSessionUserId(event);
 
   const parts = await readMultipartFormData(event);
   const part = parts?.find((p) => p.name === "file" && p.filename);

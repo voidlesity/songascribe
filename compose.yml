@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    image: songascribe:local
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - nodelink
+    environment:
+      DATABASE_PATH: /data/sqlite.db
+      NODELINK_HOST: nodelink
+      NODELINK_PORT: "3000"
+      NODELINK_PASSWORD: ${NODELINK_PASSWORD:?Set NODELINK_PASSWORD in .env}
+      NODELINK_TIMEOUT_MS: ${NODELINK_TIMEOUT_MS:-8000}
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:?Set NUXT_SESSION_PASSWORD in .env}
+    ports:
+      - "3000:3000"
+    volumes:
+      - songascribe-data:/data
+
+  nodelink:
+    image: performanc/nodelink:3.8.0
+    init: true
+    restart: unless-stopped
+    environment:
+      NODELINK_SERVER_PASSWORD: ${NODELINK_PASSWORD:?Set NODELINK_PASSWORD in .env}
+      NODELINK_ENABLELOADSTREAMENDPOINT: "true"
+      NODELINK_SOURCES_YOUTUBE_ENABLED: "true"
+      NODELINK_SOURCES_SOUNDCLOUD_ENABLED: "true"
+      NODELINK_SOURCES_BANDCAMP_ENABLED: "true"
+    ports:
+      - "127.0.0.1:2333:3000"
+
+volumes:
+  songascribe-data:

@@ -135,7 +135,13 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: ["logged-in"] });
+import { getApiErrorMessage } from "~/services/api";
+import { authApi } from "~/services/auth";
+
+definePageMeta({ middleware: ["guest"], layout: "public" });
+useSeoMeta({ title: "Sign in · Songascribe" });
+
+const { fetch: refreshSession } = useUserSession();
 
 const mode = ref<"login" | "register">("login");
 const error = ref("");
@@ -153,14 +159,14 @@ async function handleLogin() {
   error.value = "";
   submitting.value = true;
   try {
-    await $fetch("/api/auth/login", {
-      method: "POST",
-      body: { login: login.value.identifier, password: login.value.password },
+    await authApi.login({
+      login: login.value.identifier,
+      password: login.value.password,
     });
-    window.location.reload();
+    await refreshSession();
+    await navigateTo("/");
   } catch (e) {
-    error.value =
-      (e as { statusMessage?: string }).statusMessage || "Login failed";
+    error.value = getApiErrorMessage(e, "Login failed");
   } finally {
     submitting.value = false;
   }
@@ -174,18 +180,15 @@ async function handleRegister() {
   }
   submitting.value = true;
   try {
-    await $fetch("/api/auth/register", {
-      method: "POST",
-      body: {
-        username: register.value.username,
-        email: register.value.email,
-        password: register.value.password,
-      },
+    await authApi.register({
+      username: register.value.username,
+      email: register.value.email,
+      password: register.value.password,
     });
-    window.location.reload();
+    await refreshSession();
+    await navigateTo("/");
   } catch (e) {
-    error.value =
-      (e as { statusMessage?: string }).statusMessage || "Registration failed";
+    error.value = getApiErrorMessage(e, "Registration failed");
   } finally {
     submitting.value = false;
   }

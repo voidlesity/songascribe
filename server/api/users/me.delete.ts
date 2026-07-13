@@ -1,3 +1,5 @@
+import { requireSessionUserId } from "../../utils/validation";
+
 defineRouteMeta({
   openAPI: {
     tags: ["Users"],
@@ -13,11 +15,11 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
+  const userId = await requireSessionUserId(event);
 
   const [deleted] = await db
     .delete(tables.users)
-    .where(eq(tables.users.id, (sessionUser as { id: number }).id))
+    .where(eq(tables.users.id, userId))
     .returning();
 
   if (!deleted) {
