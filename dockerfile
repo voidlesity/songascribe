@@ -18,36 +18,32 @@ FROM node:26-alpine
 WORKDIR /app
 
 # Install runtime dependencies for NodeLink
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg tini
 
 # Copy NodeLink from its official image
-COPY --from=performanc/nodelink:latest /app /app/nodelink
+COPY --from=performanc/nodelink:3.9.0 /app /app/nodelink
 
 # Copy Nuxt app output
 COPY --from=build /app/.output/ ./
 COPY --from=build /app/sqlite.db ./
 
 # NodeLink & Server Defaults (Internal)
-ENV NODELINK_SERVER_HOST=127.0.0.1 \
-    NODELINK_SERVER_PORT=2333 \
-    NODELINK_SERVER_PASSWORD=youshallnotpass \
-    NODELINK_ENABLELOADSTREAMENDPOINT=true \
-    NODELINK_SOURCES_YOUTUBE_ENABLED=true \
-    NODELINK_SOURCES_SOUNDCLOUD_ENABLED=true \
-    NODELINK_SOURCES_BANDCAMP_ENABLED=true \
-    NODELINK_HOST=127.0.0.1 \
-    NODELINK_PORT=2333 \
-    NODELINK_PASSWORD=youshallnotpass \
+ENV NODELINK_API_ENABLELOADSTREAMENDPOINT=true \
     PORT=80 \
     HOST=0.0.0.0 \
     NODE_ENV=production
 
-# Create entrypoint script
-RUN printf "#!/bin/sh\n\
-cd /app/nodelink && npm start & \n\
-cd /app && exec node server/index.mjs\n" > /app/entrypoint.sh && \
+# Start NodeLink in the background, then hand PID 1 duties to the Nuxt server
+RUN printf '%s\n' \
+    '#!/bin/sh' \
+    'set -e' \
+    '(cd /app/nodelink && npm start) &' \
+    'cd /app' \
+    'exec node server/index.mjs' \
+    > /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh
 
 EXPOSE 80
 
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/app/entrypoint.sh"]

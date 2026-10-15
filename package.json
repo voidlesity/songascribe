@@ -14,22 +14,21 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "better-sqlite3": "12.11.1",
-    "drizzle-orm": "0.45.2",
-    "h3": "1.15.11"
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.4"
   },
   "devDependencies": {
     "@iconify-json/mdi": "1.2.3",
-    "@nuxt/eslint": "1.16.0",
-    "@nuxt/icon": "2.2.5",
-    "@tailwindcss/vite": "4.3.2",
-    "@types/node": "26.0.1",
-    "daisyui": "5.6.6",
-    "drizzle-kit": "0.31.10",
-    "eslint": "10.6.0",
-    "nuxt": "4.4.8",
-    "nuxt-auth-utils": "0.5.29",
-    "tailwindcss": "4.3.2"
+    "@nuxt/eslint": "1.17.0",
+    "@nuxt/icon": "2.5.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "26.6.5",
+    "daisyui": "5.7.50",
+    "drizzle-kit": "0.31.11",
+    "eslint": "10.12.0",
+    "nuxt": "4.6.1",
+    "nuxt-auth-utils": "0.5.31",
+    "tailwindcss": "4.3.3"
   },
   "engines": {
     "node": ">=26"

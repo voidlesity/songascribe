@@ -17,6 +17,10 @@ logs
 # Misc
 .DS_Store
 
+# Nix / direnv
+.direnv
+result
+
 # Local env files
 .env
 .env.*
