@@ -14,7 +14,7 @@
         type="search"
         placeholder="Search public categories…"
         @input="onSearch"
-      >
+      />
     </label>
 
     <div v-if="loading" class="flex justify-center py-16">
@@ -39,7 +39,7 @@
                   v-if="c.owner?.avatar"
                   :src="c.owner.avatar"
                   :alt="c.owner.username"
-                >
+                />
                 <div
                   v-else
                   class="w-full h-full flex items-center justify-center"
@@ -108,7 +108,7 @@
                 v-if="selected.owner?.avatar"
                 :src="selected.owner.avatar"
                 :alt="selected.owner.username"
-              >
+              />
               <div
                 v-else
                 class="w-full h-full flex items-center justify-center"

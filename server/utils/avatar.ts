@@ -21,7 +21,8 @@ const SIGNATURES: { kind: AvatarKind; test: (b: Buffer) => boolean }[] = [
   },
   {
     kind: { ext: "jpg", mime: "image/jpeg" },
-    test: (b) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+    test: (b) =>
+      b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
   },
   {
     kind: { ext: "gif", mime: "image/gif" },

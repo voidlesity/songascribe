@@ -5,7 +5,7 @@
       v-model="drawerOpen"
       type="checkbox"
       class="drawer-toggle"
-    >
+    />
 
     <div class="drawer-content flex flex-col">
       <div
@@ -135,7 +135,9 @@
       <div
         class="bg-base-100 border-r border-base-300 w-72 h-full flex flex-col"
       >
-        <div class="p-3 border-b border-base-300 flex items-center gap-2 shrink-0">
+        <div
+          class="p-3 border-b border-base-300 flex items-center gap-2 shrink-0"
+        >
           <span class="text-xs uppercase opacity-60 flex-1 font-medium">
             Categories
           </span>

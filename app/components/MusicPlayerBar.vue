@@ -116,7 +116,7 @@
           max="100"
           class="range range-xs range-primary w-24"
           @input="onVolumeChange"
-        >
+        />
         <button
           class="btn btn-ghost btn-sm btn-square relative"
           :class="{ 'text-primary': showQueue }"

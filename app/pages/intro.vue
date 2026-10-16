@@ -5,7 +5,9 @@
     >
       <div class="hero-content py-10 md:py-14 text-center">
         <div class="max-w-2xl space-y-4">
-          <div class="inline-flex items-center gap-2 badge badge-primary badge-outline">
+          <div
+            class="inline-flex items-center gap-2 badge badge-primary badge-outline"
+          >
             <Icon name="mdi:book-music" /> Songascribe
           </div>
           <h1 class="text-3xl md:text-5xl font-semibold leading-tight">
@@ -13,9 +15,9 @@
             <span class="text-primary">and a reason</span>
           </h1>
           <p class="text-sm md:text-base opacity-80">
-            Organize tracks into categories and items, then optionally explain why each song
-            belongs there. Perfect for moodboards, characters, projects,
-            memories, and playlists with meaning.
+            Organize tracks into categories and items, then optionally explain
+            why each song belongs there. Perfect for moodboards, characters,
+            projects, memories, and playlists with meaning.
           </p>
 
           <div class="flex flex-wrap justify-center gap-2 pt-2">
@@ -50,7 +52,8 @@
           </div>
           <h2 class="font-semibold">Attach tracks instantly</h2>
           <p class="text-sm opacity-70">
-            Search tracks or paste URLs, then reorder songs as your narrative evolves.
+            Search tracks or paste URLs, then reorder songs as your narrative
+            evolves.
           </p>
         </div>
       </article>
@@ -62,7 +65,8 @@
           </div>
           <h2 class="font-semibold">Add per-song reasons</h2>
           <p class="text-sm opacity-70">
-            Save context per item: why this exact song belongs with this exact thing.
+            Save context per item: why this exact song belongs with this exact
+            thing.
           </p>
         </div>
       </article>

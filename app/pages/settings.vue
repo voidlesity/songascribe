@@ -26,14 +26,20 @@
         <div v-if="tab === 'profile'" class="space-y-5">
           <div>
             <h2 class="font-semibold">Profile</h2>
-            <p class="text-sm opacity-60">Upload a picture to personalize your account.</p>
+            <p class="text-sm opacity-60">
+              Upload a picture to personalize your account.
+            </p>
           </div>
 
           <div class="flex flex-col sm:flex-row items-center gap-6">
             <button
               type="button"
               class="group relative shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
-              :class="dragging ? 'ring-2 ring-primary ring-offset-2 ring-offset-base-100' : ''"
+              :class="
+                dragging
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-base-100'
+                  : ''
+              "
               aria-label="Upload avatar"
               @click="fileInput?.click()"
               @dragover.prevent="dragging = true"
@@ -46,7 +52,7 @@
                     v-if="profile.avatar"
                     :src="profile.avatar"
                     :alt="username"
-                  >
+                  />
                   <div
                     v-else
                     class="w-full h-full flex items-center justify-center opacity-40"
@@ -77,7 +83,7 @@
                 accept="image/*"
                 class="hidden"
                 @change="onFileChange"
-              >
+              />
               <div class="flex flex-wrap justify-center sm:justify-start gap-2">
                 <button
                   type="button"
@@ -97,13 +103,20 @@
                   <Icon name="mdi:delete-outline" /> Remove
                 </button>
               </div>
-              <p class="text-xs opacity-50">Drag &amp; drop or click. JPG, PNG or WebP, up to 2 MB.</p>
+              <p class="text-xs opacity-50">
+                Drag &amp; drop or click. JPG, PNG or WebP, up to 2 MB.
+              </p>
               <Transition name="fade">
-                <p v-if="message" class="text-success text-xs flex items-center gap-1 justify-center sm:justify-start">
+                <p
+                  v-if="message"
+                  class="text-success text-xs flex items-center gap-1 justify-center sm:justify-start"
+                >
                   <Icon name="mdi:check-circle" /> {{ message }}
                 </p>
               </Transition>
-              <p v-if="uploadError" class="text-error text-xs">{{ uploadError }}</p>
+              <p v-if="uploadError" class="text-error text-xs">
+                {{ uploadError }}
+              </p>
             </div>
           </div>
 
@@ -112,9 +125,13 @@
           <div>
             <h2 class="font-semibold text-error mb-1">Danger zone</h2>
             <p class="text-sm opacity-60 mb-3">
-              Permanently delete your account and all associated data. This cannot be undone.
+              Permanently delete your account and all associated data. This
+              cannot be undone.
             </p>
-            <button class="btn btn-error btn-outline btn-sm" @click="confirmDelete = true">
+            <button
+              class="btn btn-error btn-outline btn-sm"
+              @click="confirmDelete = true"
+            >
               <Icon name="mdi:delete-forever" /> Delete account
             </button>
           </div>
@@ -123,7 +140,8 @@
             <div class="modal-box">
               <h3 class="font-bold text-lg text-error">Delete account?</h3>
               <p class="py-4 text-sm">
-                This will permanently delete your account and all your data. There is no way to recover it.
+                This will permanently delete your account and all your data.
+                There is no way to recover it.
               </p>
               <p class="text-sm opacity-60 mb-4">
                 Type <strong>delete</strong> to confirm.
@@ -133,20 +151,37 @@
                 type="text"
                 class="input input-bordered w-full mb-4"
                 placeholder="delete"
-              >
+              />
               <div class="modal-action">
-                <button class="btn btn-ghost" @click="confirmDelete = false; deleteConfirmText = ''">Cancel</button>
+                <button
+                  class="btn btn-ghost"
+                  @click="
+                    confirmDelete = false;
+                    deleteConfirmText = '';
+                  "
+                >
+                  Cancel
+                </button>
                 <button
                   class="btn btn-error"
                   :disabled="deleteConfirmText !== 'delete' || deleting"
                   @click="deleteAccount"
                 >
-                  <span v-if="deleting" class="loading loading-spinner loading-xs" />
+                  <span
+                    v-if="deleting"
+                    class="loading loading-spinner loading-xs"
+                  />
                   Delete account
                 </button>
               </div>
             </div>
-            <div class="modal-backdrop" @click="confirmDelete = false; deleteConfirmText = ''" />
+            <div
+              class="modal-backdrop"
+              @click="
+                confirmDelete = false;
+                deleteConfirmText = '';
+              "
+            />
           </dialog>
         </div>
 
@@ -300,7 +335,9 @@ async function deleteAccount() {
     await $fetch("/api/users/me", { method: "DELETE" });
     await navigateTo("/login");
   } catch (e) {
-    error.value = (e as { statusMessage?: string }).statusMessage || "Failed to delete account";
+    error.value =
+      (e as { statusMessage?: string }).statusMessage ||
+      "Failed to delete account";
     confirmDelete.value = false;
     deleteConfirmText.value = "";
   } finally {

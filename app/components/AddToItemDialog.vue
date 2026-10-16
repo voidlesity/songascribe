@@ -11,7 +11,10 @@
       <h3 class="text-lg font-semibold mb-3">Add song to items</h3>
 
       <!-- Selected track summary -->
-      <div v-if="track" class="flex items-center gap-2 bg-base-200 rounded-box p-2 mb-4">
+      <div
+        v-if="track"
+        class="flex items-center gap-2 bg-base-200 rounded-box p-2 mb-4"
+      >
         <TrackArt :track="track" size="sm" />
         <div class="min-w-0">
           <div class="text-sm font-medium truncate">{{ track.title }}</div>
@@ -41,7 +44,9 @@
               <li v-for="item in c.items" :key="item.id">
                 <label
                   class="flex items-center gap-2"
-                  :class="{ 'opacity-50 cursor-not-allowed': itemHasTrack(item) }"
+                  :class="{
+                    'opacity-50 cursor-not-allowed': itemHasTrack(item),
+                  }"
                 >
                   <input
                     type="checkbox"
@@ -49,7 +54,7 @@
                     :checked="itemHasTrack(item) || selected.has(item.id)"
                     :disabled="itemHasTrack(item)"
                     @change="toggle(item.id)"
-                  >
+                  />
                   <span class="flex-1 truncate">{{ item.name }}</span>
                   <span
                     v-if="itemHasTrack(item)"
@@ -65,7 +70,10 @@
             </ul>
           </div>
 
-          <p v-if="!categories.length" class="text-center text-sm opacity-60 py-4">
+          <p
+            v-if="!categories.length"
+            class="text-center text-sm opacity-60 py-4"
+          >
             No categories yet — create one below.
           </p>
         </div>
@@ -80,7 +88,7 @@
               type="text"
               placeholder="New item name"
               class="input input-sm flex-1"
-            >
+            />
             <select
               v-if="categories.length > 1"
               v-model="newCategoryId"
@@ -167,9 +175,7 @@ const willCreate = computed(
   () => newName.value.trim() !== "" && newCategoryId.value != null,
 );
 
-const canSubmit = computed(
-  () => selected.value.size > 0 || willCreate.value,
-);
+const canSubmit = computed(() => selected.value.size > 0 || willCreate.value);
 
 const submitLabel = computed(() => {
   const count = selected.value.size + (willCreate.value ? 1 : 0);

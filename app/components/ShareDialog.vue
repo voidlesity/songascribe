@@ -12,7 +12,7 @@
           readonly
           class="input join-item flex-1"
           @focus="($event.target as HTMLInputElement).select()"
-        >
+        />
         <button class="btn btn-primary join-item" @click="copy">
           <Icon :name="copied ? 'mdi:check' : 'mdi:content-copy'" />
           {{ copied ? "Copied" : "Copy" }}

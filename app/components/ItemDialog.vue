@@ -25,7 +25,7 @@
             placeholder="Name"
             class="input w-full"
             required
-          >
+          />
           <span>Item name</span>
         </label>
 
@@ -55,7 +55,7 @@
                   type="text"
                   placeholder="Why this song fits this item"
                   @input="onReasonInput(idx, $event)"
-                >
+                />
               </label>
             </div>
             <div class="join self-start">

@@ -23,7 +23,7 @@
             class="absolute top-0 left-0 max-w-none pointer-events-none"
             :style="imgStyle"
             @load="onImageLoad"
-          >
+          />
           <div
             class="absolute inset-0 rounded-full ring-2 ring-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)] pointer-events-none"
           />
@@ -39,7 +39,7 @@
             step="0.01"
             class="range range-sm range-primary flex-1"
             @input="onZoomInput"
-          >
+          />
           <Icon name="mdi:magnify-plus-outline" class="opacity-60" />
         </div>
       </div>
@@ -48,13 +48,21 @@
         <button class="btn btn-ghost" :disabled="busy" @click="emit('cancel')">
           Cancel
         </button>
-        <button class="btn btn-primary" :disabled="busy || !loaded" @click="confirm">
+        <button
+          class="btn btn-primary"
+          :disabled="busy || !loaded"
+          @click="confirm"
+        >
           <span v-if="busy" class="loading loading-spinner loading-xs" />
           <Icon v-else name="mdi:check" /> Apply
         </button>
       </div>
     </div>
-    <form method="dialog" class="modal-backdrop" @submit.prevent="emit('cancel')">
+    <form
+      method="dialog"
+      class="modal-backdrop"
+      @submit.prevent="emit('cancel')"
+    >
       <button>close</button>
     </form>
   </dialog>

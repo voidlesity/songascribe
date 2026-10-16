@@ -1,7 +1,7 @@
 <template>
   <div class="avatar shrink-0">
     <div class="rounded-md" :class="sizeClass">
-      <img v-if="src" :src="src" :alt="alt" class="object-cover" >
+      <img v-if="src" :src="src" :alt="alt" class="object-cover" />
       <div
         v-else
         class="bg-base-300 w-full h-full flex items-center justify-center"

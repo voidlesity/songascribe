@@ -14,7 +14,7 @@
             class="input w-full"
             required
             autofocus
-          >
+          />
           <span>Category name</span>
         </label>
 
@@ -23,7 +23,7 @@
             v-model="form.isPublic"
             type="checkbox"
             class="toggle toggle-primary"
-          >
+          />
           <span class="text-sm">Public | discoverable on Browse</span>
         </label>
 

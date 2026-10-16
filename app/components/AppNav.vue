@@ -1,13 +1,21 @@
 <template>
-  <header class="navbar bg-base-100 border-b border-base-300 px-4 sticky top-0 z-40">
+  <header
+    class="navbar bg-base-100 border-b border-base-300 px-4 sticky top-0 z-40"
+  >
     <div class="flex-1 flex justify-start min-w-0">
-      <NuxtLink :to="homeTo" class="btn btn-ghost px-2 text-lg font-semibold gap-2">
+      <NuxtLink
+        :to="homeTo"
+        class="btn btn-ghost px-2 text-lg font-semibold gap-2"
+      >
         <Icon name="mdi:book-music" class="text-primary" size="1.5rem" />
         <span class="hidden sm:inline">Songascribe</span>
       </NuxtLink>
     </div>
 
-    <div v-if="loggedIn" class="flex-1 flex justify-center min-w-0 max-w-md px-2">
+    <div
+      v-if="loggedIn"
+      class="flex-1 flex justify-center min-w-0 max-w-md px-2"
+    >
       <GlobalSearch />
     </div>
 
@@ -27,12 +35,16 @@
 
       <div class="flex-none ml-1">
         <div v-if="user" class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+          <div
+            tabindex="0"
+            role="button"
+            class="btn btn-ghost btn-circle avatar"
+          >
             <div
               class="w-9 rounded-full"
               :class="{ 'bg-primary text-primary-content': !avatar }"
             >
-              <img v-if="avatar" :src="avatar" :alt="initials" >
+              <img v-if="avatar" :src="avatar" :alt="initials" />
               <span
                 v-else
                 class="flex items-center justify-center w-full h-full font-semibold"

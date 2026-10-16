@@ -2,7 +2,8 @@ defineRouteMeta({
   openAPI: {
     tags: ["Users"],
     summary: "Get a user's avatar image",
-    description: "Serves a user's avatar image, stored in the database, by user id.",
+    description:
+      "Serves a user's avatar image, stored in the database, by user id.",
     responses: {
       200: { description: "Avatar image" },
       404: { description: "Avatar not found" },

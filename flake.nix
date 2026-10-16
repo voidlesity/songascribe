@@ -19,15 +19,15 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
           # NodeLink listens on 3000 by default (same as Nuxt), so expose it on 2333.
+          # and yes we sudo docker dis bitch ain't gonna add my user to the docker group
           nodelink = "sudo docker run --rm --name nodelink -p 2333:3000 -e NODELINK_API_ENABLELOADSTREAMENDPOINT=true performanc/nodelink:3.9.0";
+          pane = cmd: "'trap : INT; ${cmd}; exec $SHELL'";
         in
-         {
+        {
           default = pkgs.mkShell {
-            packages = [ pkgs.tmux ];
+            packages = [ pkgs.tmux pkgs.nodejs_26 ];
             shellHook = ''
-              sudo docker rm -f nodelink >/dev/null 2>&1
-              TMUX= tmux -L songascribe new-session -s songascribe "npm i && npm run dev; tmux kill-session" \; set mouse on \; split-window -h "${nodelink}" \; select-pane -L
-              sudo docker stop nodelink >/dev/null 2>&1
+              tmux new-session ${pane "npm i && npm run dev"} \; split-window -h ${pane nodelink} \; set -g mouse on
               exit
             '';
           };
