@@ -1,13 +1,37 @@
 defineRouteMeta({
   openAPI: {
     tags: ["Share"],
-    summary: "Create share link for category",
+    summary: "Create or get category share",
+    description:
+      "Creates a share link if there is none yet. Passing expiresAt updates the expiry of an existing share without changing its token.",
     parameters: [
-      { in: "path", name: "id", required: true, schema: { type: "integer" } },
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        schema: { type: "integer", minimum: 1 },
+      },
     ],
+    requestBody: {
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              expiresAt: {
+                type: "string",
+                format: "date-time",
+                nullable: true,
+              },
+            },
+          },
+        },
+      },
+    },
     responses: {
-      201: { description: "Share created or already exists" },
-      400: { description: "Invalid id" },
+      200: { description: "Existing share" },
+      201: { description: "Share created" },
+      400: { description: "Invalid category id or expiry" },
       401: { description: "Unauthorized" },
       404: { description: "Category not found" },
     },
@@ -15,28 +39,12 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const categoryId = Number(getRouterParam(event, "id"));
-  if (!Number.isInteger(categoryId) || categoryId <= 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid category id",
-    });
-  }
-
-  const category = db
-    .select()
-    .from(tables.categories)
-    .where(
-      and(
-        eq(tables.categories.id, categoryId),
-        eq(tables.categories.userId, (sessionUser as { id: number }).id),
-      ),
-    )
-    .get();
-  if (!category) {
-    throw createError({ statusCode: 404, statusMessage: "Category not found" });
-  }
+  const { user } = await requireUserSession(event);
+  const categoryId = parseRouteId(event, "category");
+  const expiresAt = parseOptionalExpiry(
+    (await readObjectBody(event)).expiresAt,
+  );
+  requireOwnedCategory(categoryId, user.id);
 
   const existing = db
     .select()
@@ -44,31 +52,27 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.shares.categoryId, categoryId))
     .get();
 
-  if (existing) {
-    return {
-      token: existing.token,
-      url: `/share/${existing.token}`,
-      createdAt: existing.createdAt,
-      expiresAt: existing.expiresAt,
-    };
+  if (!existing) {
+    const share = db
+      .insert(tables.shares)
+      .values({
+        categoryId,
+        token: crypto.randomUUID(),
+        createdAt: new Date(),
+        expiresAt: expiresAt ?? null,
+      })
+      .returning()
+      .get();
+    setResponseStatus(event, 201);
+    return serializeShare(share);
   }
 
-  const token = crypto.randomUUID();
-  const [row] = await db
-    .insert(tables.shares)
-    .values({
-      categoryId,
-      token,
-      createdAt: new Date(),
-      expiresAt: null,
-    })
-    .returning();
-
-  setResponseStatus(event, 201);
-  return {
-    token: row!.token,
-    url: `/share/${row!.token}`,
-    createdAt: row!.createdAt,
-    expiresAt: row!.expiresAt,
-  };
+  if (expiresAt === undefined) return serializeShare(existing);
+  const share = db
+    .update(tables.shares)
+    .set({ expiresAt })
+    .where(eq(tables.shares.id, existing.id))
+    .returning()
+    .get();
+  return serializeShare(share);
 });

@@ -14,8 +14,12 @@ node_modules
 logs
 *.log
 
-# Misc
+# Editor and OS metadata
 .DS_Store
+.idea
+.vscode
+.zed
+*.swp
 
 # Nix / direnv
 .direnv
@@ -26,5 +30,7 @@ result
 .env.*
 !.env.example
 
-# Database
+# Local database data
 *.db
+*.db-*
+data

@@ -27,57 +27,35 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const userId = (sessionUser as { id: number }).id;
-
-  const parts = await readMultipartFormData(event);
-  const part = parts?.find((p) => p.name === "file" && p.filename);
-
-  if (!part || !part.data?.length) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "No image file provided",
-    });
-  }
-
-  if (part.data.length > AVATAR_MAX_BYTES) {
+  const { user } = await requireUserSession(event);
+  const file = (await readMultipartFormData(event))?.find(
+    (part) => part.name === "file" && part.filename,
+  );
+  if (!file?.data.length) badRequest("No image file provided");
+  if (file.data.length > AVATAR_MAX_BYTES) {
     throw createError({
       statusCode: 413,
       statusMessage: "Image exceeds the 2 MB limit",
     });
   }
+  const kind = detectImage(file.data);
+  if (!kind) badRequest("File is not a valid image");
 
-  const kind = detectImage(part.data);
-  if (!kind) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "File is not a valid image",
-    });
-  }
-
-  const [updated] = await db
+  const updated = db
     .update(tables.users)
     .set({
-      avatar: avatarUrl(userId),
-      avatarData: part.data,
+      avatar: avatarUrl(user.id),
+      avatarData: file.data,
       avatarMime: kind.mime,
       updatedAt: new Date(),
     })
-    .where(eq(tables.users.id, userId))
-    .returning();
-
+    .where(eq(tables.users.id, user.id))
+    .returning()
+    .get();
   if (!updated) {
     throw createError({ statusCode: 404, statusMessage: "User not found" });
   }
 
-  await setUserSession(event, {
-    user: {
-      id: updated.id,
-      username: updated.username,
-      avatar: updated.avatar,
-      theme: updated.theme,
-    },
-  });
-
+  await setSessionUser(event, updated);
   return { avatar: updated.avatar };
 });

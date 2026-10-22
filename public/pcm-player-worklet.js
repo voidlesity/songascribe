@@ -1,61 +1,55 @@
 /**
  * PCM player AudioWorklet for Songascribe.
  *
- * Receives interleaved stereo Float32 chunks (converted from NodeLink's
- * 16-bit little-endian PCM @ 48 kHz, stereo) on its message port and plays
- * them back through the AudioContext destination.
- *
- * Messages from main thread:
- *   { type: "samples", data: Float32Array }   // interleaved L,R,L,R,...
- *   { type: "eos" }                           // upstream stream ended
- *   { type: "flush" }                         // discard buffered audio (seek)
- *
- * Messages to main thread (every ~50 ms while playing):
- *   { type: "status", samplesPlayed, bufferedSamples }
- *   { type: "ended" }                         // eos seen AND buffer drained
+ * @typedef {{ type: "reset", streamId: number }
+ *   | { type: "samples", streamId: number, data: Float32Array }
+ *   | { type: "eos", streamId: number }} PcmWorkletInputMessage
+ * @typedef {{ type: "status", streamId: number, framesPlayed: number,
+ *   bufferedSamples: number }
+ *   | { type: "ended", streamId: number }} PcmWorkletOutputMessage
  */
 class PcmPlayerProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    /** Queue of interleaved Float32 chunks not yet consumed. */
+    /** @type {Float32Array[]} */
     this.queue = [];
-    /** Read offset (in frames, NOT samples) into queue[0]. */
     this.readOffsetFrames = 0;
-    /** Total interleaved samples currently buffered across the queue. */
     this.bufferedSamples = 0;
-    /** Frames written to the output (one frame = one L+R pair). */
     this.framesPlayed = 0;
-    /** Whether the producer has signaled end-of-stream. */
     this.eos = false;
-    /** Whether we've already notified the main thread that playback ended. */
     this.endedNotified = false;
-    /** Throttle status messages. */
-    this.lastStatusFrame = 0;
+    this.statusFrames = 0;
+    this.streamId = 0;
 
     this.port.onmessage = (event) => {
-      const msg = event.data;
-      if (!msg || typeof msg !== "object") return;
-      switch (msg.type) {
-        case "samples": {
-          const data = msg.data;
-          if (data && data.length) {
-            this.queue.push(data);
-            this.bufferedSamples += data.length;
-          }
-          break;
-        }
-        case "eos":
-          this.eos = true;
-          break;
-        case "flush":
+      /** @type {PcmWorkletInputMessage | undefined} */
+      const message = event.data;
+      if (!message || typeof message !== "object") return;
+
+      switch (message.type) {
+        case "reset":
+          if (!Number.isFinite(message.streamId)) return;
+          this.streamId = message.streamId;
           this.queue = [];
           this.readOffsetFrames = 0;
           this.bufferedSamples = 0;
+          this.framesPlayed = 0;
           this.eos = false;
           this.endedNotified = false;
+          this.statusFrames = 0;
           break;
-        case "resetPosition":
-          this.framesPlayed = 0;
+        case "samples":
+          if (
+            message.streamId === this.streamId &&
+            message.data instanceof Float32Array &&
+            message.data.length > 0
+          ) {
+            this.queue.push(message.data);
+            this.bufferedSamples += message.data.length;
+          }
+          break;
+        case "eos":
+          if (message.streamId === this.streamId) this.eos = true;
           break;
       }
     };
@@ -68,39 +62,44 @@ class PcmPlayerProcessor extends AudioWorkletProcessor {
     const left = output[0];
     const right = output.length > 1 ? output[1] : output[0];
     const frameCount = left.length;
+    let outputIndex = 0;
+    let framesConsumed = 0;
 
-    let outIdx = 0;
-    while (outIdx < frameCount) {
+    while (outputIndex < frameCount) {
       const chunk = this.queue[0];
       if (!chunk) {
-        // Underrun: emit silence for the rest of the block.
-        for (; outIdx < frameCount; outIdx++) {
-          left[outIdx] = 0;
-          if (right !== left) right[outIdx] = 0;
+        for (; outputIndex < frameCount; outputIndex++) {
+          left[outputIndex] = 0;
+          if (right !== left) right[outputIndex] = 0;
         }
         break;
       }
+
       const chunkFrames = chunk.length >>> 1;
       const framesAvailable = chunkFrames - this.readOffsetFrames;
-      const framesToCopy = Math.min(frameCount - outIdx, framesAvailable);
-      const base = this.readOffsetFrames * 2;
-      for (let i = 0; i < framesToCopy; i++) {
-        const j = base + i * 2;
-        left[outIdx + i] = chunk[j];
-        if (right !== left) right[outIdx + i] = chunk[j + 1];
+      const framesToCopy = Math.min(frameCount - outputIndex, framesAvailable);
+      const readBase = this.readOffsetFrames * 2;
+
+      for (let index = 0; index < framesToCopy; index++) {
+        const sourceIndex = readBase + index * 2;
+        left[outputIndex + index] = chunk[sourceIndex];
+        if (right !== left) right[outputIndex + index] = chunk[sourceIndex + 1];
       }
-      outIdx += framesToCopy;
+
+      outputIndex += framesToCopy;
+      framesConsumed += framesToCopy;
       this.readOffsetFrames += framesToCopy;
       this.bufferedSamples -= framesToCopy * 2;
+
       if (this.readOffsetFrames >= chunkFrames) {
         this.queue.shift();
         this.readOffsetFrames = 0;
       }
     }
 
-    this.framesPlayed += frameCount;
+    this.framesPlayed += framesConsumed;
+    this.statusFrames += frameCount;
 
-    // Notify ended once after eos + drained.
     if (
       this.eos &&
       !this.endedNotified &&
@@ -108,17 +107,21 @@ class PcmPlayerProcessor extends AudioWorkletProcessor {
       this.bufferedSamples <= 0
     ) {
       this.endedNotified = true;
-      this.port.postMessage({ type: "ended" });
+      /** @type {PcmWorkletOutputMessage} */
+      const endedMessage = { type: "ended", streamId: this.streamId };
+      this.port.postMessage(endedMessage);
     }
 
-    // Throttle status messages to ~every 50 ms (sampleRate / 20 frames).
-    if (this.framesPlayed - this.lastStatusFrame >= sampleRate / 20) {
-      this.lastStatusFrame = this.framesPlayed;
-      this.port.postMessage({
+    if (this.statusFrames >= sampleRate / 20) {
+      this.statusFrames = 0;
+      /** @type {PcmWorkletOutputMessage} */
+      const statusMessage = {
         type: "status",
+        streamId: this.streamId,
         framesPlayed: this.framesPlayed,
         bufferedSamples: this.bufferedSamples,
-      });
+      };
+      this.port.postMessage(statusMessage);
     }
 
     return true;

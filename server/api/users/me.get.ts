@@ -12,25 +12,14 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-
-  const user = db
+  const { user } = await requireUserSession(event);
+  const row = db
     .select()
     .from(tables.users)
-    .where(eq(tables.users.id, (sessionUser as { id: number }).id))
+    .where(eq(tables.users.id, user.id))
     .get();
-
-  if (!user) {
+  if (!row) {
     throw createError({ statusCode: 404, statusMessage: "User not found" });
   }
-
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    avatar: user.avatar,
-    theme: user.theme,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  };
+  return serializeUser(row);
 });

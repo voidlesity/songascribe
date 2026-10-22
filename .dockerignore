@@ -1,14 +1,39 @@
-/.nuxt
-/.output
-/node_modules
-
+# Version control and CI
+.git
 .gitignore
-.sqlite.db
+.gitlab-ci.yml
 
+# Dependencies and generated output
+node_modules
+.npm
+.nuxt
+.output
+.nitro
+.data
+.cache
+dist
+
+# Local data and secrets
 .env
 .env.*
+*.db
+*.db-*
+data
 
+# Logs and editor/OS metadata
+logs
+*.log
+.DS_Store
+.idea
+.vscode
+.zed
+*.swp
+
+# Not needed to build the image
 README.md
-
+LICENSE
+.editorconfig
+.direnv
+result
 flake.nix
 flake.lock

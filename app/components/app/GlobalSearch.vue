@@ -1,6 +1,5 @@
 <template>
   <div class="relative flex justify-center w-full">
-    <!-- Desktop: inline search input -->
     <label class="input input-sm w-full hidden md:flex">
       <Icon name="mdi:magnify" class="opacity-60" />
       <input
@@ -18,15 +17,15 @@
       />
     </label>
 
-    <!-- Mobile: search icon toggle -->
     <button
+      type="button"
       class="btn btn-ghost btn-sm btn-square md:hidden"
+      aria-label="Search"
       @click="toggleMobile"
     >
       <Icon name="mdi:magnify" size="1.25rem" />
     </button>
 
-    <!-- Mobile: full-width search overlay -->
     <Transition name="search-slide">
       <div
         v-if="mobileOpen"
@@ -39,20 +38,31 @@
             v-model="query"
             type="search"
             placeholder="Search or paste URL…"
-            @keydown.escape="closeMobile"
+            @keydown.escape="close"
           />
           <span
             v-if="loading"
             class="loading loading-spinner loading-xs opacity-60"
           />
         </label>
-        <button class="btn btn-ghost btn-sm btn-square" @click="closeMobile">
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm btn-square"
+          aria-label="Close search"
+          @click="close"
+        >
           <Icon name="mdi:close" />
         </button>
       </div>
     </Transition>
 
-    <!-- Results dropdown -->
+    <p
+      v-if="error"
+      class="absolute top-full mt-1 text-error text-xs bg-base-100 px-2 py-1 rounded-box shadow"
+    >
+      {{ error }}
+    </p>
+
     <div
       v-if="showResults"
       class="fixed inset-x-0 top-14 md:absolute md:top-full md:inset-x-0 md:mt-2 z-50 bg-base-100 border border-base-300 md:rounded-box shadow-xl max-h-80 overflow-y-auto"
@@ -85,28 +95,23 @@
       </p>
     </div>
 
-    <!-- Backdrop to close results -->
     <div v-if="showResults" class="fixed inset-0 z-40" @click="close" />
 
-    <!-- Add-to-item picker -->
-    <AddToItemDialog
+    <CatalogAddToItemDialog
       :track="selectedTrack"
       @close="selectedTrack = null"
-      @added="selectedTrack = null"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Track } from "~/composables/useTrackSearch";
-
 const query = ref("");
-const { results, loading, clear: clearSearch } = useTrackSearch(query);
+const { results, loading, error, clear: clearSearch } = useTrackSearch(query);
 
 const open = ref(false);
 const mobileOpen = ref(false);
-const desktopInput = ref<HTMLInputElement | null>(null);
-const mobileInput = ref<HTMLInputElement | null>(null);
+const desktopInput = useTemplateRef("desktopInput");
+const mobileInput = useTemplateRef("mobileInput");
 const selectedTrack = ref<Track | null>(null);
 
 const showResults = computed(
@@ -134,33 +139,21 @@ function toggleMobile() {
   }
 }
 
-function closeMobile() {
-  mobileOpen.value = false;
-  query.value = "";
-  clearSearch();
-}
-
-// Global "/" keyboard shortcut to focus search
-function onKeydown(e: KeyboardEvent) {
+/** Focuses the search when "/" is pressed outside of a form field. */
+function onKeydown(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null;
   if (
-    e.key === "/" &&
-    !["INPUT", "TEXTAREA", "SELECT"].includes(
-      (e.target as HTMLElement)?.tagName,
-    )
+    event.key === "/" &&
+    !["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName ?? "")
   ) {
-    e.preventDefault();
+    event.preventDefault();
     desktopInput.value?.focus();
     open.value = true;
   }
 }
 
-onMounted(() => {
-  document.addEventListener("keydown", onKeydown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener("keydown", onKeydown);
-});
+onMounted(() => document.addEventListener("keydown", onKeydown));
+onBeforeUnmount(() => document.removeEventListener("keydown", onKeydown));
 </script>
 
 <style scoped>

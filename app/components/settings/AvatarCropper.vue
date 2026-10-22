@@ -6,7 +6,6 @@
 
       <div class="flex flex-col items-center gap-4">
         <div
-          ref="viewport"
           class="relative overflow-hidden rounded-full bg-base-300 ring-1 ring-base-300 select-none touch-none cursor-grab active:cursor-grabbing"
           :style="{ width: `${VIEWPORT}px`, height: `${VIEWPORT}px` }"
           @pointerdown="onPointerDown"
@@ -32,13 +31,13 @@
         <div class="flex items-center gap-3 w-full max-w-xs">
           <Icon name="mdi:magnify-minus-outline" class="opacity-60" />
           <input
-            v-model.number="zoom"
+            :value="zoom"
             type="range"
-            :min="1"
-            :max="4"
+            :min="MIN_ZOOM"
+            :max="MAX_ZOOM"
             step="0.01"
             class="range range-sm range-primary flex-1"
-            @input="onZoomInput"
+            @input="setZoom(($event.target as HTMLInputElement).valueAsNumber)"
           />
           <Icon name="mdi:magnify-plus-outline" class="opacity-60" />
         </div>
@@ -78,6 +77,8 @@ const emit = defineEmits<{ cancel: []; confirm: [blob: Blob] }>();
 
 const VIEWPORT = 288;
 const OUTPUT = 288;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
 
 const src = ref<string | null>(null);
 const loaded = ref(false);
@@ -137,21 +138,19 @@ function onImageLoad(e: Event) {
   loaded.value = true;
 }
 
-function onZoomInput() {
+function setZoom(next: number) {
+  const previous = zoom.value;
+  zoom.value = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
   // Keep the viewport centre anchored while zooming.
-  const prevScale = natW.value === 0 ? 1 : displayScale.value;
-  const centreImgX = (VIEWPORT / 2 - tx.value) / prevScale;
-  const centreImgY = (VIEWPORT / 2 - ty.value) / prevScale;
-  const newScale = displayScale.value;
-  tx.value = VIEWPORT / 2 - centreImgX * newScale;
-  ty.value = VIEWPORT / 2 - centreImgY * newScale;
+  const ratio = zoom.value / previous;
+  const centre = VIEWPORT / 2;
+  tx.value = centre - (centre - tx.value) * ratio;
+  ty.value = centre - (centre - ty.value) * ratio;
   clamp();
 }
 
 function onWheel(e: WheelEvent) {
-  const next = zoom.value - e.deltaY * 0.001;
-  zoom.value = Math.min(4, Math.max(1, next));
-  onZoomInput();
+  setZoom(zoom.value - e.deltaY * 0.001);
 }
 
 let dragging = false;

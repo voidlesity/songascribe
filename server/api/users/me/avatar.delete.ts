@@ -11,10 +11,8 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const userId = (sessionUser as { id: number }).id;
-
-  const [updated] = await db
+  const { user } = await requireUserSession(event);
+  const updated = db
     .update(tables.users)
     .set({
       avatar: null,
@@ -22,21 +20,13 @@ export default defineEventHandler(async (event) => {
       avatarMime: null,
       updatedAt: new Date(),
     })
-    .where(eq(tables.users.id, userId))
-    .returning();
-
+    .where(eq(tables.users.id, user.id))
+    .returning()
+    .get();
   if (!updated) {
     throw createError({ statusCode: 404, statusMessage: "User not found" });
   }
 
-  await setUserSession(event, {
-    user: {
-      id: updated.id,
-      username: updated.username,
-      avatar: updated.avatar,
-      theme: updated.theme,
-    },
-  });
-
+  await setSessionUser(event, updated);
   return { avatar: null };
 });

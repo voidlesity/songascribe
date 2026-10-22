@@ -16,7 +16,7 @@
       v-if="loggedIn"
       class="flex-1 flex justify-center min-w-0 max-w-md px-2"
     >
-      <GlobalSearch />
+      <AppGlobalSearch />
     </div>
 
     <div class="flex-1 flex justify-end items-center gap-1 min-w-0">
@@ -78,31 +78,13 @@
 <script setup lang="ts">
 const { user, loggedIn, clear } = useUserSession();
 const route = useRoute();
-
-const links = computed(() => {
-  if (!loggedIn.value) {
-    return [
-      { to: "/intro", label: "Intro", icon: "mdi:book-open-variant" },
-      { to: "/browse", label: "Browse", icon: "mdi:earth" },
-    ];
-  }
-
-  return [
-    { to: "/", label: "Home", icon: "mdi:home" },
-    { to: "/browse", label: "Browse", icon: "mdi:earth" },
-    { to: "/statistics", label: "Stats", icon: "mdi:chart-line" },
-  ];
-});
-
-const initials = computed(() => {
-  const name = (user.value as { username?: string } | null)?.username;
-  return name?.charAt(0).toUpperCase() ?? "?";
-});
-
-const avatar = computed(
-  () => (user.value as { avatar?: string | null } | null)?.avatar,
+const links = computed(() =>
+  loggedIn.value ? authenticatedNavLinks : guestNavLinks,
 );
-
+const initials = computed(
+  () => user.value?.username.charAt(0).toUpperCase() ?? "?",
+);
+const avatar = computed(() => user.value?.avatar);
 const homeTo = computed(() => (loggedIn.value ? "/" : "/intro"));
 
 async function logout() {

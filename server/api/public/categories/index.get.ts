@@ -15,89 +15,62 @@ defineRouteMeta({
         schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
       },
     ],
-    responses: { 200: { description: "Paginated list" } },
+    responses: {
+      200: { description: "Paginated public category summaries" },
+      400: { description: "Invalid pagination or search parameters" },
+    },
   },
 });
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler((event) => {
   const query = getQuery(event);
-  const page = Math.max(1, Number(query.page) || 1);
-  const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
-  const offset = (page - 1) * limit;
-  const search = typeof query.search === "string" ? query.search.trim() : "";
+  const page = parseInteger(query.page ?? 1, "page", { min: 1 });
+  const limit = parseInteger(query.limit ?? 20, "limit", { min: 1, max: 100 });
+  const search =
+    query.search === undefined || query.search === ""
+      ? ""
+      : requiredString(query.search, "search", 200);
 
-  const whereExpr = search
-    ? and(
-        eq(tables.categories.isPublic, true),
-        sql`LOWER(${tables.categories.name}) LIKE ${"%" + search.toLowerCase() + "%"}`,
-      )
-    : eq(tables.categories.isPublic, true);
+  const where = and(
+    eq(tables.categories.isPublic, true),
+    search
+      ? like(sql`lower(${tables.categories.name})`, `%${search.toLowerCase()}%`)
+      : undefined,
+  );
 
-  const totalRow = db
-    .select({ count: count() })
-    .from(tables.categories)
-    .where(whereExpr)
-    .get();
-  const total = totalRow?.count ?? 0;
+  const total =
+    db.select({ total: count() }).from(tables.categories).where(where).get()
+      ?.total ?? 0;
 
-  const rows = await db
+  const rows = db
     .select({
-      category: tables.categories,
-      owner: {
-        username: tables.users.username,
-        avatar: tables.users.avatar,
-      },
+      id: tables.categories.id,
+      name: tables.categories.name,
+      description: tables.categories.description,
+      createdAt: tables.categories.createdAt,
+      itemCount: sql<number>`count(distinct ${tables.items.id})`,
+      trackCount: sql<number>`count(distinct ${tables.itemTracks.trackId})`,
+      ownerUsername: tables.users.username,
+      ownerAvatar: tables.users.avatar,
     })
     .from(tables.categories)
     .leftJoin(tables.users, eq(tables.categories.userId, tables.users.id))
-    .where(whereExpr)
+    .leftJoin(tables.items, eq(tables.items.categoryId, tables.categories.id))
+    .leftJoin(tables.itemTracks, eq(tables.itemTracks.itemId, tables.items.id))
+    .where(where)
+    .groupBy(tables.categories.id)
     .orderBy(desc(tables.categories.createdAt))
     .limit(limit)
-    .offset(offset);
-
-  const categories = await Promise.all(
-    rows.map(async ({ category, owner }) => {
-      const itemCountRow = db
-        .select({ count: count() })
-        .from(tables.items)
-        .where(eq(tables.items.categoryId, category.id))
-        .get();
-      const itemCount = itemCountRow?.count ?? 0;
-
-      const trackCountRow = db
-        .select({
-          count: sql<number>`COUNT(DISTINCT ${tables.itemTracks.trackId})`,
-        })
-        .from(tables.itemTracks)
-        .innerJoin(tables.items, eq(tables.itemTracks.itemId, tables.items.id))
-        .where(eq(tables.items.categoryId, category.id))
-        .get();
-      const trackCount = trackCountRow?.count ?? 0;
-
-      return {
-        id: category.id,
-        name: category.name,
-        description: category.description,
-        createdAt: category.createdAt,
-        itemCount,
-        trackCount,
-        owner: owner
-          ? {
-              username: owner.username,
-              avatar: owner.avatar,
-            }
-          : null,
-      };
-    }),
-  );
+    .offset((page - 1) * limit)
+    .all();
 
   return {
-    data: categories,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-    },
+    data: rows.map(({ ownerUsername, ownerAvatar, ...category }) => ({
+      ...category,
+      owner: ownerUsername
+        ? { username: ownerUsername, avatar: ownerAvatar }
+        : null,
+    })),
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
   };
 });

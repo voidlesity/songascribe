@@ -2,8 +2,7 @@ defineRouteMeta({
   openAPI: {
     tags: ["Statistics"],
     summary: "User statistics",
-    description:
-      "Aggregated usage statistics for the authenticated user, computed via SQL.",
+    description: "Aggregated usage statistics for the authenticated user.",
     responses: {
       200: { description: "Statistics" },
       401: { description: "Unauthorized" },
@@ -12,50 +11,51 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const userId = (sessionUser as { id: number }).id;
+  const { user } = await requireUserSession(event);
+  const ownCategory = eq(tables.categories.userId, user.id);
+  const distinctItems = sql<number>`count(distinct ${tables.items.id})`;
+  const distinctTracks = sql<number>`count(distinct ${tables.itemTracks.trackId})`;
 
-  const overviewRow = db
+  const overview = db
     .select({
-      totalCategories: sql<number>`COUNT(DISTINCT ${tables.categories.id})`,
-      totalItems: sql<number>`COUNT(DISTINCT ${tables.items.id})`,
-      totalTrackLinks: sql<number>`COUNT(${tables.itemTracks.id})`,
-      uniqueTracks: sql<number>`COUNT(DISTINCT ${tables.itemTracks.trackId})`,
+      categories: sql<number>`count(distinct ${tables.categories.id})`,
+      items: distinctItems,
+      tracks: distinctTracks,
+      trackLinks: count(tables.itemTracks.id),
     })
     .from(tables.categories)
     .leftJoin(tables.items, eq(tables.items.categoryId, tables.categories.id))
     .leftJoin(tables.itemTracks, eq(tables.itemTracks.itemId, tables.items.id))
-    .where(eq(tables.categories.userId, userId))
-    .get();
+    .where(ownCategory)
+    .get()!;
 
-  const distinctTracks = await db
-    .selectDistinct({
-      id: tables.tracks.id,
-      lengthMs: tables.tracks.lengthMs,
-    })
-    .from(tables.tracks)
-    .innerJoin(
-      tables.itemTracks,
-      eq(tables.itemTracks.trackId, tables.tracks.id),
-    )
+  const ownTrackIds = db
+    .selectDistinct({ id: tables.itemTracks.trackId })
+    .from(tables.itemTracks)
     .innerJoin(tables.items, eq(tables.itemTracks.itemId, tables.items.id))
     .innerJoin(
       tables.categories,
       eq(tables.items.categoryId, tables.categories.id),
     )
-    .where(eq(tables.categories.userId, userId));
+    .where(ownCategory);
+  const totalDurationMs = db
+    .select({ value: sql<number>`coalesce(sum(${tables.tracks.lengthMs}), 0)` })
+    .from(tables.tracks)
+    .where(inArray(tables.tracks.id, ownTrackIds))
+    .get()!.value;
 
-  const totalDurationMs = distinctTracks.reduce(
-    (sum, t) => sum + (t.lengthMs ?? 0),
-    0,
-  );
-  const totalItems = overviewRow?.totalItems ?? 0;
-  const totalTrackLinks = overviewRow?.totalTrackLinks ?? 0;
-
-  const mostUsedTracks = await db
+  const usageCount = count(tables.itemTracks.id);
+  const mostUsedTracks = db
     .select({
-      track: tables.tracks,
-      usageCount: sql<number>`COUNT(${tables.itemTracks.id})`,
+      id: tables.tracks.id,
+      encoded: tables.tracks.encoded,
+      title: tables.tracks.title,
+      author: tables.tracks.author,
+      source: tables.tracks.source,
+      uri: tables.tracks.uri,
+      artworkUrl: tables.tracks.artworkUrl,
+      lengthMs: tables.tracks.lengthMs,
+      usageCount,
     })
     .from(tables.itemTracks)
     .innerJoin(tables.tracks, eq(tables.itemTracks.trackId, tables.tracks.id))
@@ -64,46 +64,43 @@ export default defineEventHandler(async (event) => {
       tables.categories,
       eq(tables.items.categoryId, tables.categories.id),
     )
-    .where(eq(tables.categories.userId, userId))
+    .where(ownCategory)
     .groupBy(tables.tracks.id)
-    .orderBy(desc(sql`COUNT(${tables.itemTracks.id})`))
-    .limit(10);
+    .orderBy(desc(usageCount))
+    .limit(10)
+    .all();
 
-  const topArtists = await db
-    .select({
-      name: tables.tracks.author,
-      trackCount: sql<number>`COUNT(DISTINCT ${tables.tracks.id})`,
-    })
-    .from(tables.tracks)
-    .innerJoin(
-      tables.itemTracks,
-      eq(tables.itemTracks.trackId, tables.tracks.id),
-    )
+  const topArtists = db
+    .select({ name: tables.tracks.author, trackCount: distinctTracks })
+    .from(tables.itemTracks)
+    .innerJoin(tables.tracks, eq(tables.itemTracks.trackId, tables.tracks.id))
     .innerJoin(tables.items, eq(tables.itemTracks.itemId, tables.items.id))
     .innerJoin(
       tables.categories,
       eq(tables.items.categoryId, tables.categories.id),
     )
-    .where(eq(tables.categories.userId, userId))
+    .where(ownCategory)
     .groupBy(tables.tracks.author)
-    .orderBy(desc(sql`COUNT(DISTINCT ${tables.tracks.id})`))
-    .limit(10);
+    .orderBy(desc(distinctTracks))
+    .limit(10)
+    .all();
 
-  const categoryStats = await db
+  const categoryStats = db
     .select({
       id: tables.categories.id,
       name: tables.categories.name,
       isPublic: tables.categories.isPublic,
-      itemCount: sql<number>`COUNT(DISTINCT ${tables.items.id})`,
-      trackCount: sql<number>`COUNT(DISTINCT ${tables.itemTracks.trackId})`,
+      itemCount: distinctItems,
+      trackCount: distinctTracks,
     })
     .from(tables.categories)
     .leftJoin(tables.items, eq(tables.items.categoryId, tables.categories.id))
     .leftJoin(tables.itemTracks, eq(tables.itemTracks.itemId, tables.items.id))
-    .where(eq(tables.categories.userId, userId))
-    .groupBy(tables.categories.id);
+    .where(ownCategory)
+    .groupBy(tables.categories.id)
+    .all();
 
-  const recentItems = await db
+  const recentItems = db
     .select({
       id: tables.items.id,
       name: tables.items.name,
@@ -116,33 +113,25 @@ export default defineEventHandler(async (event) => {
       tables.categories,
       eq(tables.items.categoryId, tables.categories.id),
     )
-    .where(eq(tables.categories.userId, userId))
+    .where(ownCategory)
     .orderBy(desc(tables.items.createdAt))
-    .limit(10);
+    .limit(10)
+    .all();
 
   return {
     overview: {
-      totalCategories: overviewRow?.totalCategories ?? 0,
-      totalItems,
-      totalTracks: overviewRow?.uniqueTracks ?? 0,
-      totalTrackLinks,
-      avgTracksPerItem:
-        totalItems > 0 ? Number((totalTrackLinks / totalItems).toFixed(2)) : 0,
+      totalCategories: overview.categories,
+      totalItems: overview.items,
+      totalTracks: overview.tracks,
+      totalTrackLinks: overview.trackLinks,
+      avgTracksPerItem: overview.items
+        ? Number((overview.trackLinks / overview.items).toFixed(2))
+        : 0,
       totalDurationMs,
       totalDurationMinutes: Math.floor(totalDurationMs / 60_000),
       totalDurationHours: Number((totalDurationMs / 3_600_000).toFixed(2)),
     },
-    mostUsedTracks: mostUsedTracks.map((r) => ({
-      id: r.track.id,
-      encoded: r.track.encoded,
-      title: r.track.title,
-      author: r.track.author,
-      source: r.track.source,
-      uri: r.track.uri,
-      artworkUrl: r.track.artworkUrl,
-      lengthMs: r.track.lengthMs,
-      usageCount: r.usageCount,
-    })),
+    mostUsedTracks,
     topArtists,
     categoryStats,
     recentItems,

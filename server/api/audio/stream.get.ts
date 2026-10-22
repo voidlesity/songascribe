@@ -3,28 +3,23 @@ defineRouteMeta({
     tags: ["Audio"],
     summary: "Stream PCM audio",
     description:
-      "Proxies NodeLink's loadStream endpoint, streaming signed 16-bit " +
-      "little-endian PCM at 48 kHz stereo (audio/l16). Consumed by an " +
-      "AudioWorklet in the browser.",
+      "Proxies NodeLink's signed 16-bit little-endian PCM (48 kHz stereo). The upstream stream is aborted when the client disconnects.",
     parameters: [
       {
         in: "query",
         name: "encoded",
         required: true,
         schema: { type: "string" },
-        description: "Encoded NodeLink track payload.",
       },
       {
         in: "query",
         name: "position",
         schema: { type: "integer", minimum: 0, default: 0 },
-        description: "Start position in milliseconds.",
       },
       {
         in: "query",
         name: "volume",
         schema: { type: "integer", minimum: 0, maximum: 1000, default: 100 },
-        description: "Server-side volume; 100 = unity.",
       },
     ],
     responses: {
@@ -32,53 +27,40 @@ defineRouteMeta({
         description: "Raw 16-bit LE PCM, 48 kHz stereo",
         content: { "audio/l16": {} },
       },
-      400: { description: "Missing encoded" },
-      502: { description: "Upstream NodeLink error" },
+      400: { description: "Invalid stream parameters" },
+      502: { description: "NodeLink stream failed" },
+      504: { description: "NodeLink connection timed out" },
     },
   },
 });
 
 export default defineEventHandler(async (event) => {
-  const { encoded, position, volume } = getQuery(event);
+  const query = getQuery(event);
+  const encoded = requiredString(query.encoded, "encoded", 64 * 1024);
+  const positionMs = parseInteger(query.position ?? 0, "position");
+  const volume = parseInteger(query.volume ?? 100, "volume", { max: 1_000 });
 
-  if (typeof encoded !== "string" || !encoded) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "encoded is required",
-    });
-  }
-
-  const positionMs = Number.isFinite(Number(position)) ? Number(position) : 0;
-  const volumeValue = Number.isFinite(Number(volume)) ? Number(volume) : 100;
+  const clientGone = new AbortController();
+  event.node.res.once("close", () => clientGone.abort());
 
   const upstream = await loadStream({
     encoded,
     positionMs,
-    volume: volumeValue,
-  }).catch((err) => {
-    console.error("[Audio stream] NodeLink unreachable:", err);
-    return null;
+    volume,
+    signal: clientGone.signal,
   });
-
-  if (!upstream || !upstream.ok || !upstream.body) {
-    const status = upstream?.status ?? 502;
-    const text = upstream ? await upstream.text().catch(() => "") : "";
+  if (!upstream.ok || !upstream.body) {
+    await upstream.body?.cancel().catch(() => {});
     throw createError({
-      statusCode: status >= 400 ? status : 502,
-      statusMessage: text || "NodeLink loadStream failed",
+      statusCode: 502,
+      statusMessage: "NodeLink stream failed",
     });
   }
 
-  setResponseHeader(
-    event,
-    "Content-Type",
-    upstream.headers.get("Content-Type") ?? "audio/l16;rate=48000;channels=2",
-  );
-  setResponseHeader(event, "Cache-Control", "no-store");
-  setResponseHeader(event, "Transfer-Encoding", "chunked");
-
-  return sendStream(
-    event,
-    upstream.body as unknown as ReadableStream<Uint8Array>,
-  );
+  setResponseHeaders(event, {
+    "Content-Type":
+      upstream.headers.get("Content-Type") ?? "audio/l16;rate=48000;channels=2",
+    "Cache-Control": "no-store",
+  });
+  return sendStream(event, upstream.body);
 });

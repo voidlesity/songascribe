@@ -3,29 +3,26 @@ defineRouteMeta({
     tags: ["Audio"],
     summary: "Search tracks",
     description:
-      "Search NodeLink for tracks. URLs are loaded directly, plain text uses YouTube Music search.",
+      "Searches NodeLink. HTTP(S) URLs are loaded directly, anything else uses YouTube Music search. Results are capped at 100.",
     parameters: [
       {
         in: "query",
         name: "q",
         required: true,
         schema: { type: "string" },
-        description: "Search query or media URL",
+        description: "Search query or HTTP(S) media URL",
       },
     ],
     responses: {
-      200: { description: "Array of normalized tracks" },
+      200: { description: "Normalized track array" },
       400: { description: "Missing query" },
+      502: { description: "NodeLink unavailable" },
+      504: { description: "NodeLink request timed out" },
     },
   },
 });
 
-export default defineEventHandler(async (event) => {
-  const { q } = getQuery(event);
-
-  if (typeof q !== "string" || !q.trim()) {
-    throw createError({ statusCode: 400, statusMessage: "q is required" });
-  }
-
-  return await searchTracks(q.trim());
+export default defineEventHandler((event) => {
+  const query = requiredString(getQuery(event).q, "q", 500);
+  return searchTracks(query);
 });

@@ -12,7 +12,7 @@ export default defineNuxtConfig({
       meta: {
         description: "REST API for Songascribe",
         title: "Songascribe API",
-        version: "0.1.0",
+        version: "0.1.1",
       },
       production: "runtime",
       route: "/api/_openapi.json",
@@ -42,8 +42,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     nodelink: {
       host: process.env.NODELINK_HOST || "localhost",
-      port: parseInt(process.env.NODELINK_PORT || "2333"),
+      port: parseInt(process.env.NODELINK_PORT || "2333", 10),
       password: process.env.NODELINK_PASSWORD || "youshallnotpass",
+      timeoutMs: parseInt(process.env.NODELINK_TIMEOUT_MS || "15000", 10),
     },
   },
 });

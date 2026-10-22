@@ -13,19 +13,16 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-
-  const [deleted] = await db
+  const { user } = await requireUserSession(event);
+  const deleted = db
     .delete(tables.users)
-    .where(eq(tables.users.id, (sessionUser as { id: number }).id))
-    .returning();
-
+    .where(eq(tables.users.id, user.id))
+    .returning({ id: tables.users.id })
+    .get();
   if (!deleted) {
     throw createError({ statusCode: 404, statusMessage: "User not found" });
   }
 
   await clearUserSession(event);
-
-  setResponseStatus(event, 204);
-  return null;
+  return sendNoContent(event);
 });

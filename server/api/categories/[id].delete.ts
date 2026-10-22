@@ -3,43 +3,28 @@ defineRouteMeta({
     tags: ["Categories"],
     summary: "Delete category",
     description:
-      "Deletes a category and all its items, item-track links and shares (cascade).",
+      "Deletes a category together with its items, track links and share.",
     parameters: [
-      { in: "path", name: "id", required: true, schema: { type: "integer" } },
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        schema: { type: "integer", minimum: 1 },
+      },
     ],
     responses: {
-      204: { description: "Deleted" },
-      400: { description: "Invalid id" },
+      204: { description: "Category deleted" },
+      400: { description: "Invalid category id" },
       401: { description: "Unauthorized" },
-      404: { description: "Not found" },
+      404: { description: "Category not found" },
     },
   },
 });
 
 export default defineEventHandler(async (event) => {
-  const { user: sessionUser } = await requireUserSession(event);
-  const id = Number(getRouterParam(event, "id"));
-  if (!Number.isInteger(id) || id <= 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid category id",
-    });
-  }
-
-  const result = await db
-    .delete(tables.categories)
-    .where(
-      and(
-        eq(tables.categories.id, id),
-        eq(tables.categories.userId, (sessionUser as { id: number }).id),
-      ),
-    )
-    .returning({ id: tables.categories.id });
-
-  if (result.length === 0) {
-    throw createError({ statusCode: 404, statusMessage: "Category not found" });
-  }
-
-  setResponseStatus(event, 204);
-  return null;
+  const { user } = await requireUserSession(event);
+  const id = parseRouteId(event, "category");
+  requireOwnedCategory(id, user.id);
+  db.delete(tables.categories).where(eq(tables.categories.id, id)).run();
+  return sendNoContent(event);
 });

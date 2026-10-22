@@ -2,7 +2,7 @@ defineRouteMeta({
   openAPI: {
     tags: ["Auth"],
     summary: "Login",
-    description: "Authenticate with username or email + password.",
+    description: "Authenticates with username or email and password.",
     requestBody: {
       required: true,
       content: {
@@ -30,24 +30,15 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const body =
-    (await readBody<{ login?: string; password?: string }>(event)) ?? {};
-  const login = body.login?.trim().toLowerCase();
-  const password = body.password;
+  const body = await readObjectBody(event);
+  const login = requiredString(body.login, "login", 320).toLowerCase();
+  const password = requiredPassword(body.password);
 
-  if (!login || !password) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "login and password are required",
-    });
-  }
-
-  const [user] = await db
+  const user = db
     .select()
     .from(tables.users)
     .where(or(eq(tables.users.email, login), eq(tables.users.username, login)))
-    .limit(1);
-
+    .get();
   if (!user || !(await verifyPassword(user.passwordHash, password))) {
     throw createError({
       statusCode: 401,
@@ -55,21 +46,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await setUserSession(event, {
-    user: {
-      id: user.id,
-      username: user.username,
-      avatar: user.avatar,
-      theme: user.theme,
-    },
-  });
-
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    avatar: user.avatar,
-    theme: user.theme,
-    createdAt: user.createdAt,
-  };
+  await setSessionUser(event, user);
+  return serializeUser(user);
 });

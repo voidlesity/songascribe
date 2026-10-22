@@ -75,9 +75,9 @@
 </template>
 
 <script setup lang="ts">
-const { loggedIn } = useUserSession();
-
-if (loggedIn.value) {
-  await navigateTo("/");
-}
+definePageMeta({ middleware: ["guest"] });
+useSeoMeta({
+  title: "About · Songascribe",
+  description: "Organize songs around ideas, moments, and meaningful context.",
+});
 </script>

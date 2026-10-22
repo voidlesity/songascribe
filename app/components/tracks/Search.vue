@@ -1,10 +1,9 @@
 <template>
   <div class="relative">
-    <label class="input w-full" :class="inputSize">
+    <label class="input w-full">
       <Icon name="mdi:magnify" class="opacity-60" />
       <input
         v-model="query"
-        :autofocus="autofocus"
         type="search"
         :placeholder="placeholder"
         @focus="open = true"
@@ -14,6 +13,8 @@
         class="loading loading-spinner loading-xs opacity-60"
       />
     </label>
+
+    <p v-if="error" class="text-error text-xs mt-1">{{ error }}</p>
 
     <div
       v-if="open && (results.length || (query && !loading))"
@@ -37,42 +38,27 @@
       <p v-else class="text-center text-sm opacity-60 p-4">No results</p>
     </div>
 
-    <div v-if="open" class="fixed inset-0 z-20" @click="close" />
+    <div v-if="open" class="fixed inset-0 z-20" @click="open = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Track } from "~/composables/useTrackSearch";
-
-const props = withDefaults(
-  defineProps<{
-    placeholder?: string;
-    size?: "sm" | "md" | "lg";
-    autofocus?: boolean;
-  }>(),
-  { placeholder: "Search songs or paste a URL…", size: "md", autofocus: false },
-);
+withDefaults(defineProps<{ placeholder?: string }>(), {
+  placeholder: "Search songs or paste a URL…",
+});
 
 const emit = defineEmits<{
   select: [track: Track];
 }>();
 
 const query = ref("");
-const { results, loading, clear } = useTrackSearch(query);
+const { results, loading, error, clear } = useTrackSearch(query);
 const open = ref(false);
-
-const inputSize = computed(() =>
-  props.size === "lg" ? "input-lg" : props.size === "sm" ? "input-sm" : "",
-);
 
 function pick(track: Track) {
   emit("select", track);
   query.value = "";
   clear();
-  open.value = false;
-}
-
-function close() {
   open.value = false;
 }
 

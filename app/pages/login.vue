@@ -135,7 +135,8 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: ["logged-in"] });
+definePageMeta({ middleware: ["guest"] });
+useSeoMeta({ title: "Sign in · Songascribe" });
 
 const mode = ref<"login" | "register">("login");
 const error = ref("");
@@ -155,13 +156,15 @@ async function handleLogin() {
   try {
     await $fetch("/api/auth/login", {
       method: "POST",
-      body: { login: login.value.identifier, password: login.value.password },
+      body: {
+        login: login.value.identifier,
+        password: login.value.password,
+      },
     });
     await navigateTo("/");
     window.location.reload();
   } catch (e) {
-    error.value =
-      (e as { statusMessage?: string }).statusMessage || "Login failed";
+    error.value = getApiErrorMessage(e, "Login failed");
   } finally {
     submitting.value = false;
   }
@@ -186,8 +189,7 @@ async function handleRegister() {
     await navigateTo("/");
     window.location.reload();
   } catch (e) {
-    error.value =
-      (e as { statusMessage?: string }).statusMessage || "Registration failed";
+    error.value = getApiErrorMessage(e, "Registration failed");
   } finally {
     submitting.value = false;
   }

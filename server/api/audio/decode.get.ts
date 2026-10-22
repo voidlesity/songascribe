@@ -12,25 +12,15 @@ defineRouteMeta({
     ],
     responses: {
       200: { description: "Normalized track" },
-      400: { description: "Missing encoded" },
-      404: { description: "Could not decode" },
+      400: { description: "Missing encoded track" },
+      404: { description: "Track could not be decoded" },
+      502: { description: "NodeLink unavailable" },
+      504: { description: "NodeLink request timed out" },
     },
   },
 });
 
-export default defineEventHandler(async (event) => {
-  const { encoded } = getQuery(event);
-
-  if (typeof encoded !== "string" || !encoded) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "encoded is required",
-    });
-  }
-
-  const track = await decodeTrack(encoded);
-  if (!track) {
-    throw createError({ statusCode: 404, statusMessage: "Track not found" });
-  }
-  return track;
+export default defineEventHandler((event) => {
+  const encoded = requiredString(getQuery(event).encoded, "encoded", 64 * 1024);
+  return decodeTrack(encoded);
 });

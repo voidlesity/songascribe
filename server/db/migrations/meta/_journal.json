@@ -22,6 +22,20 @@
       "when": 1781249268863,
       "tag": "0002_lush_silver_samurai",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792683738618,
+      "tag": "0003_avatar_storage",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792683739236,
+      "tag": "0004_indexes",
+      "breakpoints": true
     }
   ]
 }

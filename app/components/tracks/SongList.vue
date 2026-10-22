@@ -38,13 +38,35 @@
       </div>
 
       <span class="hidden sm:inline text-xs opacity-50">
-        {{ fmtDuration(song.lengthMs) }}
+        {{ song.lengthMs ? formatTime(song.lengthMs / 1000) : "" }}
       </span>
+
+      <div v-if="reorderable" class="join" @click.stop>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs join-item"
+          :disabled="reordering || index === 0"
+          :aria-label="`Move ${song.title} up`"
+          @click="emit('move', index, -1)"
+        >
+          <Icon name="mdi:arrow-up" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs join-item"
+          :disabled="reordering || index === songs.length - 1"
+          :aria-label="`Move ${song.title} down`"
+          @click="emit('move', index, 1)"
+        >
+          <Icon name="mdi:arrow-down" />
+        </button>
+      </div>
 
       <a
         v-if="song.uri"
         :href="song.uri"
         target="_blank"
+        rel="noopener noreferrer"
         class="btn btn-ghost btn-xs btn-square opacity-70 sm:opacity-0 sm:group-hover:opacity-70"
         @click.stop
       >
@@ -53,33 +75,35 @@
     </li>
   </ul>
 
-  <p v-else class="text-sm opacity-50 text-center py-3">
-    {{ empty ?? "No songs yet" }}
-  </p>
+  <p v-else class="text-sm opacity-50 text-center py-3">No songs yet</p>
 </template>
 
 <script setup lang="ts">
-import type { Track } from "~/composables/useTrackSearch";
-
 const props = defineProps<{
   songs: Track[];
-  itemName?: string;
-  empty?: string;
+  itemName: string;
+  itemId: number;
+  categoryName: string;
+  categoryId: number;
+  reorderable?: boolean;
+  reordering?: boolean;
 }>();
 
+const emit = defineEmits<{ move: [index: number, direction: -1 | 1] }>();
 const { isPlaying, isCurrentSong, playSong, playMultiple } = usePlayerStore();
+
+const contextLabel = computed(
+  () => `${props.categoryName} · ${props.itemName}`,
+);
+const contextId = computed(
+  () => `category:${props.categoryId}:item:${props.itemId}`,
+);
 
 function play(song: Track, index: number) {
   if (props.songs.length > 1) {
-    playMultiple(props.songs, props.itemName, index);
+    playMultiple(props.songs, contextLabel.value, index, contextId.value);
   } else {
-    playSong(song, props.itemName);
+    playSong(song, contextLabel.value, contextId.value);
   }
-}
-
-function fmtDuration(ms?: number) {
-  if (!ms || !Number.isFinite(ms)) return "";
-  const s = Math.floor(ms / 1000);
-  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 }
 </script>
